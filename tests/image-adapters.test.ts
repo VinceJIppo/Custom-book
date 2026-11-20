@@ -74,8 +74,9 @@ describe("Gemini adapter (no network)", () => {
     expect(body.model).toBe("gemini-nano-banana-2.1");
     expect(body.input[0].type).toBe("text");
     expect(body.input[1]).toMatchObject({ type: "image", mime_type: "image/png" });
-    expect(body.response_format).toMatchObject({ type: "image", aspect_ratio: "1:1", image_size: "4K" });
+    expect(body.response_format).toMatchObject({ type: "image", mime_type: "image/jpeg", aspect_ratio: "1:1", image_size: "4K" });
     expect(r.value.width).toBe(128);
+    expect(r.value.mimeType).toBe("image/png"); // detected from the bytes the fake returned
     // 4K output + one input image, from the pricing table.
     expect(r.usage.costUsd).toBeCloseTo(0.113 + 0.0017, 6);
   });

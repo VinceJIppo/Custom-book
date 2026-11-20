@@ -89,7 +89,8 @@ export class GeminiImageProvider implements ImageProvider {
         { type: "text", text: prompt },
         ...images.map((img) => ({ type: "image", mime_type: img.mimeType, data: img.data.toString("base64") })),
       ],
-      response_format: { type: "image", mime_type: "image/png", aspect_ratio: nearestAspect(aspect, GEMINI_ASPECTS), image_size: size },
+      // The live API accepts only image/jpeg here (it rejects image/png with HTTP 400).
+      response_format: { type: "image", mime_type: "image/jpeg", aspect_ratio: nearestAspect(aspect, GEMINI_ASPECTS), image_size: size },
       store: false,
     };
   }
@@ -132,7 +133,9 @@ export class GeminiImageProvider implements ImageProvider {
       imageCalls: 1,
       costUsd: Math.round((p.out[size] + images.length * p.perInputImage) * 1e6) / 1e6,
     };
-    return { value: { data, mimeType: image.mime_type ?? "image/png", width: meta.width ?? 0, height: meta.height ?? 0 }, usage };
+    // Trust the bytes, not the label.
+    const mimeType = meta.format === "png" ? "image/png" : meta.format === "webp" ? "image/webp" : "image/jpeg";
+    return { value: { data, mimeType, width: meta.width ?? 0, height: meta.height ?? 0 }, usage };
   }
 
   async generateCharacterSheet(input: CharacterSheetRequest): Promise<WithUsage<ImageData[]>> {
