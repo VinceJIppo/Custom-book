@@ -146,7 +146,7 @@ export function BookWizard({ child, themes, defaultReadingLevel, estimates, stor
             <span className="font-semibold">Book size</span>
             <select name="trimSize" defaultValue="square-8.5" className={input}>
               <option value="square-8.5">8.5 x 8.5 in square</option>
-              <option value="portrait-8x10">8 x 10 in portrait</option>
+              <option value="portrait-8.5x11">8.5 x 11 in portrait</option>
             </select>
           </label>
           <div className="space-y-2 sm:col-span-2">

@@ -86,3 +86,21 @@ describe("theme registry", () => {
     expect(Object.keys(BUILT_IN_THEME_FILES).sort()).toEqual(onDisk);
   });
 });
+
+describe("config", () => {
+  it("treats blank values from .env.example as not set", async () => {
+    const { getConfig, resetConfigCache } = await import("@/lib/config");
+    process.env.PUBLIC_BASE_URL = "";
+    process.env.DAILY_COST_CAP_USD = " ";
+    resetConfigCache();
+    try {
+      const c = getConfig();
+      expect(c.PUBLIC_BASE_URL).toBeUndefined();
+      expect(c.DAILY_COST_CAP_USD).toBe(10);
+    } finally {
+      delete process.env.PUBLIC_BASE_URL;
+      delete process.env.DAILY_COST_CAP_USD;
+      resetConfigCache();
+    }
+  });
+});

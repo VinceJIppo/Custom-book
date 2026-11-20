@@ -11,7 +11,7 @@ export function getStorage(): Storage {
   instance =
     c.STORAGE_DRIVER === "s3"
       ? new S3Storage()
-      : new LocalStorage(c.STORAGE_LOCAL_DIR, c.storageSigningSecret, c.storageEncryptionKey, "", c.SIGNED_URL_TTL_SECONDS);
+      : new LocalStorage(c.STORAGE_LOCAL_DIR, c.storageSigningSecret, c.storageEncryptionKey, "", c.SIGNED_URL_TTL_SECONDS, c.PUBLIC_BASE_URL ?? c.APP_URL);
   return instance;
 }
 
@@ -25,6 +25,8 @@ export const keys = {
   sheetImage: (userId: string, childId: string, sheetId: string, i: number, ext: string) => `users/${userId}/children/${childId}/sheets/${sheetId}-${i}.${ext}`,
   pageWorking: (userId: string, childId: string, bookId: string, pageId: string, version: number, ext: string) =>
     `users/${userId}/children/${childId}/books/${bookId}/pages/${pageId}-v${version}-work.${ext}`,
+  exportFile: (userId: string, childId: string, bookId: string, exportId: string, name: "interior" | "cover") =>
+    `users/${userId}/children/${childId}/books/${bookId}/exports/${exportId}-${name}.pdf`,
   coverImage: (userId: string, childId: string, bookId: string, version: number, ext: string) =>
     `users/${userId}/children/${childId}/books/${bookId}/cover-v${version}.${ext}`,
 };

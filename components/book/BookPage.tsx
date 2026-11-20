@@ -47,7 +47,9 @@ function bleedSize(trim: TrimSize | BookView["trim"]) {
 function TextBox({ text, zone, safe, book, panel = true, align = "left" }: { text: string; zone: PageView["textZone"]; safe: Box; book: BookView; panel?: boolean; align?: "left" | "center" }) {
   const fs = FONT_SIZE_IN[book.readingLevel];
   const half = { ...safe, width: safe.width * 0.62 };
-  const style: CSSProperties = { fontSize: inch(fs), textAlign: align };
+  // Capped so text never buries the picture; preflight reports text that doesn't fit.
+  const maxH = zone === "top" || zone === "bottom" ? safe.height * 0.5 : safe.height * 0.75;
+  const style: CSSProperties = { fontSize: inch(fs), textAlign: align, maxHeight: inch(maxH), overflow: "hidden" };
   if (zone === "top") Object.assign(style, { left: inch(safe.x), top: inch(safe.y), width: inch(safe.width) });
   else if (zone === "bottom") Object.assign(style, { left: inch(safe.x), bottom: `calc(var(--in) * ${(bleedSize(book.trim).h - safe.y - safe.height).toFixed(4)})`, width: inch(safe.width) });
   else if (zone === "left") Object.assign(style, { left: inch(safe.x), top: inch(safe.y), width: inch(half.width) });
@@ -179,7 +181,7 @@ function FrontMatter({ page, book }: { page: PageView; book: BookView }) {
       );
     case "endpaper":
     default:
-      return <div className="bk-endpaper" style={{ "--c1": c1, "--c2": c2 ?? c1 } as CSSProperties} />;
+      return <div className="bk-endpaper" style={{ "--c1": c1, "--c2": c2 ?? c1, "--c3": tint(c1, 0.6) } as CSSProperties} />;
   }
 }
 
@@ -191,9 +193,12 @@ function Stars({ color }: { color: string }) {
   );
 }
 
-export function tint(hex: string, alpha: number) {
+/** A solid (opaque) lighter shade: the color mixed with white. No transparency, so PDFs need no flattening. */
+export function tint(hex: string, amount: number) {
   const n = parseInt(hex.slice(1), 16);
-  return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
+  const mix = (c: number) => Math.round(255 + (c - 255) * amount);
+  const [r, g, b] = [mix((n >> 16) & 255), mix((n >> 8) & 255), mix(n & 255)];
+  return `#${((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1)}`;
 }
 
 export function BookPage({ page, book, mode }: { page: PageView; book: BookView; mode: PageMode }) {
@@ -212,7 +217,7 @@ export function CoverFront({ book, mode }: { book: BookView; mode: PageMode }) {
   return (
     <PageFrame trim={book.trim} mode={mode} label="Front cover">
       <Art url={book.cover.imageUrl} status={book.cover.imageStatus} alt="Cover illustration" style={{ left: 0, top: 0, width: inch(w), height: inch(h) }} />
-      <div className="bk-cover-title" style={{ left: inch(safe.x - 0.2), top: inch(safe.y), width: inch(safe.width + 0.4) }}>
+      <div className="bk-cover-title" style={{ left: inch(safe.x - 0.2), top: inch(safe.y), width: inch(safe.width + 0.4), color: book.palette[0] }}>
         <h1 className="bk-display" style={{ fontSize: inch(0.62) }}>
           {book.title}
         </h1>
@@ -227,7 +232,7 @@ export function InsideCover({ book, mode, label }: { book: BookView; mode: PageM
   const [c1, c2] = book.palette;
   return (
     <PageFrame trim={book.trim} mode={mode} label={label}>
-      <div className="bk-endpaper" style={{ "--c1": c1, "--c2": c2 ?? c1 } as CSSProperties} />
+      <div className="bk-endpaper" style={{ "--c1": c1, "--c2": c2 ?? c1, "--c3": tint(c1, 0.6) } as CSSProperties} />
     </PageFrame>
   );
 }
@@ -240,7 +245,7 @@ export function CoverBack({ book, mode }: { book: BookView; mode: PageMode }) {
       <div className="bk-tint" style={{ background: `linear-gradient(200deg, ${c1}, ${c2 ?? c1})` }} />
       <div className="bk-center bk-back" style={boxStyle(safe)}>
         <p style={{ fontSize: inch(0.27) }}>{book.backBlurb}</p>
-        <p className="bk-display" style={{ fontSize: inch(0.22), marginTop: inch(0.4), opacity: 0.85 }}>
+        <p className="bk-display" style={{ fontSize: inch(0.22), marginTop: inch(0.4) }}>
           StoryStar
         </p>
       </div>

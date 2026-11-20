@@ -8,6 +8,7 @@ import { createChild, deleteChildEverything, getChild, updateChild, type SaveRes
 import { createAndStartBook, retryFailedJobs, type CreateBookResult } from "@/lib/books/service";
 import { acceptFlagged, changeLayout, movePage, requestNewArt, restoreVersion, reviseTextWithAI, updatePageText } from "@/lib/books/pages";
 import { deleteCustomTheme, draftCustomTheme, duplicateTheme, saveCustomTheme } from "@/lib/customThemes";
+import { startExport, startValidation } from "@/lib/books/export";
 import { addPhoto, approveSheetOption, deletePhoto, saveBible, setDeleteOriginals, startCharacterSheet } from "@/lib/characters/service";
 
 export async function confirmAdultAction(formData: FormData) {
@@ -286,4 +287,22 @@ export async function deleteThemeAction(fd: FormData) {
   const user = await getCurrentUser();
   const res = await deleteCustomTheme(user.id, String(fd.get("themeId") ?? ""));
   redirect(res.ok ? "/themes?deleted=1" : `/themes/${String(fd.get("themeId") ?? "")}?deleteError=1`);
+}
+
+// ---------------------------------------------------------------- Print files
+
+export async function startExportAction(_prev: EditState | null, fd: FormData): Promise<EditState> {
+  const user = await getCurrentUser();
+  const bookId = String(fd.get("bookId") ?? "");
+  const res = await startExport(user.id, bookId, String(fd.get("productId") ?? ""));
+  if (!res.ok) return { message: res.message };
+  revalidatePath(`/books/${bookId}/print`);
+  return { ok: true, message: "Making print files..." };
+}
+
+export async function validateExportAction(fd: FormData) {
+  const user = await getCurrentUser();
+  const bookId = String(fd.get("bookId") ?? "");
+  const res = await startValidation(user.id, String(fd.get("exportId") ?? ""));
+  redirect(`/books/${bookId}/print${res.ok ? "" : `?error=${encodeURIComponent(res.message)}`}`);
 }

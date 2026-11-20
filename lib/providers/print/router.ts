@@ -19,6 +19,12 @@ export class PrintRouter {
     return out;
   }
 
+  async allProducts(): Promise<ProductSpec[]> {
+    const out: ProductSpec[] = [];
+    for (const p of this.providers) out.push(...(await p.getProducts()));
+    return out;
+  }
+
   async choose(productId: string, _destination?: Pick<ShippingAddress, "countryCode">) {
     const candidates = await this.productsFor(productId);
     if (!candidates.length) throw new Error(`No print provider offers product ${productId}`);

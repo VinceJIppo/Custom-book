@@ -1,45 +1,29 @@
 import type { CoverDimensions, CreateOrderInput, FileValidation, PrintOrderState, PrintProvider, PrintQuote, ProductSpec, ShippingAddress, ShippingLevel } from "./types";
-import { coverSpreadSizeIn, getTrim } from "../../print/geometry";
+import { getTrim } from "../../print/geometry";
+import { CATALOG, luluSpineWidthIn, spineTextAllowed } from "../../print/products";
 
 /**
- * Offline print provider. Its page rules mirror a typical hardcover picture
- * book (min 24, multiple of 2) and are re-checked against Lulu in Phase 3.
+ * Offline print provider. Uses the same product catalog and spine rules as
+ * Lulu. Cover size is an estimate (Lulu's exact case-wrap size comes from its
+ * API), so mock covers are marked approximate.
  */
-const PRODUCTS: ProductSpec[] = [
-  {
-    id: "hardcover-square-8.5",
-    provider: "mock",
-    sku: "MOCK-HC-8.5SQ",
-    label: "Hardcover, 8.5 x 8.5 in square",
-    trimSize: "square-8.5",
-    binding: "hardcover",
-    paper: "80# coated white",
-    color: "full",
-    pageRules: { minPages: 24, maxPages: 800, multiple: 2 },
-  },
-  {
-    id: "softcover-square-8.5",
-    provider: "mock",
-    sku: "MOCK-SC-8.5SQ",
-    label: "Softcover, 8.5 x 8.5 in square",
-    trimSize: "square-8.5",
-    binding: "softcover",
-    paper: "80# coated white",
-    color: "full",
-    pageRules: { minPages: 24, maxPages: 800, multiple: 2 },
-  },
-  {
-    id: "hardcover-portrait-8x10",
-    provider: "mock",
-    sku: "MOCK-HC-8X10",
-    label: "Hardcover, 8 x 10 in portrait",
-    trimSize: "portrait-8x10",
-    binding: "hardcover",
-    paper: "80# coated white",
-    color: "full",
-    pageRules: { minPages: 24, maxPages: 800, multiple: 2 },
-  },
-];
+/** Estimated wrap around the boards for case-wrap covers; softcovers just need bleed. */
+const MOCK_HARDCOVER_WRAP_IN = 0.75;
+const MOCK_SOFTCOVER_WRAP_IN = 0.125;
+
+export function catalogAsProducts(provider: string): ProductSpec[] {
+  return CATALOG.map((c) => ({
+    id: c.id,
+    provider,
+    sku: c.luluSku,
+    label: c.label,
+    trimSize: c.trimSize,
+    binding: c.binding,
+    paper: c.paper,
+    color: "full" as const,
+    pageRules: c.pageRules,
+  }));
+}
 
 const orders = new Map<string, PrintOrderState>();
 
@@ -47,18 +31,29 @@ export class MockPrintProvider implements PrintProvider {
   readonly name = "mock";
 
   async getProducts() {
-    return PRODUCTS;
+    return catalogAsProducts(this.name);
   }
 
   async getCoverDimensions(product: ProductSpec, pageCount: number): Promise<CoverDimensions> {
-    const spineIn = Math.round((pageCount * 0.0025 + (product.binding === "hardcover" ? 0.2 : 0.06)) * 1000) / 1000;
-    const wrap = product.binding === "hardcover" ? 0.75 : 0.125;
-    const size = coverSpreadSizeIn(getTrim(product.trimSize), spineIn, wrap);
-    return { ...size, spineIn, spineTextAllowed: spineIn >= 0.25 };
+    const trim = getTrim(product.trimSize);
+    const spineIn = luluSpineWidthIn(product.binding, pageCount);
+    const wrap = product.binding === "hardcover" ? MOCK_HARDCOVER_WRAP_IN : MOCK_SOFTCOVER_WRAP_IN;
+    return {
+      widthIn: Math.round((2 * trim.widthIn + spineIn + 2 * wrap) * 1000) / 1000,
+      heightIn: Math.round((trim.heightIn + 2 * wrap) * 1000) / 1000,
+      spineIn,
+      spineTextAllowed: spineTextAllowed(pageCount),
+      approximate: true,
+    };
   }
 
   async validateFiles(): Promise<FileValidation> {
-    return { ok: true, problems: [] };
+    return {
+      ok: true,
+      problems: [],
+      interior: { status: "SKIPPED (mock)", errors: [] },
+      cover: { status: "SKIPPED (mock)", errors: [] },
+    };
   }
 
   async quote(_product: ProductSpec, pageCount: number, _address: ShippingAddress, level: ShippingLevel): Promise<PrintQuote> {

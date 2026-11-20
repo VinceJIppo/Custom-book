@@ -14,6 +14,8 @@ export const PRINT_PPI = 300;
 
 export const TRIM_SIZES = {
   "square-8.5": { id: "square-8.5", label: "8.5 x 8.5 in square", widthIn: 8.5, heightIn: 8.5 },
+  "portrait-8.5x11": { id: "portrait-8.5x11", label: "8.5 x 11 in portrait", widthIn: 8.5, heightIn: 11 },
+  /** Legacy (Phase 1). Lulu has no full-color 8 x 10 product, so it is no longer offered. */
   "portrait-8x10": { id: "portrait-8x10", label: "8 x 10 in portrait", widthIn: 8, heightIn: 10 },
 } as const;
 export type TrimSizeId = keyof typeof TRIM_SIZES;

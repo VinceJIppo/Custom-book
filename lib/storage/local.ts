@@ -1,6 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import { assertSafeKey, type Storage, type StoredObjectMeta } from "./types";
+import { assertSafeKey, type SignedUrlOptions, type Storage, type StoredObjectMeta } from "./types";
 import { decrypt, encrypt, safeEqual, signParts } from "./crypto";
 
 /**
@@ -16,6 +16,7 @@ export class LocalStorage implements Storage {
     private readonly encryptionKey: string,
     private readonly appUrl: string,
     private readonly defaultTtl: number,
+    private readonly publicUrl: string = "",
   ) {}
 
   private filePath(key: string) {
@@ -70,11 +71,13 @@ export class LocalStorage implements Storage {
     return count;
   }
 
-  async signedUrl(key: string, ttlSeconds?: number) {
+  async signedUrl(key: string, ttlSeconds?: number, opts: SignedUrlOptions = {}) {
     assertSafeKey(key);
     const exp = Math.floor(Date.now() / 1000) + (ttlSeconds ?? this.defaultTtl);
     const sig = signParts([key, String(exp)], this.signingSecret);
-    return `${this.appUrl.replace(/\/$/, "")}/api/files/${key}?exp=${exp}&sig=${sig}`;
+    const base = (opts.absolute ? this.publicUrl || this.appUrl : this.appUrl).replace(/\/$/, "");
+    const dl = opts.downloadName ? `&dl=${encodeURIComponent(opts.downloadName.replace(/[^A-Za-z0-9 ._-]/g, ""))}` : "";
+    return `${base}/api/files/${key}?exp=${exp}&sig=${sig}${dl}`;
   }
 
   /** Used by the /api/files route. */

@@ -15,8 +15,16 @@ export interface Storage {
   exists(key: string): Promise<boolean>;
   delete(key: string): Promise<void>;
   deletePrefix(prefix: string): Promise<number>;
-  /** Short-lived URL a browser (or, later, a print provider) can fetch. */
-  signedUrl(key: string, ttlSeconds?: number): Promise<string>;
+  /**
+   * Short-lived URL a browser (or a print provider) can fetch.
+   * absolute: prefix with the public base URL. downloadName: serve as an attachment.
+   */
+  signedUrl(key: string, ttlSeconds?: number, opts?: SignedUrlOptions): Promise<string>;
+}
+
+export interface SignedUrlOptions {
+  absolute?: boolean;
+  downloadName?: string;
 }
 
 export function assertSafeKey(key: string) {

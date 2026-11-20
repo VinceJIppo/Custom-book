@@ -13,6 +13,7 @@ import { MockModerationProvider } from "./moderation/mock";
 import { MockVisionProvider } from "./vision/mock";
 import { MockPrintProvider } from "./print/mock";
 import { PrintRouter } from "./print/router";
+import { LuluPrintProvider } from "./lulu/print";
 import { AnthropicStoryProvider } from "./anthropic/story";
 import { AnthropicVisionProvider } from "./anthropic/vision";
 import { AnthropicModerationProvider } from "./anthropic/moderation";
@@ -105,8 +106,24 @@ export function getModeration(): ModerationProvider {
   return cache.moderation;
 }
 
+export function printProviderChoice(): "mock" | "lulu" {
+  const c = getConfig();
+  if (c.PRINT_PROVIDER !== "auto") return c.PRINT_PROVIDER;
+  return c.LULU_CLIENT_KEY && c.LULU_CLIENT_SECRET ? "lulu" : "mock";
+}
+
 export function getPrintRouter(): PrintRouter {
-  return (cache.printRouter ??= new PrintRouter([new MockPrintProvider()] as PrintProvider[]));
+  if (cache.printRouter) return cache.printRouter;
+  const c = getConfig();
+  const provider: PrintProvider =
+    printProviderChoice() === "lulu"
+      ? new LuluPrintProvider({
+          baseUrl: c.LULU_API_BASE,
+          clientKey: requireKey("PRINT_PROVIDER", c.LULU_CLIENT_KEY, "lulu"),
+          clientSecret: requireKey("PRINT_PROVIDER", c.LULU_CLIENT_SECRET, "lulu"),
+        })
+      : new MockPrintProvider();
+  return (cache.printRouter = new PrintRouter([provider]));
 }
 
 /** For tests: reset, or swap in specific implementations. */
@@ -126,6 +143,6 @@ export function activeProviderNames() {
     upscaler: getUpscaler().name,
     vision: getVisionProvider().name,
     moderation: getModeration().name,
-    print: "mock",
+    print: printProviderChoice(),
   };
 }

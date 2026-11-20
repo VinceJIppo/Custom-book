@@ -49,7 +49,17 @@ const EnvSchema = z.object({
   /** Compare each page with the character sheet and retry once on drift. */
   CONSISTENCY_QA: bool.default(true),
   MODERATION_PROVIDER: z.enum(["auto", "mock", "anthropic"]).default("auto"),
-  PRINT_PROVIDER: z.enum(["auto", "mock"]).default("auto"),
+  PRINT_PROVIDER: z.enum(["auto", "mock", "lulu"]).default("auto"),
+  LULU_API_BASE: z.string().url().default("https://api.sandbox.lulu.com"),
+  LULU_CLIENT_KEY: z.string().optional(),
+  LULU_CLIENT_SECRET: z.string().optional(),
+  /**
+   * Public base URL a print provider can download PDFs from (Lulu fetches files
+   * itself). Defaults to APP_URL; on a laptop use a tunnel URL.
+   */
+  PUBLIC_BASE_URL: z.string().url().optional(),
+  /** Lifetime of signed links handed to a print provider (PDFs only, never photos). */
+  PRINT_FILE_URL_TTL_SECONDS: z.coerce.number().int().min(300).max(7 * 86400).default(6 * 3600),
 
   CHARACTER_SHEET_OPTIONS: z.coerce.number().int().min(1).max(4).default(3),
   /** How many times a parent may generate a new set of character options. */
@@ -73,7 +83,9 @@ const DEV_ENCRYPTION_KEY = "dev-only-encryption-key-change-me-in-env-local";
 
 export function getConfig(): AppConfig {
   if (cached) return cached;
-  const parsed = EnvSchema.safeParse(process.env);
+  // A blank value (e.g. "KEY=" copied from .env.example) means "not set".
+  const env0 = Object.fromEntries(Object.entries(process.env).filter(([, v]) => v !== undefined && v.trim() !== ""));
+  const parsed = EnvSchema.safeParse(env0);
   if (!parsed.success) {
     const issues = parsed.error.issues.map((i) => `  ${i.path.join(".")}: ${i.message}`).join("\n");
     throw new Error(`Invalid environment configuration:\n${issues}`);

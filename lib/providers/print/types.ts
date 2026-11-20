@@ -19,8 +19,10 @@ export interface CoverDimensions {
   widthIn: number;
   heightIn: number;
   spineIn: number;
-  /** Whether the spine is wide enough for text. */
+  /** Whether the spine may carry text. */
   spineTextAllowed: boolean;
+  /** True when the size is an offline estimate rather than the provider's answer. */
+  approximate?: boolean;
 }
 
 export interface ShippingAddress {
@@ -46,9 +48,28 @@ export interface PrintQuote {
   shippingLevel: ShippingLevel;
 }
 
+export interface FileCheck {
+  /** Provider status, e.g. Lulu VALIDATED / NORMALIZED / ERROR. */
+  status: string;
+  errors: string[];
+  pageCount?: number;
+}
+
 export interface FileValidation {
   ok: boolean;
+  /** Plain-English problems for the parent. */
   problems: string[];
+  interior?: FileCheck;
+  cover?: FileCheck;
+}
+
+export interface ValidateFilesInput {
+  interiorUrl: string;
+  coverUrl: string;
+  product: ProductSpec;
+  pageCount: number;
+  /** Called as the provider reports progress (validation can take minutes). */
+  onProgress?: (message: string) => void;
 }
 
 export type PrintOrderStatus = "created" | "in_production" | "shipped" | "delivered" | "rejected" | "cancelled";
@@ -77,7 +98,7 @@ export interface PrintProvider {
   readonly name: string;
   getProducts(): Promise<ProductSpec[]>;
   getCoverDimensions(product: ProductSpec, pageCount: number): Promise<CoverDimensions>;
-  validateFiles(interiorUrl: string, coverUrl: string, product: ProductSpec): Promise<FileValidation>;
+  validateFiles(input: ValidateFilesInput): Promise<FileValidation>;
   quote(product: ProductSpec, pageCount: number, address: ShippingAddress, level: ShippingLevel): Promise<PrintQuote>;
   createOrder(input: CreateOrderInput): Promise<PrintOrderState>;
   getOrderStatus(providerOrderId: string): Promise<PrintOrderState>;

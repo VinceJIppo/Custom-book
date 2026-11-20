@@ -12,7 +12,7 @@ imports outside each vendor's folder (`lib/providers/anthropic`, `gemini`, `open
 | Upscaler | Mock, Sharp (local) | Exact print pixels at 300 ppi |
 | VisionProvider | Mock, Anthropic (Claude) | One-face photo check, page-vs-character likeness check |
 | ModerationProvider | Mock (word list), Anthropic | Parent free text: favorites, notes, themes, instructions |
-| PrintProvider + PrintRouter | Mock | Lulu sandbox in Phases 3 and 4 |
+| PrintProvider + PrintRouter | Mock, **Lulu** | Products, cover size, file validation (ordering in Phase 4) |
 
 Docs for every adapter below were read on **2026-11-20**. Prices in
 `lib/cost/prices.ts` are high-side; actual cost is recorded from each response on
@@ -89,6 +89,42 @@ Adapter folder: `lib/providers/anthropic/` (shared caller in `client.ts`).
   is re-run on a fallback model in the same call.
 - **Data use:** commercial API inputs are not used for training by default. Zero data
   retention is available to eligible organizations by arrangement.
+
+## Lulu: printing
+
+Adapter: `lib/providers/lulu/print.ts` (raw HTTP), checked against Lulu's OpenAPI spec
+(`api.lulu.com/api-docs/openapi-specs/openapi_public.yml`), the Product Specification Sheet
+and the Book Creation Guide on 2026-11-20.
+
+- **Sandbox:** `https://api.sandbox.lulu.com`. Sandbox accounts are separate from production
+  (developers.sandbox.lulu.com); print jobs there are never printed.
+- **Auth:** OpenID Connect client credentials. `POST /auth/realms/glasstree/protocol/openid-connect/token`
+  with `Authorization: Basic base64(client_key:client_secret)`. Tokens are cached and refreshed.
+- **Products** (`lib/print/products.ts`), all premium full color on 80# coated white with a gloss cover.
+  These use the new "dotted" POD package IDs (live March 31, 2026; the old 27-character IDs stop
+  working Feb 1, 2027):
+
+  | Product | POD package ID | Pages |
+  |---|---|---|
+  | Hardcover 8.5 x 8.5 (default) | `0850X0850.FC.PRE.CW.080CW444.GXX` | 24 to 800 |
+  | Softcover 8.5 x 8.5 | `0850X0850.FC.PRE.PB.080CW444.GXX` | 32 to 800 |
+  | Hardcover 8.5 x 11 | `0850X1100.FC.PRE.CW.080CW444.GXX` | 24 to 800 |
+  | Softcover 8.5 x 11 | `0850X1100.FC.PRE.PB.080CW444.GXX` | 32 to 800 |
+
+  Lulu has no full-color 8 x 10 product, so the portrait size is 8.5 x 11 (US Letter).
+  Lulu lists base prices of $10.98 (hardcover) and $2.16 (softcover), plus $0.2148 per page for these
+  products; Phase 4 uses its live cost API.
+- **Cover size:** `POST /cover-dimensions/` with the POD package ID and page count. The spine width
+  comes from Lulu's published table (hardcover: 0.25 in for 24 to 84 pages) or formula (paperback:
+  pages / 444 + 0.06 in). No spine text at 80 pages or fewer.
+- **File rules we follow:** single-page interior PDF at trim + 0.125 in bleed; one-page wraparound
+  cover; images 300 to 600 ppi; fonts embedded; no transparency; 0.5 in safety margin (plus gutter
+  on the binding side and a hinge keep-out on hardcovers); no crop marks; no password protection.
+- **Validation:** `POST /validate-interior/` and `/validate-cover/` take a public `source_url`; results
+  are polled (`VALIDATED`/`NORMALIZED` = pass, `ERROR` = fail with reasons). Limits: 3 interior and
+  6 cover validations per minute (the adapter backs off on HTTP 429).
+- **Data sent:** only the final PDFs (via signed links that expire after `PRINT_FILE_URL_TTL_SECONDS`,
+  6 hours by default). Never photos.
 
 ## Upscaler
 

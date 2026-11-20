@@ -4,6 +4,7 @@ import { outlineHandler, pagesHandler } from "./story";
 import { coverHandler, editHandler, illustrateHandler } from "./illustrate";
 import { maybeFinalizeBook } from "./finalize";
 import { bibleHandler, sheetHandler } from "./characters";
+import { exportHandler, validateHandler } from "./export";
 
 export const handlers: Record<JobType, JobHandler> = {
   "book.outline": outlineHandler,
@@ -14,6 +15,8 @@ export const handlers: Record<JobType, JobHandler> = {
   "page.revise": async () => ({}),
   "book.cover": coverHandler,
   "character.sheet": sheetHandler,
+  "book.export": exportHandler,
+  "export.validate": validateHandler,
   "character.bible": bibleHandler,
   "book.finalize": async (job) => {
     if (job.bookId) await maybeFinalizeBook(job.bookId);

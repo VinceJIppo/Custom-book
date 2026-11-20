@@ -6,23 +6,31 @@ import { getTrim } from "../print/geometry";
 import { storyContextFor } from "./context";
 import type { Layout, TextZone } from "../schemas/story";
 import type { BookView, PageView } from "./viewTypes";
+import type { PageCountRules } from "../print/padding";
+
+export interface BookViewOptions {
+  /** Page-count rules of the product being printed (defaults to the hardcover for this size). */
+  pageRules?: PageCountRules;
+  /** How image keys become URLs (defaults to short-lived signed URLs). */
+  resolveUrl?: (key: string) => string | Promise<string>;
+}
 
 /** Builds the flipbook / print view: paginated, padded, with short-lived image URLs. */
-export async function buildBookView(book: Book & { pages: Page[] }): Promise<BookView> {
+export async function buildBookView(book: Book & { pages: Page[] }, opts: BookViewOptions = {}): Promise<BookView> {
   const ctx = storyContextFor(book);
   const trim = getTrim(book.trimSize);
   const storage = getStorage();
-  const product = await getPrintRouter().defaultProduct(book.trimSize);
+  const pageRules = opts.pageRules ?? (await getPrintRouter().defaultProduct(book.trimSize)).pageRules;
   const pages = [...book.pages].sort((a, b) => a.index - b.index);
   const { pages: physical, warnings } = paginate(
     pages.map((p) => ({ id: p.id, kind: p.kind, layout: p.layout as Layout })),
-    product.pageRules,
+    pageRules,
   );
   const byId = new Map(pages.map((p) => [p.id, p]));
   const urlCache = new Map<string, string>();
   const urlFor = async (key: string | null) => {
     if (!key) return null;
-    if (!urlCache.has(key)) urlCache.set(key, await storage.signedUrl(key));
+    if (!urlCache.has(key)) urlCache.set(key, opts.resolveUrl ? await opts.resolveUrl(key) : await storage.signedUrl(key));
     return urlCache.get(key)!;
   };
 

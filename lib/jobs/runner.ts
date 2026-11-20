@@ -35,6 +35,9 @@ async function onJobGaveUp(job: GenerationJob, _err: unknown) {
     if (job.bookId) await maybeFinalizeBook(job.bookId);
   } else if (job.bookId && (job.type === "book.outline" || job.type === "book.pages")) {
     await db.book.updateMany({ where: { id: job.bookId }, data: { status: "failed" } });
+  } else if (job.type === "book.export" || job.type === "export.validate") {
+    const { exportJobGaveUp } = await import("./handlers/export");
+    await exportJobGaveUp(job, errorMessage(_err));
   } else if (job.type === "character.sheet") {
     const sheetId = (job.payload as { sheetId?: string }).sheetId;
     if (sheetId) await db.characterSheet.updateMany({ where: { id: sheetId }, data: { status: "failed", error: errorMessage(_err) } });

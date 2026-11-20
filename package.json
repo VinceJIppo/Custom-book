@@ -19,7 +19,9 @@
     "setup": "node -e \"const f=require('fs');if(!f.existsSync('.env.local')){f.copyFileSync('.env.example','.env.local');console.log('Created .env.local from .env.example')}\" && npm run db:push && npm run db:seed",
     "postinstall": "prisma generate",
     "db:studio": "dotenv -e .env.local -- prisma studio",
-    "compare": "tsx scripts/compare-image-providers.ts"
+    "compare": "tsx scripts/compare-image-providers.ts",
+    "lulu:check": "tsx scripts/lulu-check.ts",
+    "render:pdfs": "tsx scripts/render-pdfs.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.11.0",
@@ -29,6 +31,8 @@
     "heic-convert": "^2.1.0",
     "next": "^16.4.6",
     "page-flip": "^2.0.7",
+    "pdf-lib": "^1.17.1",
+    "playwright": "^1.63.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "sharp": "^0.35.5",

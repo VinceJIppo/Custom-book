@@ -59,6 +59,10 @@ export function BookLive({ bookId, initial }: { bookId: string; initial: LiveSta
                 <Link href={`/books/${bookId}/edit`} className="font-semibold text-berry underline" data-testid="edit-pages">
                   Edit pages
                 </Link>
+                {" · "}
+                <Link href={`/books/${bookId}/print`} className="font-semibold text-berry underline" data-testid="print-files">
+                  Print files
+                </Link>
               </>
             )}
           </p>

@@ -19,7 +19,9 @@ export function readingLevelForAge(age: number): ReadingLevel {
   return "6-8";
 }
 
-export const TrimSizeSchema = z.enum(["square-8.5", "portrait-8x10"]);
+export const TrimSizeSchema = z.enum(["square-8.5", "portrait-8.5x11", "portrait-8x10"]);
+/** Sizes offered for new books (each has a print product). */
+export const OFFERED_TRIM_SIZES = ["square-8.5", "portrait-8.5x11"] as const;
 export type TrimSizeId = z.infer<typeof TrimSizeSchema>;
 
 export const BookOptionsSchema = z.object({

@@ -165,9 +165,10 @@ model Book {
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
 
-  pages  Page[]
-  jobs   GenerationJob[]
-  orders Order[]
+  pages   Page[]
+  jobs    GenerationJob[]
+  orders  Order[]
+  exports BookExport[]
 
   @@index([userId])
   @@index([childId])
@@ -219,6 +220,37 @@ model PageVersion {
   createdAt DateTime @default(now())
 
   @@index([pageId])
+}
+
+/// A set of print files (interior + cover PDF) for one product, with its preflight and provider validation.
+model BookExport {
+  id                 String   @id @default(cuid())
+  bookId             String
+  book               Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  userId             String
+  productId          String
+  provider           String
+  sku                String
+  status             String   @default("rendering") // rendering | ready | failed
+  pageCount          Int?
+  interiorKey        String?
+  coverKey           String?
+  /// { widthIn, heightIn, spineIn, spineTextAllowed, approximate }
+  coverDims          Json?
+  /// PreflightReport
+  preflight          Json?
+  preflightOk        Boolean  @default(false)
+  validationStatus   String   @default("none") // none | running | passed | failed
+  /// FileValidation from the print provider
+  validation         Json?
+  validationProgress String?
+  /// The book content these files were made from; differs when the book was edited since.
+  contentKey         String
+  error              String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([bookId])
 }
 
 model GenerationJob {
