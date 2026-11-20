@@ -21,6 +21,8 @@ export interface BookView {
   title: string;
   childName: string;
   themeName: string;
+  /** Story voice label, e.g. "Rhyming and mischievous". */
+  voiceLabel: string;
   style: string;
   status: string;
   trim: { id: string; widthIn: number; heightIn: number };

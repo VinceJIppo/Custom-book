@@ -77,6 +77,7 @@ export async function createBookAction(_prev: CreateBookResult | null, fd: FormD
     length: fd.get("length"),
     readingLevel: fd.get("readingLevel"),
     style: fd.get("style"),
+    voice: opt(fd.get("voice")),
     trimSize: fd.get("trimSize"),
     includePet: fd.get("includePet") === "on",
     includeFriend: fd.get("includeFriend") === "on",

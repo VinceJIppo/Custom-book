@@ -7,6 +7,7 @@ import { storyContextFor } from "./context";
 import type { Layout, TextZone } from "../schemas/story";
 import type { BookView, PageView } from "./viewTypes";
 import type { PageCountRules } from "../print/padding";
+import { voiceFor } from "../schemas/voices";
 
 export interface BookViewOptions {
   /** Page-count rules of the product being printed (defaults to the hardcover for this size). */
@@ -60,6 +61,7 @@ export async function buildBookView(book: Book & { pages: Page[] }, opts: BookVi
     title: book.title ?? "Your story",
     childName,
     themeName: ctx.theme.name,
+    voiceLabel: voiceFor(ctx.options).label,
     style: book.style,
     status: book.status,
     trim: { id: trim.id, widthIn: trim.widthIn, heightIn: trim.heightIn },

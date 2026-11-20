@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { ArtStyleSchema } from "./theme";
+import { VoiceIdSchema } from "./voices";
 
 export const STORY_LENGTHS = [12, 16, 20, 24] as const;
 export type StoryLength = (typeof STORY_LENGTHS)[number];
@@ -31,6 +32,8 @@ export const BookOptionsSchema = z.object({
     .refine((n): n is StoryLength => (STORY_LENGTHS as readonly number[]).includes(n), "Story length must be 12, 16, 20 or 24 pages"),
   readingLevel: ReadingLevelSchema,
   style: ArtStyleSchema,
+  /** Story voice. Optional only so books made before voices existed still parse (they read as "classic"). */
+  voice: VoiceIdSchema.optional(),
   trimSize: TrimSizeSchema,
   includePet: z.boolean(),
   includeFriend: z.boolean(),

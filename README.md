@@ -39,7 +39,7 @@ See [PROVIDERS.md](PROVIDERS.md) for exactly what is sent where and what it cost
 2. **Photos & character:** upload 1 to 3 photos (JPG, PNG or HEIC). Location data is stripped and
    each photo is checked for one clear face. Pick an art style; we draw 3 character options.
    Approve one (originals are deleted by default), then correct the Character Bible if needed.
-3. **New book:** pick a built-in or custom theme and options. Every page is drawn from the
+3. **New book:** pick a built-in or custom theme, a **story voice**, and options. Every page is drawn from the
    approved character, checked for likeness, redrawn once on drift, and flagged if it still drifts.
 4. **Read** in the flipbook. **Edit pages:** change text (or ask for a rewrite), change or redraw
    one picture with a note, swap layout, reorder, restore any earlier version.
@@ -61,6 +61,17 @@ Lulu downloads the PDFs from a public link, and `localhost` isn't public. Use a 
 
 `npm run lulu:check` tests your keys (it prints cover sizes for each product), and
 `npm run lulu:check -- <exportId>` validates one set of files from the command line.
+
+## Story voices
+
+Every new book defaults to **Rhyming and mischievous**: bouncy rhyming couplets, invented silly
+words, a cheeky narrator who talks to the reader, and gloriously ridiculous grown-ups, with a warm
+heart and nothing mean or scary. Other voices: **Classic storybook**, **Gentle bedtime** and
+**Big adventure**. Voices live in `lib/schemas/voices.ts` (style guide, sample, and reading-level
+rules, since rhyming verse can't be "one short sentence per page"). They describe qualities and
+never name real authors, so the writer produces original verse rather than borrowed lines,
+characters or coined words. Page rewrites keep the book's voice. Books made before voices existed
+stay "Classic storybook".
 
 ## Scripts
 

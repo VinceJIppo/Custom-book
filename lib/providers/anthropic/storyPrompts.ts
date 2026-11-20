@@ -1,4 +1,5 @@
 import { READING_LEVEL_RULES } from "../../schemas/book";
+import { voiceFor } from "../../schemas/voices";
 import type { Outline } from "../../schemas/story";
 import type { StoryContext, ThemeDraftRequest } from "../story/types";
 import { ART_STYLES } from "../../schemas/theme";
@@ -34,9 +35,21 @@ Page layouts:
 - "textZone" is where the words go, so the picture must leave calm, uncluttered space there (for example open sky at the top, or a plain floor at the bottom).
 - Vary layouts so the book has rhythm. Start with "fullBleed" on page 1.`;
 
+/** The reading-level rule, as adjusted by the book's voice. */
+export function readingRule(ctx: StoryContext): string {
+  const level = READING_LEVEL_RULES[ctx.options.readingLevel];
+  const voice = voiceFor(ctx.options);
+  return `${level.label}: ${voice.readingLevels?.[ctx.options.readingLevel] ?? level.rule}`;
+}
+
+/** The voice style guide, placed after the book details so it takes priority on tone. */
+export function voiceBlock(ctx: StoryContext): string {
+  const voice = voiceFor(ctx.options);
+  return `STORY VOICE: ${voice.label}\n${voice.guide}\nThe voice changes how the story sounds, never the safety and story rules above.`;
+}
+
 export function describeContext(ctx: StoryContext): string {
   const { child, theme, options } = ctx;
-  const level = READING_LEVEL_RULES[options.readingLevel];
   const payload = {
     child: {
       name: child.firstName,
@@ -59,7 +72,7 @@ export function describeContext(ctx: StoryContext): string {
     },
     options: {
       storyPages: options.length,
-      readingLevel: `${level.label}: ${level.rule}`,
+      readingLevel: readingRule(ctx),
       lesson: options.lesson || child.lesson || null,
       extraInstructionsFromParent: options.instructions || null,
     },
@@ -72,7 +85,9 @@ export function outlinePrompt(ctx: StoryContext, problems?: string[]): string {
     "Here are the details for this book:",
     describeContext(ctx),
     "",
-    `Write the outline: a title (short, includes the child's name or nickname), a one-line premise, and exactly ${ctx.options.length} pages numbered 1 to ${ctx.options.length}.`,
+    voiceBlock(ctx),
+    "",
+    `Write the outline: a title (short, includes the child's name or nickname, and suits the story voice), a one-line premise, and exactly ${ctx.options.length} pages numbered 1 to ${ctx.options.length}.`,
     "For each page give the story beat (drawn from the theme's storyBeats, in order, spread across the pages), a one or two sentence summary of what happens, and the characters on that page.",
     retryNote(problems),
   ]
@@ -88,11 +103,13 @@ export function pagesPrompt(ctx: StoryContext, outline: Outline, problems?: stri
     "Here is the approved outline:",
     JSON.stringify(outline, null, 2),
     "",
-    `Now write all ${ctx.options.length} story pages, following the outline page by page. For each page return the page text (respecting the reading level exactly), the illustration scene, the layout and the textZone.`,
+    voiceBlock(ctx),
+    "",
+    `Now write all ${ctx.options.length} story pages in the story voice, following the outline page by page. For each page return the page text (respecting the reading level exactly), the illustration scene, the layout and the textZone.`,
     ctx.options.dedication
       ? `Use this dedication exactly: ${JSON.stringify(ctx.options.dedication)}`
-      : "Also write a short, warm dedication from the parent to the child (one or two lines).",
-    "Also write a back-cover blurb (two or three sentences, no spoilers) and a cover scene (the child in a heroic, joyful pose in the setting, with open sky at the top for the title).",
+      : "Also write a short, warm dedication from the parent to the child (one or two lines, in the story voice).",
+    "Also write a back-cover blurb in the story voice (two or three sentences or a short verse, no spoilers) and a cover scene (the child in a heroic, joyful pose in the setting, with open sky at the top for the title).",
     retryNote(problems),
   ]
     .filter(Boolean)
@@ -100,10 +117,11 @@ export function pagesPrompt(ctx: StoryContext, outline: Outline, problems?: stri
 }
 
 export function revisePrompt(text: string, sceneAction: string | null, instruction: string, ctx: StoryContext): string {
-  const level = READING_LEVEL_RULES[ctx.options.readingLevel];
   return [
     `Revise the text of one page in a picture book about ${ctx.child.nickname || ctx.child.firstName} (${ctx.child.pronouns}).`,
-    `Reading level: ${level.label}: ${level.rule}`,
+    `Reading level: ${readingRule(ctx)}`,
+    voiceBlock(ctx),
+    "Keep the page in this voice unless the parent's request asks for something different.",
     sceneAction ? `The picture on this page shows: ${sceneAction}` : "",
     `Current text: ${JSON.stringify(text)}`,
     `The parent's request: ${JSON.stringify(instruction)}`,

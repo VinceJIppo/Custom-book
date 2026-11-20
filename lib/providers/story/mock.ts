@@ -2,6 +2,7 @@ import type { StoryContext, StoryProvider, ThemeDraftRequest } from "./types";
 import type { ThemeConfig } from "../../schemas/theme";
 import type { CharacterBible, Outline, Scene, StoryLayout, StoryPage, StoryPagesResult, TextZone } from "../../schemas/story";
 import { READING_LEVEL_RULES } from "../../schemas/book";
+import { voiceFor } from "../../schemas/voices";
 import type { ImageData, WithUsage } from "../types";
 
 /**
@@ -123,12 +124,12 @@ const TEMPLATES: Record<Stage, Template[]> = {
     ),
     t(
       [
-        "Along the way, they spotted a friendly {animal}.",
+        "Along the way, they spotted {aFriendlyAnimal}.",
         "The {animal} wanted to come along too, so now the team was even bigger.",
         "{name} shared a snack of {food}, and everyone agreed it was delicious.",
         "\"Every adventure is better with friends,\" said {sidekick}.",
       ],
-      "{name} meets a friendly {animal} and shares a snack",
+      "{name} meets {aFriendlyAnimal} and shares a snack",
       "warm and funny",
       "medium shot, characters sitting together",
       (v) => withCompanion(v, [v.name, v.sidekick]),
@@ -254,6 +255,87 @@ const TEMPLATES: Record<Stage, Template[]> = {
   ],
 };
 
+/** Rhyming couplets for the "rhyming-mischief" voice. Rhyme words are fixed at line ends so substitutions never break a rhyme. */
+type Couplet = [string, string];
+const RHYMES: Record<Stage, Array<[Couplet, Couplet]>> = {
+  opening: [
+    [
+      ["Good morning, good morning! The sun's in the sky,", "and {name} hopped out of bed with a whoop and a \"Hi!\""],
+      ["Now listen, dear reader, I'll whisper it low:", "today was the wibbliest day you could know."],
+    ],
+    [
+      ["{name} loved {activity} from morning till night,", "and practiced and practiced with all of {poss} might."],
+      ["{companionWith}, it was such a delight,", "though the neighbors all grumbled, \"Oh, not the whole night!\""],
+    ],
+  ],
+  call: [
+    [
+      ["Then {leader} came zooming, all flustered and red:", "\"Come quick! Something's missing!\" is what {leader} said."],
+      ["\"It's gone from {setting}! It's vanished! It's lost!", "We need someone clever, whatever the cost!\""],
+    ],
+    [
+      ["{helper} unrolled a big map on the floor,", "with squiggles and wiggles and doodles galore."],
+      ["\"We follow this path to the end of the line.\"", "{name} gave a nod. \"Then I'll make it all fine!\""],
+    ],
+  ],
+  journey: [
+    [
+      ["So off they all went with a skip and a hop,", "past puddles and poodles. They didn't once stop!"],
+      ["{sidekick} raced ahead, shouting, \"Hurry! This way!\"", "It was turning into a most whizzle-bang day."],
+    ],
+    [
+      ["Along came {aAnimal}, as friendly as pie,", "who nibbled some {food} and let out a sigh."],
+      ["\"Delicious!\" it squeaked with a wiggle and grin.", "\"Wherever you're going, I'd love to come in!\""],
+    ],
+  ],
+  setback: [
+    [
+      ["But then (oh, dear reader!) the path gave a WOBBLE,", "and down tumbled {name} with a SPLISH and a SPLOBBLE."],
+      ["{name} sat in the mud, looking terribly glum,", "while the frogs in the reeds hummed a sorry ho-hum."],
+    ],
+    [
+      ["A wind came a-whirling, a-whistling, WHOOSH!", "and the map flew away to the top of a bush."],
+      ["\"Oh no!\" cried {helper}. \"Now which way is right?\"", "But {name} just grinned. \"I've a plan. Hold on tight!\""],
+    ],
+  ],
+  idea: [
+    [
+      ["Then {name} had a thought that went PING! in {poss} head,", "as bright as a lantern, as warm as fresh bread."],
+      ["\"When things go all wonky, you try a new way,", "and that's how a hero can rescue the day!\""],
+    ],
+    [
+      ["\"I know what to do!\" {name} said with a cheer.", "\"Now everyone, everyone, gather round here!\""],
+      ["They huddled, they muddled, they whispered, they planned,", "and the plan was the cleverest plan in the land."],
+    ],
+  ],
+  teamwork: [
+    [
+      ["So {name} led the way and the whole crew pitched in,", "with a heave and a ho and a big jolly grin."],
+      ["{companionHelpWho} pulled and {helper} pushed with a groan,", "while {sidekick} sang loudly (and quite out of tone)."],
+    ],
+    [
+      ["\"Almost!\" called {leader}. \"Now reach, reach up high!\"", "So {name} stretched up to the edge of the sky."],
+      ["And then, with a PLINK and a PLONK and a PLOP,", "the very last piece clicked right into the top!"],
+    ],
+  ],
+  triumph: [
+    [
+      ["Hooray and hooray! It was fixed! It was done!", "The whole of {setting} went wild with fun."],
+      ["They pinned a bright {color} badge on {name}'s chest,", "and cried, \"You're the bravest, the kindest, the best!\""],
+    ],
+    [
+      ["There was dancing and prancing and {food} piled high,", "and a cake with a candle that reached to the sky."],
+      ["{name} danced with {sidekick} until they both flopped,", "and the music went on and the giggles never stopped."],
+    ],
+  ],
+  cozy: [
+    [
+      ["That night {name} snuggled up, cozy and deep,", "with a yawn and a stretch and a sigh into sleep."],
+      ["The moon, who'd been watching, said softly, \"Well done.", "Goodnight, little hero. Tomorrow: more fun!\""],
+    ],
+  ],
+};
+
 const LESSON_LINES: Record<string, string> = {
   bravery: "Being brave does not mean you are never scared. It means you try anyway.",
   sharing: "{name} remembered that sharing makes a good thing even bigger.",
@@ -283,7 +365,7 @@ function buildVars(ctx: StoryContext): Vars {
     helper: (cast[1] ?? cast[0]).name,
     sidekick: (cast[2] ?? cast[1] ?? cast[0]).name,
     color: child.favorites.colors[0]?.toLowerCase() ?? "golden",
-    animal: child.favorites.animals[0]?.toLowerCase() ?? "bunny",
+    animal: singular(child.favorites.animals[0]?.toLowerCase() ?? "bunny"),
     food: child.favorites.foods[0]?.toLowerCase() ?? "pancakes",
     activity: activity.toLowerCase(),
     companion,
@@ -296,7 +378,20 @@ function buildVars(ctx: StoryContext): Vars {
   };
 }
 
-function fill(s: string, v: Vars): string {
+/** "otters" -> "otter", "puppies" -> "puppy"; leaves "glass" and "fish" alone. */
+function singular(word: string): string {
+  if (/ies$/.test(word) && word.length > 4) return word.replace(/ies$/, "y");
+  if (/(ches|shes|xes)$/.test(word)) return word.replace(/es$/, "");
+  if (/[^s]s$/.test(word) && !/(us|is)$/.test(word)) return word.slice(0, -1);
+  return word;
+}
+
+function withArticle(phrase: string): string {
+  return `${/^[aeiou]/i.test(phrase) ? "an" : "a"} ${phrase}`;
+}
+
+/** Fill placeholders. Verse lines keep their own capitalization (capitalize=false). */
+function fill(s: string, v: Vars, capitalize = true): string {
   const extra: Record<string, string> = {
     companionLine: v.companion ? `${v.companion} always joined in, wagging and bouncing.` : "Sometimes the birds joined in too.",
     companionHelpLine: v.companionShort
@@ -306,6 +401,10 @@ function fill(s: string, v: Vars): string {
         : "Even the birds helped.",
     companionNightLine: v.companionShort ? `${v.companionShort} curled up at the foot of the bed.` : "The stars twinkled outside the window.",
     lessonLine: v.lessonLine ?? "{name} remembered that the best ideas come from a calm, kind heart.",
+    companionWith: v.companionShort ? `With ${v.companionShort} beside` : "With birds all around",
+    aAnimal: withArticle(v.animal),
+    aFriendlyAnimal: withArticle(`friendly ${v.animal}`),
+    companionHelpWho: v.companionShort ?? (v.friend ?? "The birds"),
   };
   let out = s;
   for (let i = 0; i < 2; i++) {
@@ -315,7 +414,7 @@ function fill(s: string, v: Vars): string {
       return typeof val === "string" ? val : m;
     });
   }
-  return out.replace(/(^|[.!?]\s+)([a-z])/g, (_m, p: string, c: string) => p + c.toUpperCase());
+  return capitalize ? out.replace(/(^|[.!?]\s+)([a-z])/g, (_m, p: string, c: string) => p + c.toUpperCase()) : out;
 }
 
 function stageFor(i: number, n: number): Stage {
@@ -378,6 +477,17 @@ export class MockStoryProvider implements StoryProvider {
       const tpl = TEMPLATES[stage][k % TEMPLATES[stage].length];
       const count = ctx.options.readingLevel === "4-6" ? (i % 2 === 0 ? minS : maxS) : maxS;
       const sentences = tpl.s.slice(0, Math.max(1, Math.min(count, 4))).map((s) => fill(s, v));
+      let text = sentences.join(" ");
+      if (voiceFor(ctx.options).id === "rhyming-mischief") {
+        const [first, second] = RHYMES[stage][k % RHYMES[stage].length];
+        const verse = (c: Couplet) => c.map((l) => fill(l, v, false)).join("\n");
+        text =
+          ctx.options.readingLevel === "2-4"
+            ? verse(first)
+            : ctx.options.readingLevel === "4-6"
+              ? `${verse(first)}\n${verse(second)}`
+              : `${tpl.s.slice(0, 2).map((s) => fill(s, v)).join(" ")}\n\n${verse(first)}`;
+      }
       const { layout, textZone } = layoutFor(op.pageNumber, n, stage, spreadUsed);
       if (layout === "spread") spreadUsed = true;
       const scene: Scene = {
@@ -387,7 +497,7 @@ export class MockStoryProvider implements StoryProvider {
         mood: tpl.mood,
         framing: fill(tpl.framing, v),
       };
-      return { pageNumber: op.pageNumber, text: sentences.join(" "), scene, layout, textZone };
+      return { pageNumber: op.pageNumber, text, scene, layout, textZone };
     });
     return {
       value: {

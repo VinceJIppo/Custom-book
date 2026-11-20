@@ -5,6 +5,7 @@ import Link from "next/link";
 import { createBookAction } from "@/app/actions";
 import { ART_STYLES, ART_STYLE_LABELS, type ArtStyle } from "@/lib/schemas/theme";
 import { READING_LEVELS, READING_LEVEL_RULES, STORY_LENGTHS, type ReadingLevel } from "@/lib/schemas/book";
+import { DEFAULT_VOICE, VOICES, VOICE_IDS, type VoiceId } from "@/lib/schemas/voices";
 import type { CostEstimate } from "@/lib/cost/estimate";
 
 export interface WizardTheme {
@@ -38,6 +39,8 @@ export function BookWizard({ child, themes, defaultReadingLevel, estimates, stor
   const theme = themes.find((t) => t.id === themeId) ?? null;
   const [style, setStyle] = useState<ArtStyle | null>(null);
   const [length, setLength] = useState(16);
+  const [voice, setVoice] = useState<VoiceId>(DEFAULT_VOICE);
+  const [level, setLevel] = useState<ReadingLevel>(defaultReadingLevel);
   const est = estimates[length];
   const suggested = state && !state.ok ? themes.filter((t) => state.suggestedThemeIds?.includes(t.slug)) : [];
 
@@ -101,6 +104,31 @@ export function BookWizard({ child, themes, defaultReadingLevel, estimates, stor
       <fieldset disabled={!theme} className={theme ? "" : "opacity-40"}>
         <legend className="font-display text-xl font-semibold">2. Book options</legend>
         <div className="mt-3 grid gap-5 rounded-3xl bg-white p-5 ring-1 ring-[color:var(--line)] sm:grid-cols-2">
+          <div className="sm:col-span-2" role="radiogroup" aria-label="Story voice">
+            <span className="font-semibold">Story voice</span> <span className="text-sm text-[color:var(--muted)]">how the book sounds read aloud</span>
+            <div className="mt-2 grid gap-3 sm:grid-cols-2">
+              {VOICE_IDS.map((id) => {
+                const v = VOICES[id];
+                return (
+                  <label
+                    key={id}
+                    data-testid={`voice-${id}`}
+                    className="flex cursor-pointer gap-3 rounded-2xl bg-cream p-3 ring-1 ring-[color:var(--line)] has-[:checked]:bg-violet-50 has-[:checked]:ring-berry"
+                  >
+                    <input type="radio" name="voice" value={id} checked={voice === id} onChange={() => setVoice(id)} className="mt-1 accent-[color:var(--color-berry)]" />
+                    <span>
+                      <span className="block font-semibold">
+                        {v.label}
+                        {id === DEFAULT_VOICE && <span className="ml-2 rounded-full bg-star px-2 py-0.5 text-xs text-ink">default</span>}
+                      </span>
+                      <span className="block text-sm text-[color:var(--muted)]">{v.description}</span>
+                      <span className="mt-1 block whitespace-pre-line text-sm italic">{v.sample}</span>
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
           <label className="block">
             <span className="font-semibold">Story length</span>
             <select name="length" value={length} onChange={(e) => setLength(Number(e.target.value))} className={input}>
@@ -113,13 +141,16 @@ export function BookWizard({ child, themes, defaultReadingLevel, estimates, stor
           </label>
           <label className="block">
             <span className="font-semibold">Reading level</span>
-            <select name="readingLevel" defaultValue={defaultReadingLevel} className={input}>
+            <select name="readingLevel" value={level} onChange={(e) => setLevel(e.target.value as ReadingLevel)} className={input}>
               {READING_LEVELS.map((l) => (
                 <option key={l} value={l}>
-                  {READING_LEVEL_RULES[l].label}: {READING_LEVEL_RULES[l].rule}
+                  {READING_LEVEL_RULES[l].label}
                 </option>
               ))}
             </select>
+            <span className="mt-1 block text-xs text-[color:var(--muted)]" data-testid="reading-rule">
+              {VOICES[voice].readingLevels?.[level] ?? READING_LEVEL_RULES[level].rule}
+            </span>
           </label>
           <label className="block">
             <span className="font-semibold">Art style</span>

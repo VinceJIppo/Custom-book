@@ -49,7 +49,7 @@ export function BookLive({ bookId, initial }: { bookId: string; initial: LiveSta
         </h1>
         {state.view && (
           <p className="text-sm text-[color:var(--muted)]">
-            {state.view.themeName} · {state.view.pages.length} printed pages ·{" "}
+            {state.view.themeName} · {state.view.voiceLabel} voice · {state.view.pages.length} printed pages ·{" "}
             <Link href={`/print/${bookId}`} className="underline" target="_blank">
               print layout preview
             </Link>

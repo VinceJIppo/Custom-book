@@ -3,6 +3,7 @@ import { db } from "../db";
 import { getConfig } from "../config";
 import { enqueue } from "../jobs/queue";
 import { BookOptionsSchema, type BookOptions } from "../schemas/book";
+import { DEFAULT_VOICE } from "../schemas/voices";
 import { getThemeForUser } from "../themes";
 import { childSnapshot, getChild } from "../children/service";
 import { checkFieldsForProtectedNames } from "../safety/protectedNames";
@@ -31,7 +32,8 @@ export async function createAndStartBook(userId: string, input: { childId: strin
     for (const i of parsed.error.issues) errors[i.path.join(".")] ??= i.message;
     return { ok: false, message: "Please check the book options.", errors };
   }
-  const options = parsed.data;
+  // New books always record their voice; the default is the rhyming, mischievous one.
+  const options = { ...parsed.data, voice: parsed.data.voice ?? DEFAULT_VOICE };
   const [child, theme] = await Promise.all([getChild(userId, input.childId), getThemeForUser(input.themeId, userId)]);
   if (!child) return { ok: false, message: "Child profile not found." };
   if (!theme) return { ok: false, message: "That theme is not available." };
