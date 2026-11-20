@@ -53,6 +53,14 @@ export function BookLive({ bookId, initial }: { bookId: string; initial: LiveSta
             <Link href={`/print/${bookId}`} className="underline" target="_blank">
               print layout preview
             </Link>
+            {!generating && (
+              <>
+                {" · "}
+                <Link href={`/books/${bookId}/edit`} className="font-semibold text-berry underline" data-testid="edit-pages">
+                  Edit pages
+                </Link>
+              </>
+            )}
           </p>
         )}
       </div>
@@ -82,6 +90,15 @@ export function BookLive({ bookId, initial }: { bookId: string; initial: LiveSta
           )}
           <p className="mt-3 text-xs text-[color:var(--muted)]">You can leave this page; the book keeps going in the background. Spent so far: ${p.costUsd.toFixed(4)}</p>
         </div>
+      )}
+
+      {state.view && state.view.pages.some((p) => p.imageStatus === "flagged") && (
+        <p className="rounded-xl bg-amber-50 px-4 py-2 text-sm text-amber-900 ring-1 ring-amber-200">
+          Some pictures may not match {state.view.childName}&apos;s character exactly.{" "}
+          <Link href={`/books/${bookId}/edit`} className="font-semibold underline">
+            Review them
+          </Link>
+        </p>
       )}
 
       {state.view ? (

@@ -21,6 +21,10 @@ export const keys = {
   bookPrefix: (userId: string, childId: string, bookId: string) => `users/${userId}/children/${childId}/books/${bookId}/`,
   pageImage: (userId: string, childId: string, bookId: string, pageId: string, version: number, ext: string) =>
     `users/${userId}/children/${childId}/books/${bookId}/pages/${pageId}-v${version}.${ext}`,
+  photo: (userId: string, childId: string, photoId: string) => `users/${userId}/children/${childId}/photos/${photoId}.jpg`,
+  sheetImage: (userId: string, childId: string, sheetId: string, i: number, ext: string) => `users/${userId}/children/${childId}/sheets/${sheetId}-${i}.${ext}`,
+  pageWorking: (userId: string, childId: string, bookId: string, pageId: string, version: number, ext: string) =>
+    `users/${userId}/children/${childId}/books/${bookId}/pages/${pageId}-v${version}-work.${ext}`,
   coverImage: (userId: string, childId: string, bookId: string, version: number, ext: string) =>
     `users/${userId}/children/${childId}/books/${bookId}/cover-v${version}.${ext}`,
 };

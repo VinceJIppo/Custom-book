@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { MockStoryProvider } from "@/lib/providers/story/mock";
-import { AnthropicStoryProvider, type ModelCallResult, type ModelCaller } from "@/lib/providers/story/anthropic";
+import { AnthropicStoryProvider } from "@/lib/providers/anthropic/story";
+import type { ModelCallResult, ModelCaller } from "@/lib/providers/anthropic/client";
 import { OutlineSchema, StoryPagesResultSchema, validateStoryPages } from "@/lib/schemas/story";
 import { PermanentProviderError } from "@/lib/providers/types";
 import { loadBuiltInThemeFiles } from "@/lib/themes";

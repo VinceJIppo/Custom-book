@@ -6,15 +6,21 @@ import nextTs from "eslint-config-next/typescript";
  * lib/providers. Everything else talks to the interfaces in lib/providers.
  */
 const PROVIDER_SDKS = [
-  { name: "@anthropic-ai/sdk", folder: "lib/providers/story/anthropic" },
-  { name: "openai", folder: "lib/providers/image/openai" },
-  { name: "@google/genai", folder: "lib/providers/image/gemini" },
-  { name: "replicate", folder: "lib/providers/upscale/replicate" },
+  { name: "@anthropic-ai/sdk", folder: "lib/providers/anthropic" },
+  { name: "openai", folder: "lib/providers/openai" },
+  { name: "@google/genai", folder: "lib/providers/gemini" },
+  { name: "replicate", folder: "lib/providers/replicate" },
   { name: "stripe", folder: "lib/payments/stripe" },
 ];
 
-const sdkPatterns = PROVIDER_SDKS.map((s) => ({
-  group: [s.name, `${s.name}/*`],
+// Exact package names, plus subpaths for scoped packages (a bare "openai/*"
+// pattern would also match our own lib/providers/openai folder).
+const sdkPaths = PROVIDER_SDKS.map((s) => ({
+  name: s.name,
+  message: `Import ${s.name} only inside ${s.folder}. App code must use the provider interfaces.`,
+}));
+const sdkPatterns = PROVIDER_SDKS.filter((s) => s.name.startsWith("@")).map((s) => ({
+  group: [`${s.name}/*`],
   message: `Import ${s.name} only inside ${s.folder}. App code must use the provider interfaces.`,
 }));
 
@@ -25,7 +31,7 @@ const config = [
   {
     files: ["**/*.ts", "**/*.tsx"],
     rules: {
-      "no-restricted-imports": ["error", { patterns: sdkPatterns }],
+      "no-restricted-imports": ["error", { paths: sdkPaths, patterns: sdkPatterns }],
       "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }],
     },
   },

@@ -33,10 +33,27 @@ const EnvSchema = z.object({
   STORY_EFFORT: z.enum(["low", "medium", "high", "xhigh", "max"]).default("high"),
   STORY_FALLBACKS: bool.default(true),
 
-  IMAGE_PROVIDER: z.enum(["auto", "mock"]).default("auto"),
-  UPSCALER: z.enum(["auto", "mock"]).default("auto"),
+  IMAGE_PROVIDER: z.enum(["auto", "mock", "gemini", "openai"]).default("auto"),
+  GEMINI_API_KEY: z.string().optional(),
+  GEMINI_IMAGE_MODEL: z.string().default("gemini-nano-banana-2.1"),
+  /** Output size for page art: auto picks per layout from print pixels. */
+  GEMINI_PAGE_SIZE: z.enum(["auto", "1K", "2K", "4K"]).default("auto"),
+  OPENAI_API_KEY: z.string().optional(),
+  OPENAI_IMAGE_MODEL: z.string().default("gpt-image-2.6-sunburst"),
+  OPENAI_IMAGE_QUALITY: z.enum(["low", "medium", "high", "xhigh", "max", "auto"]).default("high"),
+  UPSCALER: z.enum(["auto", "mock", "sharp"]).default("auto"),
+
+  VISION_PROVIDER: z.enum(["auto", "mock", "anthropic"]).default("auto"),
+  VISION_MODEL: z.string().default("claude-sonnet-5-5"),
+  VISION_EFFORT: z.enum(["low", "medium", "high", "xhigh", "max"]).default("medium"),
+  /** Compare each page with the character sheet and retry once on drift. */
+  CONSISTENCY_QA: bool.default(true),
+  MODERATION_PROVIDER: z.enum(["auto", "mock", "anthropic"]).default("auto"),
   PRINT_PROVIDER: z.enum(["auto", "mock"]).default("auto"),
-  MODERATION_PROVIDER: z.enum(["auto", "mock"]).default("auto"),
+
+  CHARACTER_SHEET_OPTIONS: z.coerce.number().int().min(1).max(4).default(3),
+  /** How many times a parent may generate a new set of character options. */
+  CHARACTER_SHEET_MAX_ROUNDS: z.coerce.number().int().min(1).max(10).default(3),
 
   DAILY_COST_CAP_USD: z.coerce.number().min(0).default(10),
   DAILY_BOOK_CAP: z.coerce.number().int().min(0).default(10),

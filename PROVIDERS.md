@@ -3,100 +3,127 @@
 Every external service sits behind an interface in `lib/providers`, with a Mock
 implementation so the app runs end to end with zero keys. `lib/providers/registry.ts`
 is the only place that picks an implementation. An ESLint rule blocks provider SDK
-imports anywhere outside the provider's own adapter folder.
+imports outside each vendor's folder (`lib/providers/anthropic`, `gemini`, `openai`).
 
-| Interface | Phase 1 implementations | Planned |
+| Interface | Implementations | Used for |
 |---|---|---|
-| StoryProvider | Mock, Anthropic (Claude) | |
-| ImageProvider | Mock (labeled SVG placeholders) | One real provider in Phase 2, chosen with the comparison script |
-| Upscaler | Mock | Provider upscaler or hosted Real-ESRGAN (Phase 2) |
-| ModerationProvider | Mock (word list) | Model-based (Phase 2) |
-| PrintProvider + PrintRouter | Mock | Lulu sandbox (Phase 3 and 4), then Gelato/Peecho/RPI |
+| StoryProvider | Mock, Anthropic (Claude) | Outline, pages, text rewrites, Character Bible, Custom Theme drafts |
+| ImageProvider | Mock, **Gemini** (default), OpenAI | Character sheets, page art, picture edits |
+| Upscaler | Mock, Sharp (local) | Exact print pixels at 300 ppi |
+| VisionProvider | Mock, Anthropic (Claude) | One-face photo check, page-vs-character likeness check |
+| ModerationProvider | Mock (word list), Anthropic | Parent free text: favorites, notes, themes, instructions |
+| PrintProvider + PrintRouter | Mock | Lulu sandbox in Phases 3 and 4 |
 
-Prices in `lib/cost/prices.ts` are deliberately high-side and must be re-checked
-against each provider's pricing page before relying on them.
+Docs for every adapter below were read on **2026-11-20**. Prices in
+`lib/cost/prices.ts` are high-side; actual cost is recorded from each response on
+`GenerationJob.costUsd`.
+
+## What goes where (child data)
+
+| Data | Sent to |
+|---|---|
+| Raw photos of the child | **Image provider** (only to draw the character sheet) and **Claude** (one-face photo check). Never used for pages. Deleted by default once a character is approved. |
+| Approved character sheet (illustration) | Image provider (every page), Claude (Character Bible, likeness checks) |
+| First name, nickname, age, pronouns, favorites, pet, friend, lesson | Claude (story text). The image provider sees the hero's name inside scene prompts. |
+| Final PDFs | Print provider (Phases 3 and 4) |
 
 ---
 
-## Anthropic (Claude): story text
+## Google Gemini: images (default)
 
-Adapter: `lib/providers/story/anthropic/` (prompts in `prompts.ts`).
-Enabled automatically when `ANTHROPIC_API_KEY` is set.
+Adapter: `lib/providers/gemini/image.ts` (raw HTTP, no SDK).
 
-### What is sent
+- **Endpoint:** `POST https://generativelanguage.googleapis.com/v1beta/interactions`
+  (the Interactions API; `generateContent` is now "legacy"), headers `x-goog-api-key`
+  and `Api-Revision: 2026-05-20`.
+- **Model:** `gemini-nano-banana-2.1` ("Nano Banana 2.1", the recommended workhorse).
+  Supports up to 4 character reference images and 1K, 2K and 4K output.
+  Also available: `gemini-3-pro-image` (premium, $0.134 to $0.24 per image).
+- **Request:** text prompt plus `{type:"image", mime_type, data}` reference parts, and
+  `response_format: {type:"image", aspect_ratio, image_size}`.
+- **Storage:** the Interactions API stores requests for **55 days** by default (paid
+  tier). The adapter always sends **`store: false`**, so nothing is kept for multi-turn use.
+- **Data use:** Google's pricing page lists paid-tier inputs as **not** used to improve
+  its products (the free tier is). Use a paid-tier key.
+- **Watermark:** all Gemini images carry an invisible SynthID watermark.
+- **Price (paid tier):** $0.0336 per 1K image, $0.0504 per 2K, $0.113 per 4K, plus
+  about $0.0017 per reference image. Size is chosen per layout: 4K for full pages, the
+  cover and spreads (so print needs no real upscaling), 2K for smaller art.
+  Override with `GEMINI_PAGE_SIZE`.
 
-Per book, two calls, plus one per later text edit:
+## OpenAI GPT Image: images (comparison / alternative)
 
-1. **Outline**: the child's first name, nickname, age, pronouns, favorite things,
-   pet (only if "include pet" is on), one best friend's first name (only if "include
-   best friend" is on), the lesson, the parent's optional extra instructions, and the
-   theme (setting, original cast, beats, content rules).
-2. **Pages**: the same details plus the outline. Returns every page's text, the
-   illustration scene, layout and text zone, the dedication, the back-cover blurb and
-   the cover scene.
-3. **Revise text** (Phase 2 page editing): one page's text, its scene, and the parent's note.
-4. **Describe character** (Phase 2): the approved Character Sheet image (illustrated,
-   never a photo), to produce the Character Bible.
+Adapter: `lib/providers/openai/image.ts` (raw HTTP).
 
-Never sent: photos of the child, surname, address, email, or anything about other children.
+- **Models:** `gpt-image-2.6-sunburst` (editing precision, default here) and
+  `gpt-image-2.6-flare` (faster). `gpt-image-1.5` and `gpt-image-1-mini` shut down on
+  Dec 1, 2026; `gpt-image-2` on Feb 10, 2027.
+- **Endpoints:** `/v1/images/edits` (multipart, repeated `image[]` parts) when a
+  character reference is attached, `/v1/images/generations` otherwise.
+  `input_fidelity` is not used (newer models always use high fidelity).
+- **Size:** custom `WxH`, multiples of 16, edges up to 3840 px, at most 8.3 MP. A full
+  page is requested at 2624 x 2624; spreads at 3840 x 1936 and resized for print.
+- **Price:** token based: $5 per 1M text input, $8 per 1M image input, $30 per 1M image
+  output. Planning figure: about $0.30 per high-quality page. Use OpenAI's calculator for
+  exact numbers; the app records real cost from the `usage` block.
+- **Data use:** API data is not used for training by default. Abuse-monitoring logs keep
+  content up to 30 days unless your org is approved for Zero Data Retention or
+  Modified Abuse Monitoring.
 
-### How the call is made
+## Anthropic (Claude): story, vision, moderation
 
-- Model: `STORY_MODEL` (default `claude-sonnet-5-5`), effort `STORY_EFFORT` (default `high`).
-- Streaming Messages API with structured JSON output (`output_config.format`). Shape is
-  enforced by the API; lengths, page counts and spread rules are then checked with Zod
-  (`lib/schemas/story.ts`). On a problem the adapter retries (up to 3 attempts) and tells
-  the model exactly what to fix.
-- Server-side refusal fallbacks are on (`STORY_FALLBACKS=true`): if a request is declined
-  by a safety classifier, the API re-runs it on a fallback model in the same call. A
-  final refusal is treated as permanent and is not retried.
-- Token usage and cost are recorded on every `GenerationJob` (`costUsd`, `usage`).
+Adapter folder: `lib/providers/anthropic/` (shared caller in `client.ts`).
 
-### Expected cost
+- **Story:** `STORY_MODEL` (default `claude-sonnet-5-5`), structured JSON output,
+  Zod-validated, retry with feedback. 16-page story about $0.10 to $0.18 (high-side
+  estimate $0.26).
+- **Vision:** `VISION_MODEL` (default `claude-sonnet-5-5`, effort `medium`):
+  - Photo check: counts faces, checks the face is clear, returns friendly tips. About $0.01.
+  - Likeness check: compares each page with the approved sheet and Character Bible,
+    scoring 0 to 1. Below 0.7, the page is redrawn once with the specific drift as a
+    correction (for example "hair is blond instead of brown"). If it still drifts, it's
+    flagged for the parent. About $0.01 to $0.02 per check.
+- **Moderation:** word list first (free), then Claude for anything that passes.
+- **Character Bible and theme drafts:** one call each.
+- Refusal fallbacks are on (`STORY_FALLBACKS`): a request a safety classifier declines
+  is re-run on a fallback model in the same call.
+- **Data use:** commercial API inputs are not used for training by default. Zero data
+  retention is available to eligible organizations by arrangement.
 
-Prices checked 2026-11-20: Claude Sonnet 5.5 is $2 per million input tokens and $10 per
-million output tokens (thinking counts as output).
+## Upscaler
 
-| Story length | Typical | High-side estimate shown in the app |
-|---|---|---|
-| 12 pages | about $0.08 to $0.15 | $0.23 |
-| 16 pages | about $0.10 to $0.18 | $0.26 |
-| 20 pages | about $0.12 to $0.22 | $0.30 |
-| 24 pages | about $0.14 to $0.25 | $0.34 |
+`lib/providers/upscale/sharp.ts`: Lanczos resize to the exact print size, center crop to
+the layout's aspect, sRGB, tagged 300 ppi. Because Gemini renders full pages at 4K
+(4096 px) and print needs 2625 px, this is a downscale or a small upscale (2K art for
+picture-on-top pages is about 1.04x). A hosted super-resolution model (Real-ESRGAN on
+Replicate) can be added behind the same interface. Its docs page renders with JavaScript
+and couldn't be read from this environment, so it wasn't built.
 
-A text-only page edit costs well under $0.02. Retries add to this and are tracked.
-For comparison, illustrations (Phase 2) will dominate the cost of a book: at a planning
-figure of $0.08 per illustration plus $0.02 per upscale, a 16-page book's 17 images come to
-about $1.70, so a whole 16-page book is roughly $2 at the high side.
+## Expected cost per book (high-side estimates the app shows)
 
-Levers if cost matters: `STORY_EFFORT=medium` (less thinking), or
-`STORY_MODEL=claude-haiku-5-5` (much cheaper, lower writing quality).
+| | 12 pages | 16 pages | 24 pages |
+|---|---|---|---|
+| Gemini + Claude | $2.53 | $3.24 | $4.67 |
+| OpenAI + Claude | $5.67 | $7.30 | $10.58 |
 
-### Data policy
+These assume every page at 4K, a likeness check per page, and a redraw on a quarter of
+pages. Typical real cost is lower: roughly $2 for a 16-page Gemini book.
+A character sheet set (3 options) costs about $0.16 with Gemini.
 
-- Anthropic's commercial API terms state API inputs and outputs are not used to train
-  models by default. Confirm the current terms on your account before production use.
-- Zero data retention is available to eligible organizations by arrangement with
-  Anthropic; it is not a request parameter. If you get ZDR, note the date here.
-- Logs in this app never include prompts with image data (`lib/log.ts` strips binary and
-  base64 content).
+## Comparison script
 
----
+```bash
+npm run compare -- --a gemini --b openai --character path/to/approved-sheet.png --style watercolor-storybook --name Teddy
+```
+
+It draws the same 4 scenes (full page, close-up, two-page spread, night scene) with each
+provider and writes `comparisons/<time>/index.html` and `grid.png`, with time and cost per
+image. A run costs roughly $0.50 (Gemini) plus $1.20 (OpenAI).
 
 ## Mock providers
 
-- **Story**: deterministic templated story following an eight-stage arc, filled with the
-  child's details and the theme's cast and setting. Respects reading level, pet and
-  friend toggles, and the lesson.
-- **Image**: SVG placeholders tinted with the theme palette, labeled with the page,
-  style and scene, with the reserved text area drawn as a hatched box.
-- **Upscaler**: passes through, updating the target size.
-- **Moderation**: small blocklist that keeps free text G-rated.
-- **Print**: hardcover and softcover products with typical picture-book page rules
-  (min 24, multiple of 2), a rough spine formula and fake quotes. Re-checked against
-  Lulu in Phase 3.
-
-## Image, upscaler and print providers
-
-To be documented as each adapter is added (current docs checked first), including each
-provider's training and retention policy and the settings used to minimize retention.
+- **Story:** deterministic eight-stage story from the child's details and the theme.
+  Drafts custom themes by matching keywords.
+- **Image:** SVG placeholders labeled with page, style and scene, showing the reserved text area.
+- **Vision:** passes every photo and page. **Moderation:** small word list.
+- **Upscaler:** pass-through. **Print:** typical picture-book rules (min 24 pages, multiple of 2).

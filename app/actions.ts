@@ -6,6 +6,9 @@ import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { createChild, deleteChildEverything, getChild, updateChild, type SaveResult } from "@/lib/children/service";
 import { createAndStartBook, retryFailedJobs, type CreateBookResult } from "@/lib/books/service";
+import { acceptFlagged, changeLayout, movePage, requestNewArt, restoreVersion, reviseTextWithAI, updatePageText } from "@/lib/books/pages";
+import { deleteCustomTheme, draftCustomTheme, duplicateTheme, saveCustomTheme } from "@/lib/customThemes";
+import { addPhoto, approveSheetOption, deletePhoto, saveBible, setDeleteOriginals, startCharacterSheet } from "@/lib/characters/service";
 
 export async function confirmAdultAction(formData: FormData) {
   if (formData.get("adult") !== "on") redirect("/welcome?error=1");
@@ -90,4 +93,197 @@ export async function retryBookAction(fd: FormData) {
   const id = String(fd.get("bookId") ?? "");
   await retryFailedJobs(user.id, id);
   redirect(`/books/${id}`);
+}
+
+// ---------------------------------------------------------------- Photos and characters
+
+
+export interface PhotoUploadState {
+  results: Array<{ name: string; ok: boolean; message?: string; problems?: string[] }>;
+}
+
+export async function uploadPhotosAction(_prev: PhotoUploadState | null, fd: FormData): Promise<PhotoUploadState> {
+  const user = await getCurrentUser();
+  const childId = String(fd.get("childId") ?? "");
+  const consent = fd.get("consent") === "on";
+  const files = fd.getAll("photos").filter((f): f is File => f instanceof File && f.size > 0);
+  if (!files.length) return { results: [{ name: "", ok: false, message: "Choose at least one photo." }] };
+  const results: PhotoUploadState["results"] = [];
+  for (const f of files.slice(0, 3)) {
+    const r = await addPhoto(user.id, childId, Buffer.from(await f.arrayBuffer()), consent);
+    results.push(r.ok ? { name: f.name, ok: true } : { name: f.name, ok: false, message: r.message, problems: r.problems });
+  }
+  revalidatePath(`/children/${childId}/character`);
+  return { results };
+}
+
+export async function deletePhotoAction(fd: FormData) {
+  const user = await getCurrentUser();
+  await deletePhoto(user.id, String(fd.get("photoId") ?? ""));
+  revalidatePath(`/children/${String(fd.get("childId") ?? "")}/character`);
+}
+
+export async function setDeleteOriginalsAction(fd: FormData) {
+  const user = await getCurrentUser();
+  const childId = String(fd.get("childId") ?? "");
+  await setDeleteOriginals(user.id, childId, fd.get("value") === "on");
+  revalidatePath(`/children/${childId}/character`);
+}
+
+export async function startSheetAction(_prev: { message?: string } | null, fd: FormData): Promise<{ message?: string }> {
+  const user = await getCurrentUser();
+  const childId = String(fd.get("childId") ?? "");
+  const res = await startCharacterSheet(user.id, childId, { style: String(fd.get("style") ?? ""), outfit: opt(fd.get("outfit")) });
+  if (!res.ok) return { message: res.message };
+  revalidatePath(`/children/${childId}/character`);
+  return {};
+}
+
+export async function approveSheetAction(fd: FormData) {
+  const user = await getCurrentUser();
+  const childId = String(fd.get("childId") ?? "");
+  const res = await approveSheetOption(user.id, String(fd.get("sheetId") ?? ""), Number(fd.get("index")));
+  redirect(`/children/${childId}/character${res.ok ? `?approved=1&deleted=${res.deletedPhotos}` : "?approveError=1"}`);
+}
+
+export async function saveBibleAction(_prev: { ok?: boolean; message?: string } | null, fd: FormData): Promise<{ ok?: boolean; message?: string }> {
+  const user = await getCurrentUser();
+  const field = (k: string) => String(fd.get(k) ?? "").trim();
+  const res = await saveBible(user.id, String(fd.get("sheetId") ?? ""), {
+    hair: field("hair"),
+    eyes: field("eyes"),
+    skinTone: field("skinTone"),
+    faceShape: field("faceShape"),
+    glasses: field("glasses"),
+    freckles: field("freckles"),
+    signatureOutfit: field("signatureOutfit"),
+    otherDetails: field("otherDetails"),
+  });
+  if (!res.ok) return { message: res.message };
+  revalidatePath(`/children/${String(fd.get("childId") ?? "")}/character`);
+  return { ok: true, message: "Saved. New pages will use these details." };
+}
+
+// ---------------------------------------------------------------- Page editing
+
+
+export interface EditState {
+  ok?: boolean;
+  message?: string;
+}
+
+function editPath(fd: FormData) {
+  return `/books/${String(fd.get("bookId") ?? "")}/pages/${String(fd.get("pageId") ?? "")}`;
+}
+
+export async function updateTextAction(_prev: EditState | null, fd: FormData): Promise<EditState> {
+  const user = await getCurrentUser();
+  const res = await updatePageText(user.id, String(fd.get("pageId") ?? ""), String(fd.get("text") ?? ""));
+  if (!res.ok) return { message: res.message };
+  revalidatePath(editPath(fd));
+  return { ok: true, message: "Text saved." };
+}
+
+export async function reviseTextAction(_prev: EditState | null, fd: FormData): Promise<EditState> {
+  const user = await getCurrentUser();
+  const res = await reviseTextWithAI(user.id, String(fd.get("pageId") ?? ""), String(fd.get("instruction") ?? ""));
+  if (!res.ok) return { message: res.message };
+  revalidatePath(editPath(fd));
+  return { ok: true, message: "Rewritten. Not quite right? Restore the previous version below." };
+}
+
+export async function artAction(_prev: EditState | null, fd: FormData): Promise<EditState> {
+  const user = await getCurrentUser();
+  const mode = fd.get("mode") === "edit" ? "edit" : "redraw";
+  const res = await requestNewArt(user.id, String(fd.get("pageId") ?? ""), mode, opt(fd.get("note")));
+  if (!res.ok) return { message: res.message };
+  revalidatePath(editPath(fd));
+  return { ok: true, message: mode === "edit" ? "Changing the picture..." : "Redrawing the picture..." };
+}
+
+export async function layoutAction(_prev: EditState | null, fd: FormData): Promise<EditState> {
+  const user = await getCurrentUser();
+  const res = await changeLayout(user.id, String(fd.get("pageId") ?? ""), String(fd.get("layout") ?? ""), String(fd.get("textZone") ?? "bottom"));
+  if (!res.ok) return { message: res.message };
+  revalidatePath(editPath(fd));
+  return { ok: true, message: "Layout changed. If the picture is cropped awkwardly, redraw it for this layout." };
+}
+
+export async function movePageAction(fd: FormData) {
+  const user = await getCurrentUser();
+  await movePage(user.id, String(fd.get("pageId") ?? ""), fd.get("direction") === "up" ? "up" : "down");
+  revalidatePath(`/books/${String(fd.get("bookId") ?? "")}/edit`);
+}
+
+export async function restoreVersionAction(fd: FormData) {
+  const user = await getCurrentUser();
+  await restoreVersion(user.id, String(fd.get("pageId") ?? ""), String(fd.get("versionId") ?? ""));
+  revalidatePath(editPath(fd));
+}
+
+export async function acceptFlaggedAction(fd: FormData) {
+  const user = await getCurrentUser();
+  await acceptFlagged(user.id, String(fd.get("pageId") ?? ""));
+  revalidatePath(editPath(fd));
+}
+
+// ---------------------------------------------------------------- Custom themes
+
+export interface ThemeFormState {
+  message?: string;
+  errors?: Record<string, string>;
+  ok?: boolean;
+}
+
+export async function draftThemeAction(_prev: ThemeFormState | null, fd: FormData): Promise<ThemeFormState> {
+  const user = await getCurrentUser();
+  const age = Number(fd.get("age"));
+  const res = await draftCustomTheme(user.id, { description: String(fd.get("description") ?? ""), childAge: Number.isFinite(age) && age > 0 ? age : undefined });
+  if (!res.ok) return { message: res.message };
+  redirect(`/themes/${res.themeId}?drafted=1`);
+}
+
+const lines = (v: FormDataEntryValue | null) =>
+  String(v ?? "")
+    .split("\n")
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+export async function saveThemeAction(_prev: ThemeFormState | null, fd: FormData): Promise<ThemeFormState> {
+  const user = await getCurrentUser();
+  const themeId = String(fd.get("themeId") ?? "");
+  const cast = [0, 1, 2, 3]
+    .map((i) => ({ name: String(fd.get(`cast${i}name`) ?? "").trim(), role: String(fd.get(`cast${i}role`) ?? "").trim(), look: String(fd.get(`cast${i}look`) ?? "").trim() }))
+    .filter((c) => c.name || c.role || c.look);
+  const res = await saveCustomTheme(user.id, themeId, {
+    name: String(fd.get("name") ?? "").trim(),
+    genre: opt(fd.get("genre")),
+    ageRange: [Number(fd.get("ageMin")), Number(fd.get("ageMax"))],
+    pitch: String(fd.get("pitch") ?? "").trim(),
+    setting: String(fd.get("setting") ?? "").trim(),
+    supportingCast: cast,
+    storyBeats: lines(fd.get("storyBeats")),
+    powerIdeas: opt(fd.get("powerIdeas")),
+    artDirection: {
+      defaultStyle: String(fd.get("defaultStyle") ?? ""),
+      palette: [0, 1, 2, 3].map((i) => String(fd.get(`palette${i}`) ?? "").toUpperCase()).filter(Boolean),
+      mood: String(fd.get("mood") ?? "").trim(),
+    },
+    contentRules: lines(fd.get("contentRules")),
+  });
+  if (!res.ok) return { message: res.message, errors: res.errors };
+  revalidatePath("/themes");
+  return { ok: true, message: "Theme saved. It's ready to use in any book." };
+}
+
+export async function duplicateThemeAction(fd: FormData) {
+  const user = await getCurrentUser();
+  const res = await duplicateTheme(user.id, String(fd.get("themeId") ?? ""));
+  redirect(res.ok ? `/themes/${res.themeId}` : "/themes?error=duplicate");
+}
+
+export async function deleteThemeAction(fd: FormData) {
+  const user = await getCurrentUser();
+  const res = await deleteCustomTheme(user.id, String(fd.get("themeId") ?? ""));
+  redirect(res.ok ? "/themes?deleted=1" : `/themes/${String(fd.get("themeId") ?? "")}?deleteError=1`);
 }

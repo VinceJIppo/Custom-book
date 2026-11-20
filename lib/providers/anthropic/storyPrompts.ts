@@ -1,6 +1,8 @@
-import { READING_LEVEL_RULES } from "../../../schemas/book";
-import type { Outline } from "../../../schemas/story";
-import type { StoryContext } from "../types";
+import { READING_LEVEL_RULES } from "../../schemas/book";
+import type { Outline } from "../../schemas/story";
+import type { StoryContext, ThemeDraftRequest } from "../story/types";
+import { ART_STYLES } from "../../schemas/theme";
+import { retryNote } from "./client";
 
 /**
  * Prompt text for the Claude story adapter. The system prompt is stable across
@@ -113,7 +115,25 @@ export function revisePrompt(text: string, sceneAction: string | null, instructi
 
 export const DESCRIBE_CHARACTER_PROMPT = `This image is a character sheet for the hero of a children's picture book. Describe the character's fixed visual traits so an illustrator can draw them identically on every page. Be specific and concrete (exact colors, lengths, shapes). Use "none" when a trait is absent.`;
 
-function retryNote(problems?: string[]) {
-  if (!problems?.length) return "";
-  return `\nYour previous answer had these problems. Fix all of them:\n- ${problems.join("\n- ")}`;
+export const THEME_SYSTEM_PROMPT = `You design themes for a personalized picture book app for children aged 2 to 8. A parent describes what their child loves; you design an original world for a story where the child is the hero.
+
+Rules:
+- Everything must be original: invent the setting, characters and names. Never use or imitate trademarked or copyrighted characters, franchises, brands, or real celebrities, and never describe a lookalike of one. If the parent mentions one, capture the genre (for example "superheroes" or "space adventure") with your own original world.
+- Gentle, warm and G-rated: cartoon peril only, no weapons, nothing frightening.
+- A supporting cast of 2 to 4 friendly characters, each with a short name, a role, and a vivid one-line visual description an illustrator can follow.
+- 6 to 10 story beats that form a clear arc with a cozy ending.
+- A palette of 4 hex colors that suit the mood, and a default art style from: ${ART_STYLES.join(", ")}.
+- 2 to 5 content rules specific to this theme that keep it gentle.
+- The id is a short lowercase slug with dashes.`;
+
+export function themePrompt(req: ThemeDraftRequest, problems?: string[]): string {
+  return [
+    "The parent's description of what their child loves:",
+    JSON.stringify(req.description),
+    req.childAge ? `The child is ${req.childAge} years old; set ageRange around that age.` : "Set a sensible ageRange between 2 and 8.",
+    "Design the theme.",
+    retryNote(problems),
+  ]
+    .filter(Boolean)
+    .join("\n");
 }

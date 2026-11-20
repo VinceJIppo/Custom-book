@@ -1,5 +1,4 @@
-import type { ImageProvider, IllustrationRequest } from "./types";
-import type { ArtStyle } from "../../schemas/theme";
+import type { CharacterSheetRequest, EditRequest, ImageProvider, IllustrationRequest } from "./types";
 import type { ImageData, WithUsage } from "../types";
 
 /**
@@ -111,13 +110,15 @@ const free = { provider: "mock", model: "mock-image", imageCalls: 1, costUsd: 0 
 
 export class MockImageProvider implements ImageProvider {
   readonly name = "mock";
+  readonly model = "mock-image";
 
-  async generateCharacterSheet(input: { photos: ImageData[]; style: ArtStyle; count: number }): Promise<WithUsage<ImageData[]>> {
+  async generateCharacterSheet(input: CharacterSheetRequest): Promise<WithUsage<ImageData[]>> {
+    const seed = Date.now();
     const palettes = [["#90CAF9", "#CE93D8"], ["#A5D6A7", "#FFF59D"], ["#FFCC80", "#F48FB1"]];
     const value = Array.from({ length: input.count }, (_, i) => {
       const { width, height } = dims(1.5);
       return toImage(
-        svg({ width, height, palette: palettes[i % 3], title: `Character option ${i + 1}`, lines: ["Front · three-quarter · full body"], style: input.style, zone: null, seed: hash(`sheet${i}`) }),
+        svg({ width, height, palette: palettes[i % 3], title: `Character option ${i + 1}`, lines: ["Front · three-quarter · portrait", `from ${input.photos.length} photo(s)`], style: input.style, zone: null, seed: hash(`sheet${i}${seed}`) }),
         width,
         height,
       );
@@ -128,12 +129,12 @@ export class MockImageProvider implements ImageProvider {
   async generateIllustration(req: IllustrationRequest): Promise<WithUsage<ImageData>> {
     const { width, height } = dims(req.aspect);
     const maxChars = Math.round(width / 13);
-    const lines = wrap(req.scene.action, maxChars, 3);
-    const markup = svg({ width, height, palette: req.palette, title: req.label, lines, style: req.style, zone: req.textZone, seed: hash(req.label + req.scene.action) });
+    const lines = wrap(req.note ? `${req.scene.action} (note: ${req.note})` : req.scene.action, maxChars, 3);
+    const markup = svg({ width, height, palette: req.palette, title: req.label, lines, style: req.style, zone: req.textZone, seed: hash(req.label + req.scene.action + (req.note ?? "")) });
     return { value: toImage(markup, width, height), usage: free };
   }
 
-  async editIllustration(input: { image: ImageData; instruction: string; style: ArtStyle }): Promise<WithUsage<ImageData>> {
+  async editIllustration(input: EditRequest): Promise<WithUsage<ImageData>> {
     const { width, height } = input.image;
     const markup = svg({
       width,
@@ -142,7 +143,7 @@ export class MockImageProvider implements ImageProvider {
       title: "Edited",
       lines: wrap(`Edit: ${input.instruction}`, Math.round(width / 13), 3),
       style: input.style,
-      zone: null,
+      zone: input.textZone,
       seed: hash(input.instruction),
     });
     return { value: toImage(markup, width, height), usage: free };

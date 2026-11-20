@@ -37,9 +37,19 @@ export const STORY_TOKEN_BUDGET = {
   revise: { input: 1_000, output: 1_500 },
 };
 
-/** Per-image high-side prices. Real image providers are added in Phase 2. */
-export const IMAGE_PRICES: Record<string, { perIllustration: number; perUpscale: number }> = {
-  mock: { perIllustration: 0, perUpscale: 0 },
+/**
+ * Per-image high-side prices used for estimates (actual cost is recorded from
+ * each response). Gemini: Nano Banana 2.1 is $0.0504 at 2K and $0.113 at 4K;
+ * the estimate assumes 4K for every page. OpenAI: token-priced; this is a
+ * planning figure for high quality near 4K. Upscaling is local (free).
+ */
+export const IMAGE_PRICES: Record<string, { perIllustration: number; perUpscale: number; perSheetOption: number }> = {
+  mock: { perIllustration: 0, perUpscale: 0, perSheetOption: 0 },
+  gemini: { perIllustration: 0.115, perUpscale: 0, perSheetOption: 0.06 },
+  openai: { perIllustration: 0.3, perUpscale: 0, perSheetOption: 0.25 },
 };
-/** Planning figure for a real image provider until one is chosen in Phase 2. */
-export const PLANNING_IMAGE_PRICE = { perIllustration: 0.08, perUpscale: 0.02 };
+/** Planning figure when the image provider is not configured yet. */
+export const PLANNING_IMAGE_PRICE = { perIllustration: 0.115, perUpscale: 0, perSheetOption: 0.06 };
+
+/** High-side cost of one vision check (character consistency or photo check). */
+export const VISION_CHECK_USD: Record<string, number> = { mock: 0, anthropic: 0.02 };

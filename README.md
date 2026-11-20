@@ -4,7 +4,8 @@ Personalized picture books where your child is the hero. A parent creates a chil
 profile, picks a theme, and gets an illustrated book to read as an animated flipbook,
 export as print-ready PDFs, and (later) order as a printed hardcover.
 
-**Status: Phase 1 (foundation with mocks).** Runs end to end with zero API keys.
+**Status: Phase 2 (likeness and illustrations).** Runs end to end with zero API keys;
+add keys to draw real characters and write real stories.
 
 ## Quick start
 
@@ -20,8 +21,25 @@ npm run dev                     # web on http://localhost:3000 plus the backgrou
 `npm run dev` starts two processes: the Next.js app and the job worker
 (`scripts/worker.ts`). Generation only progresses while the worker runs.
 
-To write stories with Claude, put `ANTHROPIC_API_KEY=...` in `.env.local` and restart.
-See [PROVIDERS.md](PROVIDERS.md) for exactly what is sent and what it costs.
+Keys (all optional) go in `.env.local`; restart after changing it:
+
+- `ANTHROPIC_API_KEY`: Claude writes the stories, checks photos and likeness, moderates text, drafts themes.
+- `GEMINI_API_KEY`: Gemini draws the character and every page (the default image provider).
+- `OPENAI_API_KEY`: OpenAI as an alternative image provider (or to compare against Gemini).
+
+See [PROVIDERS.md](PROVIDERS.md) for exactly what is sent where and what it costs.
+
+## The flow
+
+1. Add a child (name, age, favorites, pet, friends, lesson).
+2. **Photos & character:** upload 1 to 3 photos (JPG, PNG or HEIC). Location data is stripped and
+   each photo is checked for one clear face. Pick an art style; we draw 3 character options.
+   Approve one (originals are deleted by default), then correct the Character Bible if needed.
+3. **New book:** pick a built-in or custom theme and options. Every page is drawn from the
+   approved character, checked for likeness, redrawn once on drift, and flagged if it still drifts.
+4. **Read** in the flipbook. **Edit pages:** change text (or ask for a rewrite), change or redraw
+   one picture with a note, swap layout, reorder, restore any earlier version.
+5. **Themes:** describe what your child loves and get an editable original theme; duplicate any theme.
 
 ## Scripts
 
@@ -34,6 +52,7 @@ See [PROVIDERS.md](PROVIDERS.md) for exactly what is sent and what it costs.
 | `npm run test:e2e` | Browser tests (Playwright, desktop and phone); starts `npm run dev` if needed |
 | `npm run lint` / `npm run typecheck` | ESLint (includes the provider-import rule) / TypeScript |
 | `npm run db:studio` | Browse the dev database |
+| `npm run compare -- --a gemini --b openai --character sheet.png` | Same 4 scenes from 2 image providers, side by side |
 
 ## How it fits together
 
@@ -63,7 +82,10 @@ Browser ── Next.js App Router (server actions, API routes)
 
 ## Safety and privacy (implemented so far)
 
-- Adults only (age confirmation), single-user mode until Auth.js in Phase 2.
+- Adults only (age confirmation); single-user mode (Auth.js sign-in is still to come).
+- Guardian consent checkbox before the first photo upload. Photos are re-encoded with all
+  metadata (including GPS) removed, stored encrypted, used only for the character sheet,
+  and deleted after approval by default. Gemini requests are sent with `store: false`.
 - Protected-names check (`lib/safety/protected-names.json`) on favorites, lessons,
   dedications and instructions, with original-theme suggestions. Child, pet and friend
   names are never checked (a real child can be called Elsa).
@@ -78,12 +100,15 @@ Browser ── Next.js App Router (server actions, API routes)
 ```
 app/                  pages, server actions, API routes (/api/files, /api/books/[id]/status)
 components/           ChildForm, BookWizard, BookLive, book/BookPage, flipbook/Flipbook
-lib/providers/        interfaces + mock/real adapters, registry
+lib/providers/        interfaces, mocks, registry; vendor folders anthropic/, gemini/, openai/
 lib/jobs/             queue, runner, handlers
 lib/schemas/          Zod schemas (theme, child, book, story)
 lib/print/            geometry and page-count padding
 lib/books/            services, pagination, view model, progress
 lib/storage/          local encrypted driver, S3 stub
+lib/characters/       photos, character sheets, Character Bible
+lib/images/           photo intake (HEIC, rotation, metadata stripping), references
+lib/customThemes.ts   Custom Theme Builder
 lib/safety/           protected names
 lib/cost/             prices and estimates
 prisma/               schema and seed

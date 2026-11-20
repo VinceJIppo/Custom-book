@@ -2,7 +2,7 @@ import crypto from "node:crypto";
 import type { GenerationJob } from "@prisma/client";
 import { claimNext, complete, fail, reclaimExpired, type JobType } from "./queue";
 import { handlers } from "./handlers";
-import { log } from "../log";
+import { errorMessage, log } from "../log";
 import type { Usage } from "../providers/types";
 
 export async function runJob(job: GenerationJob) {
@@ -27,12 +27,20 @@ export async function runJob(job: GenerationJob) {
 /** When a job fails for good, mark the related book or page so the UI can show it. */
 async function onJobGaveUp(job: GenerationJob, _err: unknown) {
   const { db } = await import("../db");
-  if (job.type === "page.illustrate" && job.pageId) {
-    await db.page.updateMany({ where: { id: job.pageId }, data: { imageStatus: "failed" } });
+  if ((job.type === "page.illustrate" || job.type === "page.edit") && job.pageId) {
+    // A failed redraw or edit keeps the previous picture.
+    await db.page.updateMany({ where: { id: job.pageId, imageKey: { not: null } }, data: { imageStatus: "ready" } });
+    await db.page.updateMany({ where: { id: job.pageId, imageKey: null }, data: { imageStatus: "failed" } });
     const { maybeFinalizeBook } = await import("./handlers/finalize");
     if (job.bookId) await maybeFinalizeBook(job.bookId);
   } else if (job.bookId && (job.type === "book.outline" || job.type === "book.pages")) {
     await db.book.updateMany({ where: { id: job.bookId }, data: { status: "failed" } });
+  } else if (job.type === "character.sheet") {
+    const sheetId = (job.payload as { sheetId?: string }).sheetId;
+    if (sheetId) await db.characterSheet.updateMany({ where: { id: sheetId }, data: { status: "failed", error: errorMessage(_err) } });
+  } else if (job.type === "character.bible") {
+    const sheetId = (job.payload as { sheetId?: string }).sheetId;
+    if (sheetId) await db.characterSheet.updateMany({ where: { id: sheetId, bibleStatus: "pending" }, data: { bibleStatus: "failed" } });
   } else if (job.type === "book.cover" && job.bookId) {
     const { maybeFinalizeBook } = await import("./handlers/finalize");
     await maybeFinalizeBook(job.bookId);

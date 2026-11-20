@@ -1,0 +1,164 @@
+"use client";
+
+import { startTransition, useActionState } from "react";
+import { draftThemeAction, saveThemeAction } from "@/app/actions";
+import { ART_STYLES, ART_STYLE_LABELS, type ThemeConfig } from "@/lib/schemas/theme";
+
+const input = "mt-1 w-full rounded-xl border border-[color:var(--line)] bg-white px-3 py-2.5 outline-none focus:border-berry focus:ring-2 focus:ring-violet-200";
+
+function keep(action: (fd: FormData) => void) {
+  return (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const fd = new FormData(e.currentTarget);
+    startTransition(() => action(fd));
+  };
+}
+
+function FieldError({ errors, k }: { errors: Record<string, string>; k: string }) {
+  const msg = errors[k] ?? Object.entries(errors).find(([key]) => key.startsWith(`${k}.`))?.[1];
+  return msg ? <span className="mt-1 block text-sm text-red-700">{msg}</span> : null;
+}
+
+export function DraftThemeForm() {
+  const [state, action, pending] = useActionState(draftThemeAction, null);
+  return (
+    <form onSubmit={keep(action)} className="space-y-4 rounded-3xl bg-white p-5 ring-1 ring-[color:var(--line)]">
+      <label className="block">
+        <span className="font-semibold">What does your child love?</span>
+        <textarea
+          name="description"
+          rows={4}
+          maxLength={1000}
+          required
+          data-testid="theme-description"
+          placeholder="She's obsessed with bees and gardens, loves the color yellow, and wants to be a scientist. She gets nervous about the dark."
+          className={input}
+        />
+      </label>
+      <label className="block max-w-40">
+        <span className="font-semibold">Child&apos;s age</span> <span className="text-sm text-[color:var(--muted)]">optional</span>
+        <input name="age" type="number" min={1} max={12} className={input} />
+      </label>
+      {state?.message && (
+        <p role="alert" className="rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-900 ring-1 ring-amber-200">
+          {state.message}
+        </p>
+      )}
+      <button disabled={pending} className="rounded-full bg-berry px-6 py-3 font-semibold text-white disabled:opacity-60" data-testid="draft-theme">
+        {pending ? "Dreaming up a world..." : "Draft my theme ✨"}
+      </button>
+    </form>
+  );
+}
+
+export function ThemeEditor({ themeId, config }: { themeId: string; config: ThemeConfig }) {
+  const [state, action, pending] = useActionState(saveThemeAction, null);
+  const err = state?.errors ?? {};
+  const cast = [...config.supportingCast, ...Array(Math.max(0, 4 - config.supportingCast.length)).fill({ name: "", role: "", look: "" })].slice(0, 4);
+  return (
+    <form onSubmit={keep(action)} className="space-y-6" data-testid="theme-editor">
+      <input type="hidden" name="themeId" value={themeId} />
+      <section className="grid gap-4 rounded-3xl bg-white p-5 ring-1 ring-[color:var(--line)] sm:grid-cols-2">
+        <label className="block">
+          <span className="font-semibold">Name</span>
+          <input name="name" defaultValue={config.name} required maxLength={60} className={input} />
+          <FieldError errors={err} k="name" />
+        </label>
+        <label className="block">
+          <span className="font-semibold">Genre</span>
+          <input name="genre" defaultValue={config.genre ?? ""} maxLength={40} className={input} />
+        </label>
+        <label className="block sm:col-span-2">
+          <span className="font-semibold">Pitch</span> <span className="text-sm text-[color:var(--muted)]">one or two sentences; &quot;The child&quot; becomes your child&apos;s name</span>
+          <textarea name="pitch" defaultValue={config.pitch} rows={2} maxLength={400} className={input} />
+          <FieldError errors={err} k="pitch" />
+        </label>
+        <label className="block sm:col-span-2">
+          <span className="font-semibold">Setting</span>
+          <textarea name="setting" defaultValue={config.setting} rows={2} maxLength={400} className={input} />
+          <FieldError errors={err} k="setting" />
+        </label>
+        <div className="flex gap-3">
+          <label className="block">
+            <span className="font-semibold">Ages from</span>
+            <input name="ageMin" type="number" min={1} max={12} defaultValue={config.ageRange[0]} className={input} />
+          </label>
+          <label className="block">
+            <span className="font-semibold">to</span>
+            <input name="ageMax" type="number" min={1} max={12} defaultValue={config.ageRange[1]} className={input} />
+          </label>
+        </div>
+        <FieldError errors={err} k="ageRange" />
+      </section>
+
+      <section className="rounded-3xl bg-white p-5 ring-1 ring-[color:var(--line)]">
+        <p className="font-display text-lg font-semibold">Supporting cast</p>
+        <p className="text-sm text-[color:var(--muted)]">Original characters only. &quot;Look&quot; is what the illustrator draws.</p>
+        <div className="mt-3 space-y-3">
+          {cast.map((c, i) => (
+            <div key={i} className="grid gap-2 sm:grid-cols-[1fr_1fr_2fr]">
+              <input name={`cast${i}name`} defaultValue={c.name} placeholder="Name" maxLength={60} className={input} />
+              <input name={`cast${i}role`} defaultValue={c.role} placeholder="Role" maxLength={80} className={input} />
+              <input name={`cast${i}look`} defaultValue={c.look} placeholder="Looks like..." maxLength={240} className={input} />
+            </div>
+          ))}
+        </div>
+        <FieldError errors={err} k="supportingCast" />
+      </section>
+
+      <section className="grid gap-4 rounded-3xl bg-white p-5 ring-1 ring-[color:var(--line)] sm:grid-cols-2">
+        <label className="block">
+          <span className="font-semibold">Story beats</span> <span className="text-sm text-[color:var(--muted)]">one per line, in order</span>
+          <textarea name="storyBeats" defaultValue={config.storyBeats.join("\n")} rows={8} className={input} />
+          <FieldError errors={err} k="storyBeats" />
+        </label>
+        <label className="block">
+          <span className="font-semibold">Content rules</span> <span className="text-sm text-[color:var(--muted)]">one per line</span>
+          <textarea name="contentRules" defaultValue={config.contentRules.join("\n")} rows={8} className={input} />
+          <FieldError errors={err} k="contentRules" />
+        </label>
+        <label className="block sm:col-span-2">
+          <span className="font-semibold">Special-talent idea</span> <span className="text-sm text-[color:var(--muted)]">optional</span>
+          <input name="powerIdeas" defaultValue={config.powerIdeas ?? ""} maxLength={300} className={input} />
+        </label>
+      </section>
+
+      <section className="grid gap-4 rounded-3xl bg-white p-5 ring-1 ring-[color:var(--line)] sm:grid-cols-2">
+        <label className="block">
+          <span className="font-semibold">Default art style</span>
+          <select name="defaultStyle" defaultValue={config.artDirection.defaultStyle} className={input}>
+            {ART_STYLES.map((s) => (
+              <option key={s} value={s}>
+                {ART_STYLE_LABELS[s]}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="block">
+          <span className="font-semibold">Mood</span>
+          <input name="mood" defaultValue={config.artDirection.mood} maxLength={200} className={input} />
+        </label>
+        <div className="sm:col-span-2">
+          <span className="font-semibold">Palette</span>
+          <div className="mt-2 flex gap-3">
+            {[0, 1, 2, 3].map((i) => (
+              <input key={i} type="color" name={`palette${i}`} defaultValue={config.artDirection.palette[i] ?? "#FFFFFF"} className="h-12 w-16 cursor-pointer rounded-xl border border-[color:var(--line)] bg-white" />
+            ))}
+          </div>
+          <FieldError errors={err} k="artDirection.palette" />
+        </div>
+      </section>
+
+      <div className="flex flex-wrap items-center gap-3">
+        <button disabled={pending} className="rounded-full bg-berry px-6 py-3 font-semibold text-white disabled:opacity-60" data-testid="save-theme">
+          {pending ? "Saving..." : "Save theme"}
+        </button>
+        {state?.message && (
+          <span role="status" className={`text-sm ${state.ok ? "text-emerald-700" : "text-red-700"}`}>
+            {state.message}
+          </span>
+        )}
+      </div>
+    </form>
+  );
+}

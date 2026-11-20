@@ -35,6 +35,9 @@ export default async function ChildPage({ params, searchParams }: { params: Prom
           <Link href={`/children/${child.id}/edit`} className="rounded-full bg-white px-4 py-2 font-semibold ring-1 ring-[color:var(--line)]">
             Edit
           </Link>
+          <Link href={`/children/${child.id}/character`} className="rounded-full bg-white px-4 py-2 font-semibold ring-1 ring-[color:var(--line)]">
+            Photos &amp; character
+          </Link>
           <Link href={`/books/new?childId=${child.id}`} className="rounded-full bg-berry px-4 py-2 font-semibold text-white">
             New book
           </Link>

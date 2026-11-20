@@ -1,6 +1,7 @@
 "use client";
 
 import { startTransition, useActionState, useState } from "react";
+import Link from "next/link";
 import { createBookAction } from "@/app/actions";
 import { ART_STYLES, ART_STYLE_LABELS, type ArtStyle } from "@/lib/schemas/theme";
 import { READING_LEVELS, READING_LEVEL_RULES, STORY_LENGTHS, type ReadingLevel } from "@/lib/schemas/book";
@@ -23,11 +24,15 @@ export interface WizardProps {
   defaultReadingLevel: ReadingLevel;
   estimates: Record<number, CostEstimate>;
   storyProvider: string;
+  /** Art styles with an approved character for this child. */
+  approvedStyles: string[];
+  /** True when a real image provider is on, so a character is required. */
+  needsCharacter: boolean;
 }
 
 const input = "mt-1 w-full rounded-xl border border-[color:var(--line)] bg-white px-3 py-2.5 outline-none focus:border-berry focus:ring-2 focus:ring-violet-200";
 
-export function BookWizard({ child, themes, defaultReadingLevel, estimates, storyProvider }: WizardProps) {
+export function BookWizard({ child, themes, defaultReadingLevel, estimates, storyProvider, approvedStyles, needsCharacter }: WizardProps) {
   const [state, action, pending] = useActionState(createBookAction, null);
   const [themeId, setThemeId] = useState<string | null>(null);
   const theme = themes.find((t) => t.id === themeId) ?? null;
@@ -48,7 +53,12 @@ export function BookWizard({ child, themes, defaultReadingLevel, estimates, stor
       <input type="hidden" name="themeId" value={themeId ?? ""} />
 
       <section>
-        <h2 className="font-display text-xl font-semibold">1. Pick a theme</h2>
+        <div className="flex items-baseline justify-between gap-2">
+          <h2 className="font-display text-xl font-semibold">1. Pick a theme</h2>
+          <Link href="/themes/new" className="text-sm font-semibold text-berry underline">
+            or create your own
+          </Link>
+        </div>
         <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3" role="radiogroup" aria-label="Theme">
           {themes.map((t) => {
             const selected = t.id === themeId;
@@ -62,7 +72,7 @@ export function BookWizard({ child, themes, defaultReadingLevel, estimates, stor
                 data-testid={`theme-${t.slug}`}
                 onClick={() => {
                   setThemeId(t.id);
-                  setStyle((s) => s ?? t.defaultStyle);
+                  setStyle((s) => s ?? ((approvedStyles[0] as ArtStyle | undefined) ?? t.defaultStyle));
                 }}
                 className={`overflow-hidden rounded-3xl bg-white text-left shadow-sm ring-2 transition ${selected ? "ring-berry" : "ring-transparent hover:ring-violet-200"}`}
               >
@@ -118,10 +128,19 @@ export function BookWizard({ child, themes, defaultReadingLevel, estimates, stor
                 <option key={s} value={s}>
                   {ART_STYLE_LABELS[s]}
                   {theme?.defaultStyle === s ? " (theme default)" : ""}
+                  {approvedStyles.includes(s) ? " ✓ character ready" : ""}
                 </option>
               ))}
             </select>
             <span className="mt-1 block text-xs text-[color:var(--muted)]">The style is locked for the whole book.</span>
+            {style && !approvedStyles.includes(style) && (
+              <span className={`mt-1 block text-xs ${needsCharacter ? "font-semibold text-amber-800" : "text-[color:var(--muted)]"}`}>
+                {needsCharacter ? "No approved character in this style yet. " : "Tip: create a character in this style so the hero looks like your child. "}
+                <Link href={`/children/${child.id}/character`} className="underline">
+                  Create one
+                </Link>
+              </span>
+            )}
           </label>
           <label className="block">
             <span className="font-semibold">Book size</span>

@@ -10,10 +10,18 @@ export interface StoryContext {
   options: BookOptions;
 }
 
+export interface ThemeDraftRequest {
+  /** Parent's free text, already moderated and checked for protected names. */
+  description: string;
+  childAge?: number;
+}
+
 export interface StoryProvider {
   readonly name: string;
   generateOutline(ctx: StoryContext): Promise<WithUsage<Outline>>;
   generatePages(outline: Outline, ctx: StoryContext): Promise<WithUsage<StoryPagesResult>>;
   reviseText(page: { text: string; scene: Scene | null }, instruction: string, ctx: StoryContext): Promise<WithUsage<{ text: string }>>;
   describeCharacter(sheet: ImageData): Promise<WithUsage<CharacterBible>>;
+  /** Custom Theme Builder: draft a full original theme config from a description. */
+  draftTheme(req: ThemeDraftRequest): Promise<WithUsage<ThemeConfig>>;
 }

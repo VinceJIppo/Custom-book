@@ -26,6 +26,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <Link href="/" className="hover:text-berry">
                 My books
               </Link>
+              <Link href="/themes" className="hover:text-berry">
+                Themes
+              </Link>
               <Link href="/children/new" className="hover:text-berry">
                 Add a child
               </Link>

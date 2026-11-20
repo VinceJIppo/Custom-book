@@ -9,10 +9,20 @@ import type { Usage } from "../providers/types";
  * whose worker dies is reclaimed when its lease expires.
  */
 
-export type JobType = "book.outline" | "book.pages" | "page.illustrate" | "book.cover" | "book.finalize";
+export type JobType =
+  | "book.outline"
+  | "book.pages"
+  | "page.illustrate"
+  | "page.edit"
+  | "page.revise"
+  | "book.cover"
+  | "book.finalize"
+  | "character.sheet"
+  | "character.bible";
 
 export interface EnqueueOptions {
   userId: string;
+  childId?: string;
   bookId?: string;
   pageId?: string;
   maxAttempts?: number;
@@ -25,6 +35,7 @@ export async function enqueue(type: JobType, payload: Prisma.InputJsonValue, opt
       type,
       payload,
       userId: opts.userId,
+      childId: opts.childId,
       bookId: opts.bookId,
       pageId: opts.pageId,
       maxAttempts: opts.maxAttempts ?? 3,

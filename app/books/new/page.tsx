@@ -6,6 +6,7 @@ import { listThemesForUser } from "@/lib/themes";
 import { estimateFor } from "@/lib/books/service";
 import { readingLevelForAge, STORY_LENGTHS } from "@/lib/schemas/book";
 import { activeProviderNames } from "@/lib/providers/registry";
+import { approvedStyles } from "@/lib/characters/service";
 import { BookWizard } from "@/components/BookWizard";
 
 export const dynamic = "force-dynamic";
@@ -44,6 +45,8 @@ export default async function NewBook({ searchParams }: { searchParams: Promise<
         defaultReadingLevel={readingLevelForAge(child.age)}
         estimates={estimates}
         storyProvider={activeProviderNames().story}
+        approvedStyles={await approvedStyles(child.id)}
+        needsCharacter={activeProviderNames().image !== "mock"}
       />
     </div>
   );

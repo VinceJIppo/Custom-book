@@ -1,4 +1,5 @@
-import type { StoryContext, StoryProvider } from "./types";
+import type { StoryContext, StoryProvider, ThemeDraftRequest } from "./types";
+import type { ThemeConfig } from "../../schemas/theme";
 import type { CharacterBible, Outline, Scene, StoryLayout, StoryPage, StoryPagesResult, TextZone } from "../../schemas/story";
 import { READING_LEVEL_RULES } from "../../schemas/book";
 import type { ImageData, WithUsage } from "../types";
@@ -410,6 +411,10 @@ export class MockStoryProvider implements StoryProvider {
     return { value: { text: `${page.text} (Revised: ${note})` }, usage: mockUsage() };
   }
 
+  async draftTheme(req: ThemeDraftRequest): Promise<WithUsage<ThemeConfig>> {
+    return { value: mockDraftTheme(req), usage: mockUsage() };
+  }
+
   async describeCharacter(_sheet: ImageData): Promise<WithUsage<CharacterBible>> {
     return {
       value: {
@@ -425,6 +430,117 @@ export class MockStoryProvider implements StoryProvider {
       usage: mockUsage(),
     };
   }
+}
+
+const MOCK_GENRES: Array<{ match: RegExp; genre: string; name: string; setting: string; palette: string[]; style: ThemeConfig["artDirection"]["defaultStyle"]; cast: ThemeConfig["supportingCast"] }> = [
+  {
+    match: /space|planet|rocket|star|moon|astronaut/i,
+    genre: "space",
+    name: "Moonbeam Voyage",
+    setting: "The Glimmerway, a ribbon of friendly planets with candy-striped rings and a moon made of soft cheese",
+    palette: ["#3949AB", "#9575CD", "#FFD54F", "#B2EBF2"],
+    style: "soft-3d",
+    cast: [
+      { name: "Comet Kip", role: "co-pilot", look: "small silver robot with springy antennae and a heart-shaped light" },
+      { name: "Nova Nell", role: "mission guide", look: "friendly astronaut grandma with a puffy orange suit" },
+    ],
+  },
+  {
+    match: /dino|dinosaur|fossil|t-rex|raptor/i,
+    genre: "dinosaurs",
+    name: "Fernstep Expedition",
+    setting: "Fernstep Basin, a misty valley of giant ferns, warm springs and gentle volcano puffs",
+    palette: ["#558B2F", "#C5E1A5", "#FF8A65", "#FFF3E0"],
+    style: "watercolor-storybook",
+    cast: [
+      { name: "Bramble", role: "guide", look: "tall, gentle long-necked dinosaur with leafy freckles" },
+      { name: "Pebble", role: "friend", look: "tiny round armored dinosaur who rolls into a ball when shy" },
+    ],
+  },
+  {
+    match: /ocean|sea|fish|whale|mermaid|shark|beach|underwater/i,
+    genre: "ocean",
+    name: "Tidepool Treasure",
+    setting: "Shellhaven, a sparkling reef village with seaweed swings and pearl lanterns",
+    palette: ["#0288D1", "#4DD0E1", "#FFCC80", "#E1F5FE"],
+    style: "watercolor-storybook",
+    cast: [
+      { name: "Captain Coral", role: "guide", look: "cheerful pink octopus wearing a tiny captain's hat" },
+      { name: "Flip", role: "friend", look: "bouncy young dolphin with a star-shaped mark" },
+    ],
+  },
+  {
+    match: /dragon|knight|castle|princess|prince|wizard|magic|fairy|unicorn/i,
+    genre: "fantasy",
+    name: "The Lantern Kingdom",
+    setting: "Lanternvale, a hillside kingdom of glowing lanterns, crooked towers and singing meadows",
+    palette: ["#7B1FA2", "#F48FB1", "#FFD54F", "#A5D6A7"],
+    style: "paper-cutout",
+    cast: [
+      { name: "Sprig", role: "magical friend", look: "small green winged creature with acorn-cap hat" },
+      { name: "Queen Marigold", role: "kind ruler", look: "smiling queen with a sunflower crown and a patched cloak" },
+    ],
+  },
+  {
+    match: /truck|digger|construction|car|train|tractor|vehicle|machine|build/i,
+    genre: "vehicles",
+    name: "Busy Builders",
+    setting: "Puddleby Yard, a muddy work site at the edge of a cheerful town",
+    palette: ["#F9A825", "#EF6C00", "#5D4037", "#90CAF9"],
+    style: "crayon",
+    cast: [
+      { name: "Scoop", role: "loader", look: "round blue front loader with friendly headlights" },
+      { name: "Gus Gearwell", role: "mechanic", look: "kind mechanic with a striped cap and a big wrench-shaped smile" },
+    ],
+  },
+  {
+    match: /hero|superhero|power|cape|save/i,
+    genre: "superheroes",
+    name: "Captain Kindness Club",
+    setting: "Brightwater, a city of rooftop gardens and a cloud-shaped clubhouse",
+    palette: ["#E53935", "#1E88E5", "#FFEE58", "#FFFFFF"],
+    style: "bold-comic",
+    cast: [
+      { name: "Dash Daisy", role: "teammate", look: "girl in a green suit with daisy-shaped goggles" },
+      { name: "Bolt Bear", role: "sidekick", look: "small teddy bear robot with lightning-bolt ears" },
+    ],
+  },
+];
+
+const DEFAULT_GENRE = {
+  genre: "adventure",
+  name: "The Wonder Walk",
+  setting: "Hollyhock Hollow, a cozy village with winding paths, hidden gardens and a talking signpost",
+  palette: ["#00897B", "#FFB74D", "#F06292", "#FFF8E1"],
+  style: "watercolor-storybook" as const,
+  cast: [
+    { name: "Moss", role: "guide", look: "wise old tortoise with a tiny lantern on his shell" },
+    { name: "Twig", role: "friend", look: "giggly squirrel with a long striped scarf" },
+  ],
+};
+
+function slugify(s: string) {
+  return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 50);
+}
+
+export function mockDraftTheme(req: ThemeDraftRequest): ThemeConfig {
+  const g = MOCK_GENRES.find((x) => x.match.test(req.description)) ?? DEFAULT_GENRE;
+  const age = req.childAge ?? 5;
+  const loves = req.description.replace(/\s+/g, " ").trim().slice(0, 140);
+  return {
+    id: `${slugify(g.name)}-${Math.random().toString(36).slice(2, 6)}`,
+    name: g.name,
+    genre: g.genre,
+    ageRange: [Math.max(2, age - 2), Math.min(10, age + 2)],
+    pitch: `The child sets off on a gentle ${g.genre} adventure inspired by what they love: ${loves}`,
+    setting: g.setting,
+    supportingCast: g.cast,
+    storyBeats: ["cozy morning", "a surprise", "setting off", "a tricky moment", "a clever idea", "teamwork", "the big moment", "cozy ending"],
+    powerIdeas: "The child's special talent connects to one of their favorite things.",
+    artDirection: { defaultStyle: g.style, palette: g.palette, mood: "warm, curious, gently adventurous" },
+    contentRules: ["cartoon peril only", "no weapons", "everyone is kind in the end"],
+    licensed: false,
+  };
 }
 
 function firstIndexOfStage(stage: Stage, n: number): number {

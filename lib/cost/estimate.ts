@@ -1,4 +1,4 @@
-import { IMAGE_PRICES, PLANNING_IMAGE_PRICE, STORY_TOKEN_BUDGET, tokenCostUsd } from "./prices";
+import { IMAGE_PRICES, PLANNING_IMAGE_PRICE, STORY_TOKEN_BUDGET, VISION_CHECK_USD, tokenCostUsd } from "./prices";
 
 export interface CostLine {
   label: string;
@@ -18,6 +18,7 @@ export function estimateBookCost(args: {
   storyModel: string;
   imageProvider: string;
   upscaler: string;
+  vision?: string;
 }): CostEstimate {
   const { storyPages } = args;
   const illustrations = storyPages + 1; // + cover
@@ -42,6 +43,12 @@ export function estimateBookCost(args: {
   });
   const up = IMAGE_PRICES[args.upscaler] ?? PLANNING_IMAGE_PRICE;
   lines.push({ label: `${illustrations} upscales for print (${args.upscaler})`, usd: round(illustrations * up.perUpscale) });
+  const vision = args.vision ?? "mock";
+  if (vision !== "mock" && args.imageProvider !== "mock") {
+    // One check per page, plus a retry and re-check on about a quarter of pages.
+    const checks = Math.ceil(illustrations * 1.25);
+    lines.push({ label: `Likeness checks (${checks}) and occasional redraws`, usd: round(checks * (VISION_CHECK_USD[vision] ?? 0.02) + Math.ceil(illustrations / 4) * img.perIllustration) });
+  }
 
   const totalUsd = round(lines.reduce((s, l) => s + l.usd, 0));
   const withRealImagesUsd = round(storyUsd + illustrations * (PLANNING_IMAGE_PRICE.perIllustration + PLANNING_IMAGE_PRICE.perUpscale));

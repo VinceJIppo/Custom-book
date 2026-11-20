@@ -53,6 +53,7 @@ model ChildProfile {
   photos          ChildPhoto[]
   characterSheets CharacterSheet[]
   books           Book[]
+  jobs            GenerationJob[]
 
   @@index([userId])
 }
@@ -64,6 +65,8 @@ model ChildPhoto {
   storageKey String
   width      Int
   height     Int
+  /// Faces found by the photo check (null when no vision provider ran)
+  faces      Int?
   createdAt  DateTime     @default(now())
 
   @@index([childId])
@@ -74,12 +77,19 @@ model CharacterSheet {
   childId       String
   child         ChildProfile @relation(fields: [childId], references: [id], onDelete: Cascade)
   style         String
-  status        String       @default("draft") // draft | approved | rejected
+  outfit        String?
+  /// Which generation round this is for the child and style (capped by CHARACTER_SHEET_MAX_ROUNDS)
+  round         Int          @default(1)
+  status        String       @default("generating") // generating | draft | approved | rejected | failed
   /// string[] storage keys, one per option
   imageKeys     Json
   selectedIndex Int?
   /// CharacterBible
   bible         Json?
+  bibleStatus   String       @default("none") // none | pending | ready | failed
+  costUsd       Float        @default(0)
+  error         String?
+  approvedAt    DateTime?
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
 
@@ -179,6 +189,11 @@ model Page {
   textZone    String   @default("bottom")
   imageKey    String?
   imageStatus String   @default("none") // none | pending | ready | failed | flagged
+  /// Likeness check against the character sheet: 0..1, and plain-English drift
+  qaScore     Float?
+  qaIssues    Json?
+  /// Pre-upscale render kept for edits (smaller than the print file)
+  workingImageKey String?
   version     Int      @default(1)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -199,6 +214,7 @@ model PageVersion {
   layout    String
   textZone  String
   imageKey  String?
+  workingImageKey String?
   note      String?
   createdAt DateTime @default(now())
 
@@ -223,6 +239,8 @@ model GenerationJob {
   usage       Json?
   userId      String
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  childId     String?
+  child       ChildProfile? @relation(fields: [childId], references: [id], onDelete: Cascade)
   bookId      String?
   book        Book?     @relation(fields: [bookId], references: [id], onDelete: Cascade)
   pageId      String?

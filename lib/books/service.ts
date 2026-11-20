@@ -6,8 +6,11 @@ import { BookOptionsSchema, type BookOptions } from "../schemas/book";
 import { getThemeForUser } from "../themes";
 import { childSnapshot, getChild } from "../children/service";
 import { checkFieldsForProtectedNames } from "../safety/protectedNames";
-import { activeProviderNames, getModeration } from "../providers/registry";
+import { activeProviderNames, getModeration, imageProviderChoice } from "../providers/registry";
+import { approvedSheetFor } from "../characters/service";
+import { ART_STYLE_LABELS } from "../schemas/theme";
 import { estimateBookCost } from "../cost/estimate";
+import { dailyUsage } from "../cost/usage";
 
 export type CreateBookResult =
   | { ok: true; bookId: string }
@@ -15,23 +18,10 @@ export type CreateBookResult =
 
 export function estimateFor(options: Pick<BookOptions, "length">) {
   const p = activeProviderNames();
-  return estimateBookCost({ storyPages: options.length, storyProvider: p.story, storyModel: p.storyModel, imageProvider: p.image, upscaler: p.upscaler });
+  return estimateBookCost({ storyPages: options.length, storyProvider: p.story, storyModel: p.storyModel, imageProvider: p.image, upscaler: p.upscaler, vision: p.vision });
 }
 
-function startOfToday() {
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  return d;
-}
-
-export async function dailyUsage(userId: string) {
-  const since = startOfToday();
-  const [cost, books] = await Promise.all([
-    db.generationJob.aggregate({ where: { userId, createdAt: { gte: since } }, _sum: { costUsd: true } }),
-    db.book.count({ where: { userId, createdAt: { gte: since }, status: { not: "draft" } } }),
-  ]);
-  return { costUsd: cost._sum.costUsd ?? 0, books };
-}
+export { dailyUsage };
 
 /** Validate everything, check caps, freeze the inputs onto the book, and queue the outline job. */
 export async function createAndStartBook(userId: string, input: { childId: string; themeId: string; options: unknown }): Promise<CreateBookResult> {
@@ -45,6 +35,15 @@ export async function createAndStartBook(userId: string, input: { childId: strin
   const [child, theme] = await Promise.all([getChild(userId, input.childId), getThemeForUser(input.themeId, userId)]);
   if (!child) return { ok: false, message: "Child profile not found." };
   if (!theme) return { ok: false, message: "That theme is not available." };
+
+  const character = await approvedSheetFor(child.id, options.style);
+  if (!character && imageProviderChoice() !== "mock") {
+    return {
+      ok: false,
+      message: `First create ${child.nickname || child.firstName}'s character in the ${ART_STYLE_LABELS[options.style]} style, so every page shows the same recognizable hero.`,
+      errors: { style: "No approved character in this style yet" },
+    };
+  }
 
   const hit = checkFieldsForProtectedNames({ instructions: options.instructions, lesson: options.lesson, dedication: options.dedication });
   if (hit) {
@@ -72,6 +71,7 @@ export async function createAndStartBook(userId: string, input: { childId: strin
         userId,
         childId: child.id,
         themeId: theme.id,
+        characterSheetId: character?.sheet.id ?? null,
         themeSnapshot: theme.config as unknown as Prisma.InputJsonValue,
         childSnapshot: childSnapshot(child) as unknown as Prisma.InputJsonValue,
         style: options.style,
