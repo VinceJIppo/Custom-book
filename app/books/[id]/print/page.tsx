@@ -52,11 +52,11 @@ export default async function PrintFiles({ params, searchParams }: { params: Pro
   return (
     <div className="space-y-6">
       <AutoRefresh active={busy} everyMs={2500} />
-      <Link href={`/books/${book.id}`} className="text-sm font-semibold text-berry">
+      <Link href={`/books/${book.id}`} className="text-sm font-semibold text-cobalt">
         ← Back to the book
       </Link>
       <div>
-        <h1 className="font-display text-3xl font-semibold">Print files for {book.title}</h1>
+        <h1 className="font-display text-3xl font-medium">Print files for {book.title}</h1>
         <p className="text-[color:var(--muted)]">
           We make two PDFs a printer needs: the interior (every page, with bleed) and the wraparound cover. Then we check them against the printer&apos;s rules.
           {providerName === "mock" && " Printer: offline mock (add Lulu sandbox keys to check files with Lulu)."}
@@ -64,8 +64,8 @@ export default async function PrintFiles({ params, searchParams }: { params: Pro
       </div>
       {sp.error && <p className="rounded-xl bg-amber-50 px-4 py-3 text-amber-900 ring-1 ring-amber-200">{sp.error}</p>}
 
-      <section className="rounded-3xl bg-white p-5 ring-1 ring-[color:var(--line)]">
-        <h2 className="mb-3 font-display text-xl font-semibold">1. Choose the book type</h2>
+      <section className="rounded-xl bg-white p-5 ring-1 ring-[color:var(--line)]">
+        <h2 className="mb-3 font-display text-xl font-medium">1. Choose the book type</h2>
         <ExportForm
           bookId={book.id}
           products={products.map((p) => ({ id: p.id, label: p.label, detail: `${p.paper} · ${p.pageRules.minPages} to ${p.pageRules.maxPages} pages` }))}
@@ -74,27 +74,27 @@ export default async function PrintFiles({ params, searchParams }: { params: Pro
       </section>
 
       {rows.map(({ e, report, interiorUrl, coverUrl, product, stale, validation, dims }) => (
-        <section key={e.id} className="space-y-4 rounded-3xl bg-white p-5 ring-1 ring-[color:var(--line)]" data-testid="export">
+        <section key={e.id} className="space-y-4 rounded-xl bg-white p-5 ring-1 ring-[color:var(--line)]" data-testid="export">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <h2 className="font-display text-xl font-semibold">{product?.label ?? e.productId}</h2>
+            <h2 className="font-display text-xl font-medium">{product?.label ?? e.productId}</h2>
             <span className="text-sm text-[color:var(--muted)]">
               {e.createdAt.toLocaleString()} · {e.sku}
             </span>
           </div>
           {stale && e.status === "ready" && <p className="rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-900 ring-1 ring-amber-200">The book changed after these files were made. Make new files before ordering.</p>}
-          {e.status === "rendering" && <p className="animate-pulse text-berry">Making the PDFs. This takes about a minute...</p>}
+          {e.status === "rendering" && <p className="animate-pulse text-cobalt">Making the PDFs. This takes about a minute...</p>}
           {e.status === "failed" && <p className="text-red-700">Making the files failed: {e.error}</p>}
 
           {e.status === "ready" && (
             <>
               <div className="flex flex-wrap gap-3">
                 {interiorUrl && (
-                  <a href={interiorUrl} className="rounded-full bg-berry px-4 py-2 font-semibold text-white" data-testid="download-interior">
+                  <a href={interiorUrl} className="btn btn-primary" data-testid="download-interior">
                     ⬇ Interior PDF ({e.pageCount} pages)
                   </a>
                 )}
                 {coverUrl && (
-                  <a href={coverUrl} className="rounded-full bg-berry px-4 py-2 font-semibold text-white" data-testid="download-cover">
+                  <a href={coverUrl} className="btn btn-primary" data-testid="download-cover">
                     ⬇ Cover PDF{dims ? ` (${dims.widthIn} x ${dims.heightIn} in, spine ${dims.spineIn} in)` : ""}
                   </a>
                 )}
@@ -117,7 +117,7 @@ export default async function PrintFiles({ params, searchParams }: { params: Pro
                           {it.page && it.level !== "pass" && (
                             <>
                               {" "}
-                              <Link href={`/books/${book.id}/edit`} className="text-berry underline">
+                              <Link href={`/books/${book.id}/edit`} className="text-cobalt underline">
                                 Fix
                               </Link>
                             </>
@@ -129,19 +129,19 @@ export default async function PrintFiles({ params, searchParams }: { params: Pro
                 </div>
               )}
 
-              <div className="rounded-2xl bg-cream p-4">
+              <div className="rounded-lg bg-cream p-4">
                 <p className="font-semibold">2. Check with the printer ({e.provider === "mock" ? "mock" : e.provider})</p>
                 {e.validationStatus === "none" && (
                   <form action={validateExportAction} className="mt-2">
                     <input type="hidden" name="bookId" value={book.id} />
                     <input type="hidden" name="exportId" value={e.id} />
-                    <button disabled={!e.preflightOk} className="rounded-full bg-white px-4 py-2 font-semibold ring-1 ring-[color:var(--line)] disabled:opacity-50" data-testid="validate">
+                    <button disabled={!e.preflightOk} className="btn btn-secondary" data-testid="validate">
                       {e.provider === "lulu" ? "Validate with Lulu" : "Run printer check"}
                     </button>
                     {!e.preflightOk && <span className="ml-3 text-sm text-[color:var(--muted)]">Fix the preflight problems first.</span>}
                   </form>
                 )}
-                {e.validationStatus === "running" && <p className="mt-2 animate-pulse text-berry">{e.validationProgress ?? "Checking..."} (Lulu can take a few minutes)</p>}
+                {e.validationStatus === "running" && <p className="mt-2 animate-pulse text-cobalt">{e.validationProgress ?? "Checking..."} (Lulu can take a few minutes)</p>}
                 {e.validationStatus === "passed" && (
                   <p className="mt-2 text-emerald-700" data-testid="validation-passed">
                     ✓ Passed. Interior: {validation?.interior?.status ?? "ok"}. Cover: {validation?.cover?.status ?? "ok"}.

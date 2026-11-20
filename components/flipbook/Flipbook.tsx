@@ -135,21 +135,21 @@ export function Flipbook({ book }: { book: BookView }) {
       <div ref={stageRef} className="flip-stage mx-auto w-full max-w-5xl">
         <div ref={hostRef} className="mx-auto w-full" data-testid="flipbook" />
         <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-sm">
-          <button onClick={prev} className="rounded-full bg-white px-4 py-2 font-semibold shadow-sm ring-1 ring-black/10 hover:bg-violet-50" aria-label="Previous page">
+          <button onClick={prev} className="btn btn-secondary" aria-label="Previous page">
             ◀ Back
           </button>
           <span className="min-w-28 text-center tabular-nums text-[color:var(--muted)]" data-testid="page-indicator">
             {total ? `${current + 1} / ${total}` : "Loading..."}
           </span>
-          <button onClick={next} className="rounded-full bg-white px-4 py-2 font-semibold shadow-sm ring-1 ring-black/10 hover:bg-violet-50" aria-label="Next page">
+          <button onClick={next} className="btn btn-secondary" aria-label="Next page">
             Next ▶
           </button>
           {canSpeak && (
-            <button onClick={readAloud} className="rounded-full bg-white px-4 py-2 font-semibold shadow-sm ring-1 ring-black/10 hover:bg-violet-50">
+            <button onClick={readAloud} className="btn btn-secondary">
               {speaking ? "■ Stop" : "🔊 Read aloud"}
             </button>
           )}
-          <button onClick={fullscreen} className="rounded-full bg-white px-4 py-2 font-semibold shadow-sm ring-1 ring-black/10 hover:bg-violet-50">
+          <button onClick={fullscreen} className="btn btn-secondary">
             ⛶ Fullscreen
           </button>
         </div>

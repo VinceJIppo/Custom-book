@@ -15,7 +15,7 @@ export default async function BookPageRoute({ params }: { params: Promise<{ id: 
   const [view, progress] = await Promise.all([book.pages.length ? buildBookView(book) : null, getBookProgress(book.id, (book.options as { length?: number }).length ?? 16)]);
   return (
     <div className="space-y-4">
-      <Link href={`/children/${book.childId}`} className="text-sm font-semibold text-berry">
+      <Link href={`/children/${book.childId}`} className="text-sm font-semibold text-cobalt">
         ← {book.child.nickname || book.child.firstName}
       </Link>
       <BookLive bookId={book.id} initial={{ status: book.status, title: book.title, progress, view }} />

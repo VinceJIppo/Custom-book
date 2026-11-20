@@ -13,7 +13,7 @@ export default async function EditChild({ params }: { params: Promise<{ id: stri
   const fav = FavoritesSchema.parse(child.favorites);
   return (
     <div className="space-y-6">
-      <h1 className="font-display text-3xl font-semibold">Edit {child.firstName}</h1>
+      <h1 className="font-display text-3xl font-medium">Edit {child.firstName}</h1>
       <ChildForm
         initial={{
           id: child.id,

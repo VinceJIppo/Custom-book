@@ -3,9 +3,9 @@
 import { startTransition, useActionState } from "react";
 import { artAction, layoutAction, reviseTextAction, updateTextAction, type EditState } from "@/app/actions";
 
-const input = "mt-1 w-full rounded-xl border border-[color:var(--line)] bg-white px-3 py-2.5 outline-none focus:border-berry focus:ring-2 focus:ring-violet-200";
-const btn = "rounded-full bg-berry px-4 py-2 text-sm font-semibold text-white disabled:opacity-50";
-const btnAlt = "rounded-full bg-white px-4 py-2 text-sm font-semibold ring-1 ring-[color:var(--line)] disabled:opacity-50";
+const input = "mt-1 w-full rounded-xl border border-[color:var(--line)] bg-white px-3 py-2.5 outline-none focus:border-cobalt focus:ring-2 focus:ring-sky";
+const btn = "btn btn-primary btn-sm";
+const btnAlt = "btn btn-secondary btn-sm";
 
 function keep(action: (fd: FormData) => void) {
   return (e: React.FormEvent<HTMLFormElement>) => {

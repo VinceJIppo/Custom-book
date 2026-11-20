@@ -31,7 +31,7 @@ export interface WizardProps {
   needsCharacter: boolean;
 }
 
-const input = "mt-1 w-full rounded-xl border border-[color:var(--line)] bg-white px-3 py-2.5 outline-none focus:border-berry focus:ring-2 focus:ring-violet-200";
+const input = "mt-1 w-full rounded-xl border border-[color:var(--line)] bg-white px-3 py-2.5 outline-none focus:border-cobalt focus:ring-2 focus:ring-sky";
 
 export function BookWizard({ child, themes, defaultReadingLevel, estimates, storyProvider, approvedStyles, needsCharacter }: WizardProps) {
   const [state, action, pending] = useActionState(createBookAction, null);
@@ -57,8 +57,8 @@ export function BookWizard({ child, themes, defaultReadingLevel, estimates, stor
 
       <section>
         <div className="flex items-baseline justify-between gap-2">
-          <h2 className="font-display text-xl font-semibold">1. Pick a theme</h2>
-          <Link href="/themes/new" className="text-sm font-semibold text-berry underline">
+          <h2 className="font-display text-xl font-medium">1. Pick a theme</h2>
+          <Link href="/themes/new" className="text-sm font-semibold text-cobalt underline">
             or create your own
           </Link>
         </div>
@@ -77,7 +77,7 @@ export function BookWizard({ child, themes, defaultReadingLevel, estimates, stor
                   setThemeId(t.id);
                   setStyle((s) => s ?? ((approvedStyles[0] as ArtStyle | undefined) ?? t.defaultStyle));
                 }}
-                className={`overflow-hidden rounded-3xl bg-white text-left shadow-sm ring-2 transition ${selected ? "ring-berry" : "ring-transparent hover:ring-violet-200"}`}
+                className={`overflow-hidden rounded-xl bg-white text-left ring-2 transition ${selected ? "ring-cobalt" : "ring-[color:var(--line)] hover:ring-sky"}`}
               >
                 <div className="flex h-16">
                   {t.palette.map((c) => (
@@ -86,8 +86,8 @@ export function BookWizard({ child, themes, defaultReadingLevel, estimates, stor
                 </div>
                 <div className="p-4">
                   <div className="flex items-center justify-between">
-                    <span className="font-display text-lg font-semibold">{t.name}</span>
-                    {selected && <span className="text-berry">✔</span>}
+                    <span className="font-display text-lg font-medium">{t.name}</span>
+                    {selected && <span className="text-cobalt">✔</span>}
                   </div>
                   <p className="mt-1 text-sm text-[color:var(--muted)]">{t.pitch.replace(/^The child/, child.name)}</p>
                   <p className="mt-2 text-xs text-[color:var(--muted)]">
@@ -102,8 +102,8 @@ export function BookWizard({ child, themes, defaultReadingLevel, estimates, stor
       </section>
 
       <fieldset disabled={!theme} className={theme ? "" : "opacity-40"}>
-        <legend className="font-display text-xl font-semibold">2. Book options</legend>
-        <div className="mt-3 grid gap-5 rounded-3xl bg-white p-5 ring-1 ring-[color:var(--line)] sm:grid-cols-2">
+        <legend className="font-display text-xl font-medium">2. Book options</legend>
+        <div className="mt-3 grid gap-5 rounded-xl bg-white p-5 ring-1 ring-[color:var(--line)] sm:grid-cols-2">
           <div className="sm:col-span-2" role="radiogroup" aria-label="Story voice">
             <span className="font-semibold">Story voice</span> <span className="text-sm text-[color:var(--muted)]">how the book sounds read aloud</span>
             <div className="mt-2 grid gap-3 sm:grid-cols-2">
@@ -113,13 +113,13 @@ export function BookWizard({ child, themes, defaultReadingLevel, estimates, stor
                   <label
                     key={id}
                     data-testid={`voice-${id}`}
-                    className="flex cursor-pointer gap-3 rounded-2xl bg-cream p-3 ring-1 ring-[color:var(--line)] has-[:checked]:bg-violet-50 has-[:checked]:ring-berry"
+                    className="flex cursor-pointer gap-3 rounded-lg bg-cream p-3 ring-1 ring-[color:var(--line)] has-[:checked]:bg-tint has-[:checked]:ring-cobalt"
                   >
-                    <input type="radio" name="voice" value={id} checked={voice === id} onChange={() => setVoice(id)} className="mt-1 accent-[color:var(--color-berry)]" />
+                    <input type="radio" name="voice" value={id} checked={voice === id} onChange={() => setVoice(id)} className="mt-1 accent-[color:var(--color-cobalt)]" />
                     <span>
                       <span className="block font-semibold">
                         {v.label}
-                        {id === DEFAULT_VOICE && <span className="ml-2 rounded-full bg-star px-2 py-0.5 text-xs text-ink">default</span>}
+                        {id === DEFAULT_VOICE && <span className="chip chip-sun ml-2">default</span>}
                       </span>
                       <span className="block text-sm text-[color:var(--muted)]">{v.description}</span>
                       <span className="mt-1 block whitespace-pre-line text-sm italic">{v.sample}</span>
@@ -182,11 +182,11 @@ export function BookWizard({ child, themes, defaultReadingLevel, estimates, stor
           </label>
           <div className="space-y-2 sm:col-span-2">
             <label className={`flex items-center gap-3 ${child.petName ? "" : "opacity-50"}`}>
-              <input type="checkbox" name="includePet" defaultChecked={!!child.petName} disabled={!child.petName} className="size-5 accent-[color:var(--color-berry)]" />
+              <input type="checkbox" name="includePet" defaultChecked={!!child.petName} disabled={!child.petName} className="size-5 accent-[color:var(--color-cobalt)]" />
               Include {child.petName ?? "a pet (add one to the profile first)"}
             </label>
             <label className={`flex items-center gap-3 ${child.friend ? "" : "opacity-50"}`}>
-              <input type="checkbox" name="includeFriend" defaultChecked={!!child.friend} disabled={!child.friend} className="size-5 accent-[color:var(--color-berry)]" />
+              <input type="checkbox" name="includeFriend" defaultChecked={!!child.friend} disabled={!child.friend} className="size-5 accent-[color:var(--color-cobalt)]" />
               Include best friend {child.friend ?? "(add one to the profile first)"}
             </label>
           </div>
@@ -211,7 +211,7 @@ export function BookWizard({ child, themes, defaultReadingLevel, estimates, stor
           {suggested.length > 0 && (
             <div className="mt-2 flex flex-wrap gap-2">
               {suggested.map((t) => (
-                <button type="button" key={t.id} onClick={() => setThemeId(t.id)} className="rounded-full bg-white px-3 py-1 text-sm font-semibold ring-1 ring-amber-300">
+                <button type="button" key={t.id} onClick={() => setThemeId(t.id)} className="btn btn-secondary btn-sm">
                   Try {t.name}
                 </button>
               ))}
@@ -229,7 +229,7 @@ export function BookWizard({ child, themes, defaultReadingLevel, estimates, stor
         </div>
       )}
 
-      <section className="flex flex-col gap-4 rounded-3xl bg-white p-5 ring-1 ring-[color:var(--line)] sm:flex-row sm:items-center sm:justify-between">
+      <section className="flex flex-col gap-4 rounded-xl bg-white p-5 ring-1 ring-[color:var(--line)] sm:flex-row sm:items-center sm:justify-between">
         <div className="text-sm">
           <p className="font-semibold">
             Estimated generation cost: <span data-testid="estimate">${est.totalUsd.toFixed(2)}</span>
@@ -242,11 +242,11 @@ export function BookWizard({ child, themes, defaultReadingLevel, estimates, stor
             ))}
           </ul>
           <p className="mt-1 text-xs text-[color:var(--muted)]">
-            High-side estimate. With a real image provider (Phase 2) this book would be about ${est.withRealImagesUsd.toFixed(2)}.
+            High-side estimate. With a real image provider this book would be about ${est.withRealImagesUsd.toFixed(2)}.
             {storyProvider === "mock" && " Stories are written by the offline mock until an Anthropic key is added."}
           </p>
         </div>
-        <button disabled={!theme || pending} data-testid="create-book" className="rounded-full bg-berry px-6 py-3 font-semibold text-white shadow disabled:opacity-50">
+        <button disabled={!theme || pending} data-testid="create-book" className="btn btn-primary btn-lg">
           {pending ? "Starting..." : "Make my book ✨"}
         </button>
       </section>

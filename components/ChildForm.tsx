@@ -20,7 +20,7 @@ export interface ChildFormValues {
   lesson: string;
 }
 
-const input = "mt-1 w-full rounded-xl border border-[color:var(--line)] bg-white px-3 py-2.5 text-base outline-none focus:border-berry focus:ring-2 focus:ring-violet-200";
+const input = "mt-1 w-full rounded-xl border border-[color:var(--line)] bg-white px-3 py-2.5 text-base outline-none focus:border-cobalt focus:ring-2 focus:ring-sky";
 
 function Field({ label, hint, error, children }: { label: string; hint?: string; error?: string; children: React.ReactNode }) {
   return (
@@ -53,8 +53,8 @@ export function ChildForm({ initial }: { initial: ChildFormValues }) {
         </div>
       )}
 
-      <fieldset className="grid gap-4 rounded-3xl bg-white p-5 ring-1 ring-[color:var(--line)] sm:grid-cols-2">
-        <legend className="px-1 font-display text-lg font-semibold">About your child</legend>
+      <fieldset className="grid gap-4 rounded-xl bg-white p-5 ring-1 ring-[color:var(--line)] sm:grid-cols-2">
+        <legend className="px-1 font-display text-lg font-medium">About your child</legend>
         <Field label="First name" error={errors.firstName}>
           <input name="firstName" required defaultValue={initial.firstName} className={input} autoComplete="off" />
         </Field>
@@ -72,8 +72,8 @@ export function ChildForm({ initial }: { initial: ChildFormValues }) {
               ["she", "she / her"],
               ["they", "they / them"],
             ].map(([v, l]) => (
-              <label key={v} className="flex cursor-pointer items-center gap-2 rounded-full bg-cream px-3 py-2 ring-1 ring-[color:var(--line)] has-[:checked]:bg-violet-100 has-[:checked]:ring-berry">
-                <input type="radio" name="pronouns" value={v} defaultChecked={initial.pronouns === v} required className="accent-[color:var(--color-berry)]" />
+              <label key={v} className="flex cursor-pointer items-center gap-2 rounded-md bg-cream px-3 py-2 ring-1 ring-[color:var(--line)] has-[:checked]:bg-sky has-[:checked]:ring-cobalt">
+                <input type="radio" name="pronouns" value={v} defaultChecked={initial.pronouns === v} required className="accent-[color:var(--color-cobalt)]" />
                 {l}
               </label>
             ))}
@@ -82,8 +82,8 @@ export function ChildForm({ initial }: { initial: ChildFormValues }) {
         </div>
       </fieldset>
 
-      <fieldset className="grid gap-4 rounded-3xl bg-white p-5 ring-1 ring-[color:var(--line)] sm:grid-cols-2">
-        <legend className="px-1 font-display text-lg font-semibold">Favorite things</legend>
+      <fieldset className="grid gap-4 rounded-xl bg-white p-5 ring-1 ring-[color:var(--line)] sm:grid-cols-2">
+        <legend className="px-1 font-display text-lg font-medium">Favorite things</legend>
         <p className="text-sm text-[color:var(--muted)] sm:col-span-2">Separate with commas. These get woven into the story.</p>
         <Field label="Colors" error={errors["favorites.colors"]}>
           <input name="colors" defaultValue={initial.colors} placeholder="purple, gold" className={input} />
@@ -99,8 +99,8 @@ export function ChildForm({ initial }: { initial: ChildFormValues }) {
         </Field>
       </fieldset>
 
-      <fieldset className="grid gap-4 rounded-3xl bg-white p-5 ring-1 ring-[color:var(--line)] sm:grid-cols-2">
-        <legend className="px-1 font-display text-lg font-semibold">Pets, friends and a lesson</legend>
+      <fieldset className="grid gap-4 rounded-xl bg-white p-5 ring-1 ring-[color:var(--line)] sm:grid-cols-2">
+        <legend className="px-1 font-display text-lg font-medium">Pets, friends and a lesson</legend>
         <Field label="Pet's name" hint="optional" error={errors.petName}>
           <input name="petName" defaultValue={initial.petName} className={input} />
         </Field>
@@ -124,7 +124,7 @@ export function ChildForm({ initial }: { initial: ChildFormValues }) {
         </Field>
       </fieldset>
 
-      <button disabled={pending} className="rounded-full bg-berry px-6 py-3 font-semibold text-white shadow disabled:opacity-60">
+      <button disabled={pending} className="btn btn-primary btn-lg">
         {pending ? "Saving..." : initial.id ? "Save changes" : "Save child"}
       </button>
     </form>

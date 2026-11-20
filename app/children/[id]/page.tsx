@@ -30,21 +30,21 @@ export default async function ChildPage({ params, searchParams }: { params: Prom
   return (
     <div className="space-y-8">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="font-display text-3xl font-semibold">{child.nickname || child.firstName}</h1>
+        <h1 className="font-display text-3xl font-medium">{child.nickname || child.firstName}</h1>
         <div className="flex gap-2">
-          <Link href={`/children/${child.id}/edit`} className="rounded-full bg-white px-4 py-2 font-semibold ring-1 ring-[color:var(--line)]">
+          <Link href={`/children/${child.id}/edit`} className="btn btn-secondary">
             Edit
           </Link>
-          <Link href={`/children/${child.id}/character`} className="rounded-full bg-white px-4 py-2 font-semibold ring-1 ring-[color:var(--line)]">
+          <Link href={`/children/${child.id}/character`} className="btn btn-secondary">
             Photos &amp; character
           </Link>
-          <Link href={`/books/new?childId=${child.id}`} className="rounded-full bg-berry px-4 py-2 font-semibold text-white">
+          <Link href={`/books/new?childId=${child.id}`} className="btn btn-primary">
             New book
           </Link>
         </div>
       </div>
 
-      <dl className="grid gap-3 rounded-3xl bg-white p-5 ring-1 ring-[color:var(--line)] sm:grid-cols-3">
+      <dl className="grid gap-3 rounded-xl bg-white p-5 ring-1 ring-[color:var(--line)] sm:grid-cols-3">
         {facts
           .filter(([, v]) => v)
           .map(([k, v]) => (
@@ -56,12 +56,12 @@ export default async function ChildPage({ params, searchParams }: { params: Prom
       </dl>
 
       <section>
-        <h2 className="font-display text-xl font-semibold">Books</h2>
+        <h2 className="font-display text-xl font-medium">Books</h2>
         <ul className="mt-3 space-y-2">
           {child.books.length === 0 && <li className="text-[color:var(--muted)]">No books yet.</li>}
           {child.books.map((b) => (
             <li key={b.id}>
-              <Link href={`/books/${b.id}`} className="block rounded-xl bg-white px-4 py-3 ring-1 ring-[color:var(--line)] hover:bg-violet-50">
+              <Link href={`/books/${b.id}`} className="block rounded-xl bg-white px-4 py-3 ring-1 ring-[color:var(--line)] hover:bg-tint">
                 {b.title ?? "New story"} <span className="text-sm text-[color:var(--muted)]">· {b.status}</span>
               </Link>
             </li>
@@ -69,15 +69,15 @@ export default async function ChildPage({ params, searchParams }: { params: Prom
         </ul>
       </section>
 
-      <section className="rounded-3xl bg-red-50 p-5 ring-1 ring-red-200">
-        <h2 className="font-display text-xl font-semibold text-red-900">Delete {child.firstName} and everything about them</h2>
+      <section className="rounded-xl bg-red-50 p-5 ring-1 ring-red-200">
+        <h2 className="font-display text-xl font-medium text-red-900">Delete {child.firstName} and everything about them</h2>
         <p className="mt-1 text-sm text-red-900/80">
           This permanently removes this profile, all photos, character art, books and pages from storage and the database. It cannot be undone.
         </p>
         <form action={deleteChildAction} className="mt-4 flex flex-col gap-2 sm:flex-row">
           <input type="hidden" name="id" value={child.id} />
           <input name="confirmName" placeholder={`Type "${child.firstName}" to confirm`} className="rounded-xl border border-red-200 bg-white px-3 py-2" autoComplete="off" />
-          <button className="rounded-full bg-red-700 px-5 py-2 font-semibold text-white">Delete everything</button>
+          <button className="btn btn-danger">Delete everything</button>
         </form>
         {deleteError && <p className="mt-2 text-sm text-red-800">The name didn&apos;t match, so nothing was deleted.</p>}
       </section>

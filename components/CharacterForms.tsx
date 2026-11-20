@@ -5,7 +5,7 @@ import { saveBibleAction, startSheetAction, uploadPhotosAction } from "@/app/act
 import { ART_STYLES, ART_STYLE_LABELS } from "@/lib/schemas/theme";
 import type { CharacterBible } from "@/lib/schemas/story";
 
-const input = "mt-1 w-full rounded-xl border border-[color:var(--line)] bg-white px-3 py-2.5 outline-none focus:border-berry focus:ring-2 focus:ring-violet-200";
+const input = "mt-1 w-full rounded-xl border border-[color:var(--line)] bg-white px-3 py-2.5 outline-none focus:border-cobalt focus:ring-2 focus:ring-sky";
 
 function submitKeeping(action: (fd: FormData) => void) {
   return (e: React.FormEvent<HTMLFormElement>) => {
@@ -27,15 +27,15 @@ export function PhotoUpload({ childId, consentGiven, remaining }: { childId: str
         name="photos"
         multiple
         accept="image/jpeg,image/png,image/heic,image/heif,.heic,.heif"
-        className="block w-full text-sm file:mr-3 file:rounded-full file:border-0 file:bg-violet-100 file:px-4 file:py-2 file:font-semibold file:text-berry"
+        className="block w-full text-sm file:mr-3 file:rounded-md file:border-0 file:bg-sky file:px-4 file:py-2 file:text-xs file:font-semibold file:uppercase file:tracking-wider file:text-navy"
       />
       {!consentGiven && (
         <label className="flex items-start gap-3 text-sm">
-          <input type="checkbox" name="consent" required className="mt-0.5 size-5 accent-[color:var(--color-berry)]" />
+          <input type="checkbox" name="consent" required className="mt-0.5 size-5 accent-[color:var(--color-cobalt)]" />
           <span>I am this child&apos;s parent or legal guardian, or I have their permission to upload these photos.</span>
         </label>
       )}
-      <button disabled={pending} className="rounded-full bg-berry px-5 py-2 font-semibold text-white disabled:opacity-60">
+      <button disabled={pending} className="btn btn-primary">
         {pending ? "Checking photos..." : `Upload (up to ${remaining})`}
       </button>
       {state?.results.map((r, i) => (
@@ -75,7 +75,7 @@ export function StartSheetForm({ childId, defaultStyle, cost, rounds, maxRounds,
       </label>
       <div className="flex flex-col gap-2 sm:col-span-2 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-[color:var(--muted)]">We draw 3 options. About ${cost.toFixed(2)} per set.</p>
-        <button disabled={pending || disabled} data-testid="start-sheet" className="rounded-full bg-berry px-5 py-2.5 font-semibold text-white disabled:opacity-50">
+        <button disabled={pending || disabled} data-testid="start-sheet" className="btn btn-primary">
           {pending ? "Starting..." : "Draw character options"}
         </button>
       </div>
@@ -112,7 +112,7 @@ export function BibleForm({ childId, sheetId, bible }: { childId: string; sheetI
         </label>
       ))}
       <div className="flex items-center gap-3 sm:col-span-2">
-        <button disabled={pending} className="rounded-full bg-berry px-5 py-2 font-semibold text-white disabled:opacity-60">
+        <button disabled={pending} className="btn btn-primary">
           {pending ? "Saving..." : "Save details"}
         </button>
         {state?.message && <span className={`text-sm ${state.ok ? "text-emerald-700" : "text-red-700"}`}>{state.message}</span>}

@@ -14,20 +14,20 @@ export default async function EditTheme({ params, searchParams }: { params: Prom
   const sp = await searchParams;
   return (
     <div className="space-y-6">
-      <Link href="/themes" className="text-sm font-semibold text-berry">
+      <Link href="/themes" className="text-sm font-semibold text-cobalt">
         ← Themes
       </Link>
-      <h1 className="font-display text-3xl font-semibold">{theme.config.name}</h1>
+      <h1 className="font-display text-3xl font-medium">{theme.config.name}</h1>
       {sp.drafted && <p className="rounded-xl bg-emerald-50 px-4 py-3 text-emerald-900 ring-1 ring-emerald-200">Here&apos;s your draft. Change anything you like, then save.</p>}
       <ThemeEditor themeId={theme.id} config={theme.config} />
       <div className="flex flex-wrap gap-3 border-t border-[color:var(--line)] pt-6 text-sm font-semibold">
         <form action={duplicateThemeAction}>
           <input type="hidden" name="themeId" value={theme.id} />
-          <button className="rounded-full bg-cream px-4 py-2 ring-1 ring-[color:var(--line)]">Duplicate</button>
+          <button className="btn btn-secondary">Duplicate</button>
         </form>
         <form action={deleteThemeAction}>
           <input type="hidden" name="themeId" value={theme.id} />
-          <button className="rounded-full bg-red-50 px-4 py-2 text-red-800 ring-1 ring-red-200">Delete theme</button>
+          <button className="btn btn-danger-outline">Delete theme</button>
         </form>
         {sp.deleteError && <span className="self-center text-red-700">Books use this theme, so it can&apos;t be deleted.</span>}
       </div>

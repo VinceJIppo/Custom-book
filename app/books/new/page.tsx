@@ -17,7 +17,7 @@ export default async function NewBook({ searchParams }: { searchParams: Promise<
   if (!childId) {
     return (
       <p>
-        Pick a child first from <Link href="/" className="text-berry underline">your dashboard</Link>.
+        Pick a child first from <Link href="/" className="text-cobalt underline">your dashboard</Link>.
       </p>
     );
   }
@@ -29,7 +29,7 @@ export default async function NewBook({ searchParams }: { searchParams: Promise<
 
   return (
     <div className="space-y-6">
-      <h1 className="font-display text-3xl font-semibold">A new book for {child.nickname || child.firstName}</h1>
+      <h1 className="font-display text-3xl font-medium">A new book for {child.nickname || child.firstName}</h1>
       <BookWizard
         child={{ id: child.id, name: child.nickname || child.firstName, age: child.age, petName: child.petName, friend: friends[0] ?? null, lesson: child.lesson }}
         themes={themes.map((t) => ({

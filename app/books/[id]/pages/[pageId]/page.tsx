@@ -33,32 +33,32 @@ export default async function EditPage({ params }: { params: Promise<{ id: strin
     <div className="space-y-6">
       <AutoRefresh active={pending} />
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <Link href={`/books/${book.id}/edit`} className="text-sm font-semibold text-berry">
+        <Link href={`/books/${book.id}/edit`} className="text-sm font-semibold text-cobalt">
           ← All pages
         </Link>
         <div className="flex gap-2 text-sm font-semibold">
           {prev && (
-            <Link href={`/books/${book.id}/pages/${prev.id}`} className="rounded-full bg-white px-3 py-1 ring-1 ring-[color:var(--line)]">
+            <Link href={`/books/${book.id}/pages/${prev.id}`} className="btn btn-secondary btn-sm">
               ◀ Page {prev.storyNumber}
             </Link>
           )}
           {next && (
-            <Link href={`/books/${book.id}/pages/${next.id}`} className="rounded-full bg-white px-3 py-1 ring-1 ring-[color:var(--line)]">
+            <Link href={`/books/${book.id}/pages/${next.id}`} className="btn btn-secondary btn-sm">
               Page {next.storyNumber} ▶
             </Link>
           )}
         </div>
       </div>
-      <h1 className="font-display text-3xl font-semibold">{page.kind === "story" ? `Page ${page.storyNumber}` : page.kind}</h1>
+      <h1 className="font-display text-3xl font-medium">{page.kind === "story" ? `Page ${page.storyNumber}` : page.kind}</h1>
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
         <div className="space-y-3">
-          <div className={`grid gap-0 overflow-hidden rounded-2xl shadow ring-1 ring-black/10 ${physical.length > 1 ? "grid-cols-2" : ""}`}>
+          <div className={`grid gap-0 overflow-hidden rounded-lg ring-1 ring-black/10 ${physical.length > 1 ? "grid-cols-2" : ""}`}>
             {physical.map((p) => (
               <BookPage key={p.number} page={p} book={view} mode="screen" />
             ))}
           </div>
-          {pending && <p className="animate-pulse text-sm text-berry">Drawing a new picture for this page...</p>}
+          {pending && <p className="animate-pulse text-sm text-cobalt">Drawing a new picture for this page...</p>}
           {!pending && lastJob?.status === "failed" && <p className="text-sm text-red-700">The last picture change didn&apos;t work: {lastJob.error}. Your previous picture is kept.</p>}
           {page.imageStatus === "flagged" && (
             <div className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900 ring-1 ring-amber-200" data-testid="flagged">
@@ -68,7 +68,7 @@ export default async function EditPage({ params }: { params: Promise<{ id: strin
               <form action={acceptFlaggedAction} className="mt-2">
                 <input type="hidden" name="bookId" value={book.id} />
                 <input type="hidden" name="pageId" value={page.id} />
-                <button className="rounded-full bg-white px-3 py-1 font-semibold ring-1 ring-amber-300">Looks fine, keep it</button>
+                <button className="btn btn-secondary btn-sm">Looks fine, keep it</button>
               </form>
             </div>
           )}
@@ -78,21 +78,21 @@ export default async function EditPage({ params }: { params: Promise<{ id: strin
         </div>
 
         <div className="space-y-6">
-          <section className="rounded-2xl bg-white p-4 ring-1 ring-[color:var(--line)]">
+          <section className="rounded-lg bg-white p-4 ring-1 ring-[color:var(--line)]">
             <TextEditor bookId={book.id} pageId={page.id} text={page.text} />
           </section>
           {page.kind === "story" && (
             <>
-              <section className="rounded-2xl bg-white p-4 ring-1 ring-[color:var(--line)]">
+              <section className="rounded-lg bg-white p-4 ring-1 ring-[color:var(--line)]">
                 <ArtEditor bookId={book.id} pageId={page.id} busy={pending} hasImage={!!page.imageKey} />
               </section>
-              <section className="rounded-2xl bg-white p-4 ring-1 ring-[color:var(--line)]">
+              <section className="rounded-lg bg-white p-4 ring-1 ring-[color:var(--line)]">
                 <LayoutEditor bookId={book.id} pageId={page.id} layout={page.layout} textZone={page.textZone} />
               </section>
             </>
           )}
           {versions.length > 0 && (
-            <section className="rounded-2xl bg-white p-4 ring-1 ring-[color:var(--line)]">
+            <section className="rounded-lg bg-white p-4 ring-1 ring-[color:var(--line)]">
               <p className="font-semibold">History</p>
               <ul className="mt-2 space-y-1 text-sm" data-testid="history">
                 {versions.map((v) => (
@@ -104,7 +104,7 @@ export default async function EditPage({ params }: { params: Promise<{ id: strin
                       <input type="hidden" name="bookId" value={book.id} />
                       <input type="hidden" name="pageId" value={page.id} />
                       <input type="hidden" name="versionId" value={v.id} />
-                      <button className="rounded-full bg-cream px-3 py-0.5 font-semibold ring-1 ring-[color:var(--line)]">Restore</button>
+                      <button className="btn btn-secondary btn-sm">Restore</button>
                     </form>
                   </li>
                 ))}

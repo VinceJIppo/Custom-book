@@ -5,6 +5,13 @@ import "@fontsource/andika/400-italic.css";
 import "@fontsource/andika/700.css";
 import "@fontsource/fredoka/500.css";
 import "@fontsource/fredoka/600.css";
+import "@fontsource/fraunces/400.css";
+import "@fontsource/fraunces/500.css";
+import "@fontsource/fraunces/600.css";
+import "@fontsource/dm-sans/400.css";
+import "@fontsource/dm-sans/500.css";
+import "@fontsource/dm-sans/600.css";
+import "@fontsource/dm-sans/700.css";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -17,26 +24,42 @@ export const viewport: Viewport = { width: "device-width", initialScale: 1 };
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className="min-h-screen font-sans antialiased">
-        <header className="border-b border-[color:var(--line)] bg-white/80 backdrop-blur">
-          <nav className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-            <Link href="/" className="font-display text-xl font-semibold text-berry">
-              ★ StoryStar
+      <body className="flex min-h-screen flex-col font-sans text-[15px] antialiased">
+        <div className="bg-coral px-4 py-2 text-center text-xs font-medium tracking-wide text-white">
+          Personalized picture books where your child is the hero
+        </div>
+        <header className="bg-white">
+          <nav className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-8 gap-y-2 px-5 py-5">
+            <Link href="/" className="font-display text-[1.7rem] font-medium leading-none tracking-tight" aria-label="StoryStar home">
+              <span className="text-coral">Story</span>
+              <span className="mx-0.5 text-sun">★</span>
+              <span className="text-cobalt">Star</span>
             </Link>
-            <div className="flex gap-4 text-sm font-semibold">
-              <Link href="/" className="hover:text-berry">
+            <div className="flex gap-6 text-[0.72rem] font-semibold uppercase tracking-[0.12em] text-cobalt">
+              <Link href="/" className="hover:text-coral">
                 My books
               </Link>
-              <Link href="/themes" className="hover:text-berry">
+              <Link href="/themes" className="hover:text-coral">
                 Themes
               </Link>
-              <Link href="/children/new" className="hover:text-berry">
+              <Link href="/children/new" className="hover:text-coral">
                 Add a child
               </Link>
             </div>
           </nav>
+          <div className="stripe-band" aria-hidden />
         </header>
-        <main className="mx-auto max-w-5xl px-4 py-6 sm:py-10">{children}</main>
+        <main className="mx-auto w-full max-w-6xl flex-1 px-5 py-8 sm:py-12">{children}</main>
+        <footer className="mt-12 bg-sky">
+          <div className="mx-auto flex max-w-6xl flex-col gap-2 px-5 py-8 text-sm text-navy sm:flex-row sm:items-center sm:justify-between">
+            <span className="font-display text-lg">
+              <span className="text-coral">Story</span>
+              <span className="mx-0.5 text-sun">★</span>
+              <span className="text-cobalt">Star</span>
+            </span>
+            <span className="eyebrow text-navy/70">Made for little readers and the grown-ups who love them</span>
+          </div>
+        </footer>
       </body>
     </html>
   );

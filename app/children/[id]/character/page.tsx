@@ -54,10 +54,10 @@ export default async function CharacterPage({ params, searchParams }: { params: 
     <div className="space-y-8">
       <AutoRefresh active={busy} />
       <div>
-        <Link href={`/children/${child.id}`} className="text-sm font-semibold text-berry">
+        <Link href={`/children/${child.id}`} className="text-sm font-semibold text-cobalt">
           ← {name}
         </Link>
-        <h1 className="mt-1 font-display text-3xl font-semibold">{name}&apos;s character</h1>
+        <h1 className="mt-1 font-display text-3xl font-medium">{name}&apos;s character</h1>
         <p className="mt-1 text-[color:var(--muted)]">
           We turn a few photos into an illustrated character, then draw that same character on every page.
           {providers.image === "mock" && " Image provider: mock (placeholder art). Add GEMINI_API_KEY to draw real characters."}
@@ -70,19 +70,19 @@ export default async function CharacterPage({ params, searchParams }: { params: 
         </p>
       )}
 
-      <section className="rounded-3xl bg-white p-5 ring-1 ring-[color:var(--line)]">
-        <h2 className="font-display text-xl font-semibold">1. Photos</h2>
+      <section className="rounded-xl bg-white p-5 ring-1 ring-[color:var(--line)]">
+        <h2 className="font-display text-xl font-medium">1. Photos</h2>
         <div className="mt-3 grid gap-5 md:grid-cols-2">
           <div className="space-y-4">
             {photos.length > 0 && (
               <ul className="flex flex-wrap gap-3">
                 {photos.map((p) => (
                   <li key={p.id} className="relative">
-                    <Img src={p.url} alt="Uploaded photo" className="size-28 rounded-2xl object-cover ring-1 ring-black/10" />
+                    <Img src={p.url} alt="Uploaded photo" className="size-28 rounded-lg object-cover ring-1 ring-black/10" />
                     <form action={deletePhotoAction}>
                       <input type="hidden" name="photoId" value={p.id} />
                       <input type="hidden" name="childId" value={child.id} />
-                      <button className="absolute -right-2 -top-2 rounded-full bg-white px-2 text-sm font-bold shadow ring-1 ring-black/10" aria-label="Remove photo">
+                      <button className="absolute -right-2 -top-2 rounded-full bg-white px-2 text-sm font-bold ring-1 ring-black/10" aria-label="Remove photo">
                         ×
                       </button>
                     </form>
@@ -93,12 +93,12 @@ export default async function CharacterPage({ params, searchParams }: { params: 
             <PhotoUpload childId={child.id} consentGiven={!!child.guardianConsentAt} remaining={MAX_PHOTOS - photos.length} />
             <form action={setDeleteOriginalsAction} className="flex items-center gap-2 text-sm">
               <input type="hidden" name="childId" value={child.id} />
-              <input type="checkbox" name="value" defaultChecked={child.deleteOriginalsAfterApproval} className="size-4 accent-[color:var(--color-berry)]" />
+              <input type="checkbox" name="value" defaultChecked={child.deleteOriginalsAfterApproval} className="size-4 accent-[color:var(--color-cobalt)]" />
               <span>Delete the original photos once I approve a character</span>
-              <button className="ml-1 rounded-full bg-cream px-3 py-1 font-semibold ring-1 ring-[color:var(--line)]">Save</button>
+              <button className="btn btn-secondary btn-sm ml-1">Save</button>
             </form>
           </div>
-          <div className="rounded-2xl bg-cream p-4 text-sm">
+          <div className="rounded-lg bg-cream p-4 text-sm">
             <p className="font-semibold">Photo tips</p>
             <ul className="mt-2 list-disc space-y-1 pl-5">
               {PHOTO_TIPS.map((t) => (
@@ -112,8 +112,8 @@ export default async function CharacterPage({ params, searchParams }: { params: 
         </div>
       </section>
 
-      <section className="rounded-3xl bg-white p-5 ring-1 ring-[color:var(--line)]">
-        <h2 className="font-display text-xl font-semibold">2. Draw the character</h2>
+      <section className="rounded-xl bg-white p-5 ring-1 ring-[color:var(--line)]">
+        <h2 className="font-display text-xl font-medium">2. Draw the character</h2>
         <div className="mt-3">
           <StartSheetForm
             childId={child.id}
@@ -138,12 +138,12 @@ export default async function CharacterPage({ params, searchParams }: { params: 
               {s.status === "draft" && (
                 <div className="mt-3 grid gap-4 sm:grid-cols-3">
                   {s.urls.map((u, i) => (
-                    <form key={u} action={approveSheetAction} className="overflow-hidden rounded-2xl bg-cream ring-1 ring-[color:var(--line)]">
+                    <form key={u} action={approveSheetAction} className="overflow-hidden rounded-lg bg-cream ring-1 ring-[color:var(--line)]">
                       <input type="hidden" name="sheetId" value={s.id} />
                       <input type="hidden" name="childId" value={child.id} />
                       <input type="hidden" name="index" value={i} />
                       <Img src={u} alt={`Character option ${i + 1}`} className="aspect-[3/2] w-full object-cover" />
-                      <button className="w-full bg-berry py-2 font-semibold text-white hover:bg-berry-dark" data-testid={`approve-${i}`}>
+                      <button className="w-full bg-cobalt py-2 font-semibold text-white hover:bg-cobalt-dark" data-testid={`approve-${i}`}>
                         Use option {i + 1}
                       </button>
                     </form>
@@ -155,14 +155,14 @@ export default async function CharacterPage({ params, searchParams }: { params: 
         </div>
       </section>
 
-      <section className="rounded-3xl bg-white p-5 ring-1 ring-[color:var(--line)]">
-        <h2 className="font-display text-xl font-semibold">3. Approved characters</h2>
+      <section className="rounded-xl bg-white p-5 ring-1 ring-[color:var(--line)]">
+        <h2 className="font-display text-xl font-medium">3. Approved characters</h2>
         {approved.length === 0 && <p className="mt-2 text-[color:var(--muted)]">None yet. Pick an option above.</p>}
         <div className="mt-3 space-y-8">
           {approved.map((s) => (
             <div key={s.id} className="grid gap-5 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]" data-testid="approved-sheet">
               <div>
-                {s.selectedIndex != null && s.urls[s.selectedIndex] && <Img src={s.urls[s.selectedIndex]} alt="Approved character" className="w-full rounded-2xl ring-1 ring-black/10" />}
+                {s.selectedIndex != null && s.urls[s.selectedIndex] && <Img src={s.urls[s.selectedIndex]} alt="Approved character" className="w-full rounded-lg ring-1 ring-black/10" />}
                 <p className="mt-2 font-semibold">{ART_STYLE_LABELS[s.style as ArtStyle]}</p>
               </div>
               <div>
@@ -182,7 +182,7 @@ export default async function CharacterPage({ params, searchParams }: { params: 
           ))}
         </div>
         {approved.length > 0 && (
-          <Link href={`/books/new?childId=${child.id}`} className="mt-6 inline-block rounded-full bg-star px-5 py-2.5 font-semibold text-ink">
+          <Link href={`/books/new?childId=${child.id}`} className="btn btn-sky mt-6">
             Make a book with {name} →
           </Link>
         )}

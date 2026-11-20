@@ -44,7 +44,7 @@ export function BookLive({ bookId, initial }: { bookId: string; initial: LiveSta
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-1">
-        <h1 className="font-display text-3xl font-semibold" data-testid="book-title">
+        <h1 className="font-display text-3xl font-medium" data-testid="book-title">
           {state.title ?? "Writing your story..."}
         </h1>
         {state.view && (
@@ -56,11 +56,11 @@ export function BookLive({ bookId, initial }: { bookId: string; initial: LiveSta
             {!generating && (
               <>
                 {" · "}
-                <Link href={`/books/${bookId}/edit`} className="font-semibold text-berry underline" data-testid="edit-pages">
+                <Link href={`/books/${bookId}/edit`} className="font-semibold text-cobalt underline" data-testid="edit-pages">
                   Edit pages
                 </Link>
                 {" · "}
-                <Link href={`/books/${bookId}/print`} className="font-semibold text-berry underline" data-testid="print-files">
+                <Link href={`/books/${bookId}/print`} className="font-semibold text-cobalt underline" data-testid="print-files">
                   Print files
                 </Link>
               </>
@@ -70,9 +70,9 @@ export function BookLive({ bookId, initial }: { bookId: string; initial: LiveSta
       </div>
 
       {(generating || state.status === "failed" || p.failedJobs > 0) && (
-        <div className="rounded-3xl bg-white p-5 ring-1 ring-[color:var(--line)]" data-testid="progress">
-          <div className="h-2 overflow-hidden rounded-full bg-violet-100">
-            <div className="h-full rounded-full bg-berry transition-all duration-700" style={{ width: `${p.percent}%` }} />
+        <div className="rounded-xl bg-white p-5 ring-1 ring-[color:var(--line)]" data-testid="progress">
+          <div className="h-2 overflow-hidden rounded-full bg-sky">
+            <div className="h-full rounded-full bg-cobalt transition-all duration-700" style={{ width: `${p.percent}%` }} />
           </div>
           <ul className="mt-4 grid gap-2 sm:grid-cols-2">
             {p.steps.map((s) => (
@@ -89,7 +89,7 @@ export function BookLive({ bookId, initial }: { bookId: string; initial: LiveSta
             <form action={retryBookAction} className="mt-4 flex items-center gap-3">
               <input type="hidden" name="bookId" value={bookId} />
               <p className="text-sm text-red-800">Something didn&apos;t finish. Only the missing parts will be redone.</p>
-              <button className="rounded-full bg-berry px-4 py-2 text-sm font-semibold text-white">Try again</button>
+              <button className="btn btn-primary btn-sm">Try again</button>
             </form>
           )}
           <p className="mt-3 text-xs text-[color:var(--muted)]">You can leave this page; the book keeps going in the background. Spent so far: ${p.costUsd.toFixed(4)}</p>

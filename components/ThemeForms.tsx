@@ -4,7 +4,7 @@ import { startTransition, useActionState } from "react";
 import { draftThemeAction, saveThemeAction } from "@/app/actions";
 import { ART_STYLES, ART_STYLE_LABELS, type ThemeConfig } from "@/lib/schemas/theme";
 
-const input = "mt-1 w-full rounded-xl border border-[color:var(--line)] bg-white px-3 py-2.5 outline-none focus:border-berry focus:ring-2 focus:ring-violet-200";
+const input = "mt-1 w-full rounded-xl border border-[color:var(--line)] bg-white px-3 py-2.5 outline-none focus:border-cobalt focus:ring-2 focus:ring-sky";
 
 function keep(action: (fd: FormData) => void) {
   return (e: React.FormEvent<HTMLFormElement>) => {
@@ -22,7 +22,7 @@ function FieldError({ errors, k }: { errors: Record<string, string>; k: string }
 export function DraftThemeForm() {
   const [state, action, pending] = useActionState(draftThemeAction, null);
   return (
-    <form onSubmit={keep(action)} className="space-y-4 rounded-3xl bg-white p-5 ring-1 ring-[color:var(--line)]">
+    <form onSubmit={keep(action)} className="space-y-4 rounded-xl bg-white p-5 ring-1 ring-[color:var(--line)]">
       <label className="block">
         <span className="font-semibold">What does your child love?</span>
         <textarea
@@ -44,7 +44,7 @@ export function DraftThemeForm() {
           {state.message}
         </p>
       )}
-      <button disabled={pending} className="rounded-full bg-berry px-6 py-3 font-semibold text-white disabled:opacity-60" data-testid="draft-theme">
+      <button disabled={pending} className="btn btn-primary btn-lg" data-testid="draft-theme">
         {pending ? "Dreaming up a world..." : "Draft my theme ✨"}
       </button>
     </form>
@@ -58,7 +58,7 @@ export function ThemeEditor({ themeId, config }: { themeId: string; config: Them
   return (
     <form onSubmit={keep(action)} className="space-y-6" data-testid="theme-editor">
       <input type="hidden" name="themeId" value={themeId} />
-      <section className="grid gap-4 rounded-3xl bg-white p-5 ring-1 ring-[color:var(--line)] sm:grid-cols-2">
+      <section className="grid gap-4 rounded-xl bg-white p-5 ring-1 ring-[color:var(--line)] sm:grid-cols-2">
         <label className="block">
           <span className="font-semibold">Name</span>
           <input name="name" defaultValue={config.name} required maxLength={60} className={input} />
@@ -91,8 +91,8 @@ export function ThemeEditor({ themeId, config }: { themeId: string; config: Them
         <FieldError errors={err} k="ageRange" />
       </section>
 
-      <section className="rounded-3xl bg-white p-5 ring-1 ring-[color:var(--line)]">
-        <p className="font-display text-lg font-semibold">Supporting cast</p>
+      <section className="rounded-xl bg-white p-5 ring-1 ring-[color:var(--line)]">
+        <p className="font-display text-lg font-medium">Supporting cast</p>
         <p className="text-sm text-[color:var(--muted)]">Original characters only. &quot;Look&quot; is what the illustrator draws.</p>
         <div className="mt-3 space-y-3">
           {cast.map((c, i) => (
@@ -106,7 +106,7 @@ export function ThemeEditor({ themeId, config }: { themeId: string; config: Them
         <FieldError errors={err} k="supportingCast" />
       </section>
 
-      <section className="grid gap-4 rounded-3xl bg-white p-5 ring-1 ring-[color:var(--line)] sm:grid-cols-2">
+      <section className="grid gap-4 rounded-xl bg-white p-5 ring-1 ring-[color:var(--line)] sm:grid-cols-2">
         <label className="block">
           <span className="font-semibold">Story beats</span> <span className="text-sm text-[color:var(--muted)]">one per line, in order</span>
           <textarea name="storyBeats" defaultValue={config.storyBeats.join("\n")} rows={8} className={input} />
@@ -123,7 +123,7 @@ export function ThemeEditor({ themeId, config }: { themeId: string; config: Them
         </label>
       </section>
 
-      <section className="grid gap-4 rounded-3xl bg-white p-5 ring-1 ring-[color:var(--line)] sm:grid-cols-2">
+      <section className="grid gap-4 rounded-xl bg-white p-5 ring-1 ring-[color:var(--line)] sm:grid-cols-2">
         <label className="block">
           <span className="font-semibold">Default art style</span>
           <select name="defaultStyle" defaultValue={config.artDirection.defaultStyle} className={input}>
@@ -150,7 +150,7 @@ export function ThemeEditor({ themeId, config }: { themeId: string; config: Them
       </section>
 
       <div className="flex flex-wrap items-center gap-3">
-        <button disabled={pending} className="rounded-full bg-berry px-6 py-3 font-semibold text-white disabled:opacity-60" data-testid="save-theme">
+        <button disabled={pending} className="btn btn-primary btn-lg" data-testid="save-theme">
           {pending ? "Saving..." : "Save theme"}
         </button>
         {state?.message && (
