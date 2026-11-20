@@ -1,0 +1,204 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Andika", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Fredoka", "Andika", ui-sans-serif, system-ui, sans-serif;
+  --color-ink: #2b2140;
+  --color-cream: #fffaf2;
+  --color-star: #ffb703;
+  --color-berry: #7b2cbf;
+  --color-berry-dark: #5a189a;
+}
+
+:root {
+  --bg: #fffaf2;
+  --fg: #2b2140;
+  --muted: #6b6280;
+  --card: #ffffff;
+  --line: #ece4f5;
+}
+
+html,
+body {
+  background: var(--bg);
+  color: var(--fg);
+}
+
+/* ---------- Book pages ----------
+ * .bk-page      the trimmed page as seen on screen (bleed clipped)
+ * .bk-bleed     the full bleed box; a size container, so 1 inch = 100cqw / bleed width
+ * .bk-content   sets --in, the length of one physical inch
+ */
+.bk-page {
+  position: relative;
+  width: 100%;
+  aspect-ratio: var(--tw) / var(--th);
+  overflow: hidden;
+  background: #fff;
+  color: #2b2140;
+  font-family: "Andika", ui-sans-serif, system-ui, sans-serif;
+  line-height: 1.35;
+}
+.bk-bleed {
+  position: absolute;
+  width: calc(100% * (var(--tw) + 2 * var(--b)) / var(--tw));
+  aspect-ratio: calc(var(--tw) + 2 * var(--b)) / calc(var(--th) + 2 * var(--b));
+  left: calc(-100% * var(--b) / var(--tw));
+  top: calc(-100% * var(--b) / var(--th));
+  container-type: inline-size;
+}
+.bk-content {
+  position: absolute;
+  inset: 0;
+  --in: calc(100cqw / (var(--tw) + 2 * var(--b)));
+  overflow: hidden;
+}
+.bk-page[data-mode="print"] {
+  width: calc((var(--tw) + 2 * var(--b)) * 1in);
+  aspect-ratio: calc(var(--tw) + 2 * var(--b)) / calc(var(--th) + 2 * var(--b));
+  break-after: page;
+}
+.bk-page[data-mode="print"] .bk-bleed {
+  width: 100%;
+  left: 0;
+  top: 0;
+}
+.bk-content > * {
+  position: absolute;
+}
+.bk-art {
+  object-fit: cover;
+  max-width: none;
+  max-height: none;
+  display: block;
+  user-select: none;
+}
+.bk-art-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: repeating-linear-gradient(45deg, #f1ecf8, #f1ecf8 12px, #e9e1f4 12px, #e9e1f4 24px);
+  color: #6b6280;
+  font-size: calc(var(--in) * 0.25);
+  text-align: center;
+}
+.bk-art-placeholder[data-status="pending"] span {
+  animation: bk-pulse 1.4s ease-in-out infinite;
+}
+.bk-art-placeholder[data-status="failed"] {
+  background: #fdecea;
+  color: #b3261e;
+}
+@keyframes bk-pulse {
+  50% {
+    opacity: 0.4;
+  }
+}
+.bk-text {
+  white-space: pre-wrap;
+}
+.bk-text-panel {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: calc(var(--in) * 0.18);
+  padding: calc(var(--in) * 0.16) calc(var(--in) * 0.22);
+  box-shadow: 0 calc(var(--in) * 0.03) calc(var(--in) * 0.12) rgba(0, 0, 0, 0.12);
+}
+.bk-text-center-v {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.bk-tint {
+  inset: 0;
+}
+.bk-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.bk-display {
+  font-family: "Fredoka", "Andika", ui-sans-serif, sans-serif;
+  font-weight: 600;
+  line-height: 1.1;
+}
+.bk-frame {
+  border: calc(var(--in) * 0.06) solid;
+  border-radius: calc(var(--in) * 0.3);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--in) * 0.4);
+  text-align: center;
+  padding: calc(var(--in) * 0.3);
+}
+.bk-frame-dashed {
+  border-style: dashed;
+  justify-content: flex-start;
+}
+.bk-name-line {
+  min-width: 70%;
+  border-bottom: calc(var(--in) * 0.03) solid;
+  padding-bottom: calc(var(--in) * 0.08);
+  font-family: "Fredoka", "Andika", sans-serif;
+}
+.bk-dedication {
+  font-style: italic;
+  margin-top: calc(var(--in) * 0.3);
+  max-width: 85%;
+}
+.bk-stars {
+  position: static;
+  margin-top: calc(var(--in) * 0.3);
+  letter-spacing: 0.3em;
+}
+.bk-center > *,
+.bk-frame > * {
+  position: static;
+}
+.bk-endpaper {
+  inset: 0;
+  background-color: var(--c1);
+  background-image: radial-gradient(circle at 25% 25%, rgba(255, 255, 255, 0.35) 0 calc(var(--in) * 0.08), transparent calc(var(--in) * 0.09)),
+    radial-gradient(circle at 75% 75%, var(--c2) 0 calc(var(--in) * 0.12), transparent calc(var(--in) * 0.13));
+  background-size: calc(var(--in) * 0.75) calc(var(--in) * 0.75);
+}
+.bk-cover-title {
+  text-align: center;
+  color: #fff;
+  text-shadow: 0 calc(var(--in) * 0.03) calc(var(--in) * 0.12) rgba(0, 0, 0, 0.55);
+  background: rgba(0, 0, 0, 0.18);
+  border-radius: calc(var(--in) * 0.25);
+  padding: calc(var(--in) * 0.2);
+}
+.bk-back {
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+.bk-folio {
+  right: calc(var(--in) * 0.35);
+  bottom: calc(var(--in) * 0.3);
+  font-size: calc(var(--in) * 0.14);
+  color: rgba(0, 0, 0, 0.35);
+}
+
+/* ---------- Flipbook ---------- */
+.flip-source {
+  position: absolute;
+  left: -99999px;
+  top: 0;
+  width: 600px;
+  visibility: hidden;
+}
+.flip-host .flip-page {
+  background: #fff;
+}
+.flip-stage:fullscreen {
+  background: #1b1530;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 2rem;
+}

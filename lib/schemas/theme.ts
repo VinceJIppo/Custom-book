@@ -1,0 +1,50 @@
+import { z } from "zod";
+
+export const ART_STYLES = [
+  "watercolor-storybook",
+  "bold-comic",
+  "soft-3d",
+  "paper-cutout",
+  "crayon",
+] as const;
+export const ArtStyleSchema = z.enum(ART_STYLES);
+export type ArtStyle = z.infer<typeof ArtStyleSchema>;
+
+export const ART_STYLE_LABELS: Record<ArtStyle, string> = {
+  "watercolor-storybook": "Watercolor storybook",
+  "bold-comic": "Bold comic",
+  "soft-3d": "Soft 3D animated",
+  "paper-cutout": "Paper cutout",
+  crayon: "Crayon",
+};
+
+const hexColor = z.string().regex(/^#[0-9a-fA-F]{6}$/, "Use a 6-digit hex color like #1E88E5");
+
+export const CastMemberSchema = z.object({
+  name: z.string().min(1).max(60),
+  role: z.string().min(1).max(80),
+  look: z.string().min(1).max(240),
+});
+
+export const ThemeConfigSchema = z
+  .object({
+    id: z.string().regex(/^[a-z0-9-]+$/, "lowercase letters, numbers and dashes only").min(2).max(60),
+    name: z.string().min(2).max(60),
+    ageRange: z.tuple([z.number().int().min(1).max(12), z.number().int().min(1).max(12)]),
+    pitch: z.string().min(10).max(400),
+    setting: z.string().min(10).max(400),
+    supportingCast: z.array(CastMemberSchema).min(1).max(6),
+    storyBeats: z.array(z.string().min(2).max(80)).min(4).max(12),
+    powerIdeas: z.string().max(300).optional(),
+    artDirection: z.object({
+      defaultStyle: ArtStyleSchema,
+      palette: z.array(hexColor).min(2).max(6),
+      mood: z.string().min(2).max(200),
+    }),
+    contentRules: z.array(z.string().min(2).max(160)).max(12),
+    genre: z.string().min(2).max(40).optional(),
+    licensed: z.boolean().default(false),
+  })
+  .refine((t) => t.ageRange[0] <= t.ageRange[1], { message: "ageRange must be [min, max]", path: ["ageRange"] });
+
+export type ThemeConfig = z.infer<typeof ThemeConfigSchema>;

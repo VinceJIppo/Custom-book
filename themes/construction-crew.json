@@ -1,0 +1,21 @@
+{
+  "id": "construction-crew",
+  "name": "Construction Crew",
+  "genre": "vehicles",
+  "ageRange": [2, 7],
+  "pitch": "The child becomes foreman for a day and runs the big machines to build a brand-new playground for the whole town.",
+  "setting": "Maple Junction, a friendly small town with an empty lot, a busy main street, and a hill perfect for a slide",
+  "supportingCast": [
+    { "name": "Digby", "role": "excavator", "look": "big yellow excavator with friendly headlight eyes and a scoop like a smile" },
+    { "name": "Rosie Rumble", "role": "crew chief", "look": "construction worker with an orange hard hat, curly red hair, and a clipboard" },
+    { "name": "Tumble", "role": "dump truck", "look": "small red dump truck who loves to make the beep-beep backing-up sound" }
+  ],
+  "storyBeats": ["hard hat morning", "the empty lot", "the plan", "digging in", "a muddy mix-up", "fixing it together", "grand opening", "tired and happy"],
+  "artDirection": {
+    "defaultStyle": "crayon",
+    "palette": ["#FBC02D", "#F4511E", "#6D4C41", "#90CAF9"],
+    "mood": "busy, cheerful, satisfying"
+  },
+  "contentRules": ["safety gear always on", "machines never crash into people", "cartoon peril only"],
+  "licensed": false
+}

@@ -1,0 +1,22 @@
+{
+  "id": "superhero-squad",
+  "name": "Superhero Squad",
+  "genre": "superheroes",
+  "ageRange": [3, 8],
+  "pitch": "The child joins The Brightside Brigade, a team of young heroes, and discovers a power of their own.",
+  "setting": "Sparkport, a bright harbor city of rooftop gardens, sky trams, and a lighthouse headquarters",
+  "supportingCast": [
+    { "name": "Zuzu Zoom", "role": "team leader", "look": "girl in a sky-blue suit who leaves rainbow trails when she runs" },
+    { "name": "Tinwhistle", "role": "robot mentor", "look": "round teal robot with a lantern head and a kind voice" },
+    { "name": "Pip", "role": "sidekick", "look": "small orange fox wearing a tiny green cape" }
+  ],
+  "storyBeats": ["ordinary morning", "call for help", "first try fails", "power discovered", "team-up", "big save", "celebration", "cozy ending"],
+  "powerIdeas": "The child's power connects to one of their favorite things.",
+  "artDirection": {
+    "defaultStyle": "bold-comic",
+    "palette": ["#1E88E5", "#26C6DA", "#FFEE58", "#FFFFFF"],
+    "mood": "bright, energetic, never scary"
+  },
+  "contentRules": ["cartoon peril only", "troublemakers are mischievous, not frightening", "no weapons"],
+  "licensed": false
+}

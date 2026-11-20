@@ -1,0 +1,21 @@
+{
+  "id": "ocean-deep",
+  "name": "Ocean Deep",
+  "genre": "ocean",
+  "ageRange": [3, 8],
+  "pitch": "The child pilots a bubble submarine with a sea turtle co-pilot to rescue a whale calf tangled in an old fishing net.",
+  "setting": "Coralcove, a glowing reef town with kelp forests, a sunken teacup ship, and lanternfish streetlights",
+  "supportingCast": [
+    { "name": "Shelby", "role": "co-pilot", "look": "wise green sea turtle wearing round diving goggles" },
+    { "name": "Nudge", "role": "whale calf", "look": "baby blue whale with a white belly and a big gentle grin" },
+    { "name": "The Puffer Twins", "role": "helpers", "look": "two spotty yellow pufferfish who puff up when they giggle" }
+  ],
+  "storyBeats": ["seaside morning", "dive in", "meet the reef", "a call for help", "the tangle", "teamwork", "free and swimming", "sunset splash"],
+  "artDirection": {
+    "defaultStyle": "watercolor-storybook",
+    "palette": ["#0277BD", "#4DD0E1", "#FFB74D", "#E0F7FA"],
+    "mood": "glowing, peaceful, a little magical"
+  },
+  "contentRules": ["no sharks or scary sea creatures", "cartoon peril only", "gentle environmental message without preaching"],
+  "licensed": false
+}

@@ -1,0 +1,51 @@
+{
+  "name": "storystar",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently -k -n web,worker -c blue,magenta \"next dev\" \"tsx watch scripts/worker.ts\"",
+    "dev:web": "next dev",
+    "worker": "tsx scripts/worker.ts",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test --trace off",
+    "db:push": "dotenv -e .env.local -- prisma db push",
+    "db:seed": "tsx prisma/seed.ts",
+    "setup": "node -e \"const f=require('fs');if(!f.existsSync('.env.local')){f.copyFileSync('.env.example','.env.local');console.log('Created .env.local from .env.example')}\" && npm run db:push && npm run db:seed",
+    "postinstall": "prisma generate",
+    "db:studio": "dotenv -e .env.local -- prisma studio"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.11.0",
+    "@fontsource/andika": "^5.3.0",
+    "@fontsource/fredoka": "^5.3.0",
+    "@prisma/client": "^6.19.3",
+    "next": "^16.4.6",
+    "page-flip": "^2.0.7",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "sharp": "^0.35.5",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "@tailwindcss/postcss": "^4.3.5",
+    "@types/node": "^22.20.5",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "concurrently": "^10.0.7",
+    "dotenv-cli": "^11.1.0",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^16.4.6",
+    "prisma": "^6.19.3",
+    "tailwindcss": "^4.3.5",
+    "tsx": "^4.23.15",
+    "typescript": "^6.0.3",
+    "vitest": "^5.1.1"
+  }
+}
