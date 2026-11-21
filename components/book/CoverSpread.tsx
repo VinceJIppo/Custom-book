@@ -36,7 +36,7 @@ export function CoverSpread({ book, layout, mode }: { book: BookView; layout: Co
           <h1 className="bk-display" style={{ fontSize: inch(Math.min(0.62, layout.frontSafe.width / 12)) }}>
             {book.title}
           </h1>
-          <p style={{ fontSize: inch(0.24) }}>starring {book.childName}</p>
+          <p style={{ fontSize: inch(0.24) }}>starring {book.starring}</p>
         </div>
 
         <div className="bk-back" style={{ ...box(layout.backSafe), display: "flex", flexDirection: "column", justifyContent: "center", textAlign: "center" }}>

@@ -20,7 +20,7 @@ function view(over: Partial<PageView> = {}): BookView {
     storyNumber: null,
     ...(i === 5 ? over : {}),
   }));
-  return { id: "b", title: "T", childName: "C", themeName: "Th", voiceLabel: "Classic storybook", style: "crayon", status: "ready", trim: { id: "square-8.5", widthIn: 8.5, heightIn: 8.5 }, palette: ["#000000"], readingLevel: "4-6", cover: { imageUrl: "c", imageStatus: "ready" }, backBlurb: "", pages, warnings: [], contentKey: "k" };
+  return { id: "b", title: "T", childName: "C", starring: "C", themeName: "Th", voiceLabel: "Classic storybook", style: "crayon", status: "ready", trim: { id: "square-8.5", widthIn: 8.5, heightIn: 8.5 }, palette: ["#000000"], readingLevel: "4-6", cover: { imageUrl: "c", imageStatus: "ready" }, backBlurb: "", pages, warnings: [], contentKey: "k" };
 }
 
 const goodPdf = (pages = 24, w = 8.75, h = 8.75): PdfInspection => ({

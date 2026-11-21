@@ -184,6 +184,32 @@ must-show list, and the summary. Use it to judge stories, tweak the prompts in
 `lib/providers/anthropic/storyPrompts.ts` or the voices, and run again. Without an Anthropic key it
 uses the offline writer (free, formulaic).
 
+## Family stories (more than one real person)
+
+Add grown-ups (Mom, Dad, Grandpa...) under **Family & friends** on the home page: a name, what the
+children call them, who they are, a few words about them (job, hobbies, personality) and,
+optionally, how they look. They can have a photo character like a child, or just the description.
+
+In the new-book form, **Who else is in the story?** adds up to 3 people (grown-ups or siblings),
+each with a note about their part ("Mama is secretly a superhero, and Oliver doesn't know it").
+Choose who the story is mostly about, and what it's about (a parent's job, a family secret, a big
+change coming up). The story writer plans around that; every picture gets each person's character
+sheet (or description), and the cover says "starring Oliver and Mama". Notes are checked for
+protected characters and moderated like all parent text.
+
+## Gentle ink & wash and Quiet wisdom
+
+- **Gentle ink & wash** art style: fine pencil-and-ink lines, muted watercolor washes, small scenes
+  that fade into a white page. Books in this style use a quiet page look: classic serif words
+  (EB Garamond) on top and the picture below on white.
+- **Quiet wisdom** voice: plain words, small questions and honest answers, feelings named gently,
+  soft humor, nature as a mirror, never a stated moral.
+- **Quiet Meadow** theme pairs with both (original friends: Bramble the hedgehog, Old Willa the
+  goose and Puddle the otter).
+
+Like every style and voice, these describe qualities only; well-known characters, their authors and
+illustrators are on the protected list and suggest Quiet Meadow instead.
+
 ## Story voices
 
 The **Topsy-Turvy Town** theme and the **Whimsical ink** art style (wobbly ink lines, leaning

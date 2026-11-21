@@ -176,7 +176,7 @@ function FrontMatter({ page, book }: { page: PageView; book: BookView }) {
               {book.title}
             </h1>
             <p style={{ fontSize: inch(0.26), marginTop: inch(0.3) }}>
-              A {book.themeName} story starring <strong>{book.childName}</strong>
+              A {book.themeName} story starring <strong>{book.starring}</strong>
             </p>
             <Stars color={c3 ?? c1} />
           </div>
@@ -243,7 +243,7 @@ export function CoverFront({ book, mode }: { book: BookView; mode: PageMode }) {
         <h1 className="bk-display" style={{ fontSize: inch(0.62) }}>
           {book.title}
         </h1>
-        <p style={{ fontSize: inch(0.24) }}>starring {book.childName}</p>
+        <p style={{ fontSize: inch(0.24) }}>starring {book.starring}</p>
       </div>
     </PageFrame>
   );

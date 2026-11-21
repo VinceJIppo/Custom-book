@@ -41,5 +41,14 @@ export const BookOptionsSchema = z.object({
   dedication: z.string().trim().max(300).optional(),
   /** Free-text extra instructions from the parent. Moderated and checked for protected names. */
   instructions: z.string().trim().max(500).optional(),
+  /** Other people in the story (grown-ups or other children), each with an optional note about their part. */
+  cast: z
+    .array(z.object({ profileId: z.string().min(1), part: z.string().trim().max(300).optional() }))
+    .max(3, "Choose up to 3 other people")
+    .optional(),
+  /** Who the story centers on: the child (default) or one of the cast. */
+  spotlightId: z.string().optional(),
+  /** What the story is about, in the parent's words (a parent's job, a family secret, a life moment...). */
+  storyAbout: z.string().trim().max(400).optional(),
 });
 export type BookOptions = z.infer<typeof BookOptionsSchema>;

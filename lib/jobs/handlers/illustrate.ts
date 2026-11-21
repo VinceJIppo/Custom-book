@@ -13,7 +13,7 @@ import { loadImage } from "./characters";
 import { snapshotPage } from "../../books/pages";
 import type { JobOutcome } from "../types";
 import type { ArtStyle } from "../../schemas/theme";
-import type { StoryContextForArt } from "../../providers/image/types";
+import type { CastRef, StoryContextForArt } from "../../providers/image/types";
 
 function extFor(mime: string) {
   return mime === "image/svg+xml" ? "svg" : mime === "image/jpeg" ? "jpg" : mime === "image/webp" ? "webp" : "png";
@@ -33,6 +33,34 @@ export async function characterFor(book: Book): Promise<CharacterRef | null> {
   if (!key) return null;
   const bible = sheet.bible ? CharacterBibleSchema.safeParse(sheet.bible) : null;
   return { image: await toReference(await loadImage(key)), bible: bible?.success ? bible.data : null };
+}
+
+/**
+ * Character references for the other real people who appear in this scene
+ * (matched by name in the scene's characters or action). Their sheets go to
+ * the image model after the hero's; people without one are described in words.
+ */
+export async function castRefsFor(ctx: ReturnType<typeof storyContextFor>, scene: Scene, heroName: string): Promise<CastRef[]> {
+  const people = ctx.cast ?? [];
+  if (!people.length) return [];
+  const haystack = [scene.action, ...scene.characters, ...(scene.mustShow ?? [])].join(" ").toLowerCase();
+  const refs: CastRef[] = [];
+  for (const m of people) {
+    const names = [m.nickname, m.name, m.relationship].filter((x): x is string => !!x);
+    const mentioned = names.some((n) => new RegExp(`(^|[^\\p{L}])${n.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}($|[^\\p{L}])`, "u").test(haystack));
+    if (!mentioned) continue;
+    let image: ImageData | null = null;
+    let bible: CharacterBible | null = null;
+    if (m.characterSheetId) {
+      const sheet = await db.characterSheet.findUnique({ where: { id: m.characterSheetId } });
+      const key = sheet && sheet.selectedIndex != null ? (sheet.imageKeys as string[])[sheet.selectedIndex] : null;
+      if (key) image = await toReference(await loadImage(key));
+      const parsed = sheet?.bible ? CharacterBibleSchema.safeParse(sheet.bible) : null;
+      bible = parsed?.success ? parsed.data : null;
+    }
+    refs.push({ name: m.nickname || m.name, label: m.kind === "grownup" ? `${heroName}'s ${m.relationship?.toLowerCase() ?? "grown-up"}` : `${heroName}'s friend`, image, bible, look: m.look });
+  }
+  return refs.slice(0, 3);
 }
 
 export interface RenderResult {
@@ -71,6 +99,7 @@ export async function renderArt(args: {
   const aspect = args.aspectOverride ?? target.aspect;
   const character = await characterFor(book);
   const childName = ctx.child.nickname || ctx.child.firstName;
+  const cast = await castRefsFor(ctx, args.scene, childName);
   const image = getImageProvider();
   const usages: Usage[] = [];
 
@@ -99,6 +128,7 @@ export async function renderArt(args: {
           label: args.label,
           note,
           story: args.story,
+          cast,
         });
     usages.push(r.usage);
     return r.value;

@@ -52,6 +52,21 @@ export function describeBible(name: string, b: CharacterBible): string {
   return `${name} (the hero, a young child) must look exactly like the character in the reference image: ${parts.join("; ")}.`;
 }
 
+/** One line per other real person: which attached sheet is theirs, or how they look. */
+function castLines(req: IllustrationRequest): string[] {
+  let n = req.characterRef ? 1 : 0;
+  const ordinal = (i: number) => ["first", "second", "third", "fourth", "fifth"][i] ?? `#${i + 1}`;
+  return (req.cast ?? []).map((c) => {
+    const traits = c.bible ? ` (${describeBible(c.name, c.bible).replace(/^.*?: /, "").replace(/\.$/, "")})` : c.look ? `: ${c.look}` : "";
+    if (c.image) {
+      const line = `The ${ordinal(n)} attached image is the approved character sheet for ${c.name}, ${c.label}. Draw ${c.name} exactly like that sheet${traits}, in the same art style.`;
+      n++;
+      return line;
+    }
+    return `${c.name}, ${c.label}, looks like this${traits || ": a friendly grown-up"}. Keep them looking the same on every page.`;
+  });
+}
+
 export function buildIllustrationPrompt(req: IllustrationRequest): string {
   const lines = [
     `Illustration for one page of a children's picture book. Art style: ${STYLE_DESCRIPTIONS[req.style]}.`,
@@ -59,6 +74,7 @@ export function buildIllustrationPrompt(req: IllustrationRequest): string {
       ? `The first attached image is the approved character sheet for ${req.childName}. Draw ${req.childName} with exactly the same face, hair, skin tone, proportions and outfit as in that sheet, in the same art style.`
       : "",
     req.bible ? describeBible(req.childName, req.bible) : "",
+    ...castLines(req),
     req.story?.summary ? `The whole story, for context (draw only this page's moment): ${req.story.summary}` : "",
     req.story?.previousMoment ? `The page before shows: ${req.story.previousMoment}.` : "",
     req.story?.nextMoment ? `The page after shows: ${req.story.nextMoment}.` : "",
@@ -83,7 +99,21 @@ export function buildIllustrationPrompt(req: IllustrationRequest): string {
   return lines.filter(Boolean).join("\n");
 }
 
-export function buildCharacterSheetPrompt(opts: { style: ArtStyle; outfit?: string; variant: number }): string {
+export function buildCharacterSheetPrompt(opts: { style: ArtStyle; outfit?: string; variant: number; subject?: "child" | "grownup" }): string {
+  if (opts.subject === "grownup") {
+    const variety = ["", "Offer a slightly different interpretation (different expression and pose), keeping the likeness.", "Offer a third interpretation with a different, still neutral outfit color, keeping the likeness."][opts.variant % 3];
+    return [
+      `Create a character turnaround sheet for a children's picture book, in this art style: ${STYLE_DESCRIPTIONS[opts.style]}.`,
+      "The attached photos show a real grown-up (a parent or family member). Turn them into a warm, friendly illustrated character who is clearly recognizable as this person: same hair color and style, eye color, skin tone, face shape, glasses, beard or freckles if present, and the same approximate age.",
+      "Show the same character three times side by side on a plain light background: a front view (head to toe), a three-quarter view, and a close-up portrait of the face. Kind, happy expression.",
+      `Outfit: ${opts.outfit || "a simple, neutral everyday outfit"}.`,
+      variety,
+      NO_TEXT_RULE,
+      SAFETY_RULE,
+    ]
+      .filter(Boolean)
+      .join("\n");
+  }
   const variety = [
     "",
     "Offer a slightly different interpretation from a typical first take (different expression and pose), keeping the likeness.",

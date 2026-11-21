@@ -9,7 +9,7 @@
  * Interactions are stored for 55 days by default; we always send store=false.
  */
 import sharp from "sharp";
-import type { CharacterSheetRequest, EditRequest, IllustrationRequest, ImageProvider } from "../image/types";
+import { referenceImages, type CharacterSheetRequest, type EditRequest, type IllustrationRequest, type ImageProvider } from "../image/types";
 import { buildCharacterSheetPrompt, buildEditPrompt, buildIllustrationPrompt, nearestAspect } from "../image/prompt";
 import { PermanentProviderError, type ImageData, type Usage, type WithUsage } from "../types";
 
@@ -142,7 +142,7 @@ export class GeminiImageProvider implements ImageProvider {
     const results: ImageData[] = [];
     let cost = 0;
     for (let i = 0; i < input.count; i++) {
-      const r = await this.call(buildCharacterSheetPrompt({ style: input.style, outfit: input.outfit, variant: i }), input.photos.slice(0, 4), 3 / 2, "2K");
+      const r = await this.call(buildCharacterSheetPrompt({ style: input.style, outfit: input.outfit, variant: i, subject: input.subject }), input.photos.slice(0, 4), 3 / 2, "2K");
       results.push(r.value);
       cost += r.usage.costUsd;
     }
@@ -150,7 +150,7 @@ export class GeminiImageProvider implements ImageProvider {
   }
 
   generateIllustration(req: IllustrationRequest): Promise<WithUsage<ImageData>> {
-    return this.call(buildIllustrationPrompt(req), req.characterRef ? [req.characterRef] : [], req.aspect, this.sizeFor(req.targetPx));
+    return this.call(buildIllustrationPrompt(req), referenceImages(req), req.aspect, this.sizeFor(req.targetPx));
   }
 
   editIllustration(input: EditRequest): Promise<WithUsage<ImageData>> {

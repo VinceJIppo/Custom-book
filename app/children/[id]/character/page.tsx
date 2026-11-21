@@ -90,7 +90,7 @@ export default async function CharacterPage({ params, searchParams }: { params: 
                 ))}
               </ul>
             )}
-            <PhotoUpload childId={child.id} consentGiven={!!child.guardianConsentAt} remaining={MAX_PHOTOS - photos.length} />
+            <PhotoUpload childId={child.id} consentGiven={!!child.guardianConsentAt} remaining={MAX_PHOTOS - photos.length} grownUp={child.kind === "grownup"} />
             <form action={setDeleteOriginalsAction} className="flex items-center gap-2 text-sm">
               <input type="hidden" name="childId" value={child.id} />
               <input type="checkbox" name="value" defaultChecked={child.deleteOriginalsAfterApproval} className="size-4 accent-[color:var(--color-cobalt)]" />

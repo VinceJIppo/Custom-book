@@ -1,11 +1,14 @@
-import type { ChildSnapshot } from "../../schemas/child";
+import type { CastMemberSnapshot, ChildSnapshot } from "../../schemas/child";
 import type { BookOptions } from "../../schemas/book";
 import type { ThemeConfig } from "../../schemas/theme";
 import type { CharacterBible, Outline, Scene, StoryPagesResult } from "../../schemas/story";
 import type { ImageData, WithUsage } from "../types";
 
 export interface StoryContext {
+  /** The child the book is for (and its hero, unless options.spotlightId names someone else). */
   child: ChildSnapshot;
+  /** Other real people in the story: grown-ups or other children. */
+  cast?: CastMemberSnapshot[];
   theme: ThemeConfig;
   options: BookOptions;
 }

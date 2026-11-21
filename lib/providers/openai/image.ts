@@ -11,7 +11,7 @@
  * API data is not used for training by default; abuse logs kept up to 30 days.
  */
 import sharp from "sharp";
-import type { CharacterSheetRequest, EditRequest, IllustrationRequest, ImageProvider } from "../image/types";
+import { referenceImages, type CharacterSheetRequest, type EditRequest, type IllustrationRequest, type ImageProvider } from "../image/types";
 import { buildCharacterSheetPrompt, buildEditPrompt, buildIllustrationPrompt } from "../image/prompt";
 import { PermanentProviderError, type ImageData, type Usage, type WithUsage } from "../types";
 
@@ -135,7 +135,7 @@ export class OpenAIImageProvider implements ImageProvider {
     const out: ImageData[] = [];
     let cost = 0;
     for (let i = 0; i < input.count; i++) {
-      const r = await this.call(buildCharacterSheetPrompt({ style: input.style, outfit: input.outfit, variant: i }), input.photos.slice(0, 4), 3 / 2, { widthPx: 2048, heightPx: 1365 });
+      const r = await this.call(buildCharacterSheetPrompt({ style: input.style, outfit: input.outfit, variant: i, subject: input.subject }), input.photos.slice(0, 4), 3 / 2, { widthPx: 2048, heightPx: 1365 });
       out.push(r.value);
       cost += r.usage.costUsd;
     }
@@ -143,7 +143,7 @@ export class OpenAIImageProvider implements ImageProvider {
   }
 
   generateIllustration(req: IllustrationRequest): Promise<WithUsage<ImageData>> {
-    return this.call(buildIllustrationPrompt(req), req.characterRef ? [req.characterRef] : [], req.aspect, req.targetPx);
+    return this.call(buildIllustrationPrompt(req), referenceImages(req), req.aspect, req.targetPx);
   }
 
   editIllustration(input: EditRequest): Promise<WithUsage<ImageData>> {

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireOnboardedUser } from "@/lib/session";
-import { getChild } from "@/lib/children/service";
+import { getChild, listPeople } from "@/lib/children/service";
 import { listThemesForUser } from "@/lib/themes";
 import { estimateFor } from "@/lib/books/service";
 import { readingLevelForAge, STORY_LENGTHS } from "@/lib/schemas/book";
@@ -23,6 +23,9 @@ export default async function NewBook({ searchParams }: { searchParams: Promise<
   }
   const child = await getChild(user.id, childId);
   if (!child) notFound();
+  if (child.kind === "grownup") {
+    return <p>Books are made for a child. Start a book from a child  if (!child) notFound();apos;s page and add {child.nickname || child.firstName} to the story there.</p>;
+  }
   const themes = await listThemesForUser(user.id);
   const estimates = Object.fromEntries(STORY_LENGTHS.map((n) => [n, estimateFor({ length: n })]));
   const friends = child.friends as string[];
@@ -47,6 +50,18 @@ export default async function NewBook({ searchParams }: { searchParams: Promise<
         storyProvider={activeProviderNames().story}
         approvedStyles={await approvedStyles(child.id)}
         needsCharacter={activeProviderNames().image !== "mock"}
+        people={await Promise.all(
+          (await listPeople(user.id))
+            .filter((p) => p.id !== child.id)
+            .map(async (p) => ({
+              id: p.id,
+              name: p.nickname || p.firstName,
+              label: p.kind === "grownup" ? (p.relationship ?? "grown-up") : `child, ${p.age}`,
+              kind: p.kind === "grownup" ? ("grownup" as const) : ("child" as const),
+              approvedStyles: await approvedStyles(p.id),
+              hasLook: !!p.look,
+            })),
+        )}
       />
     </div>
   );

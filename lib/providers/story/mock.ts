@@ -483,6 +483,7 @@ export class MockStoryProvider implements StoryProvider {
     const n = ctx.options.length;
     const [minS, maxS] = READING_LEVEL_RULES[ctx.options.readingLevel].sentences;
     let spreadUsed = false;
+    const castNames = (ctx.cast ?? []).map((c) => c.nickname || c.name);
     const pages: StoryPage[] = outline.pages.slice(0, n).map((op, i) => {
       const stage = stageFor(i, n);
       const k = i - firstIndexOfStage(stage, n);
@@ -502,9 +503,11 @@ export class MockStoryProvider implements StoryProvider {
       }
       const { layout, textZone } = layoutFor(op.pageNumber, n, stage, spreadUsed);
       if (layout === "spread") spreadUsed = true;
+      // The other real people join on the first page, the middle page and the last page.
+      const castHere = castNames.length && (i === 0 || i === Math.floor(n / 2) || i === n - 1) ? castNames : [];
       const scene: Scene = {
-        action: cap(fill(tpl.action, v)),
-        characters: tpl.who(v),
+        action: cap(fill(tpl.action, v)) + (castHere.length ? `, with ${castHere.join(" and ")} nearby` : ""),
+        characters: [...tpl.who(v), ...castHere],
         setting: ctx.theme.setting,
         mood: tpl.mood,
         framing: fill(tpl.framing, v),

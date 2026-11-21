@@ -35,6 +35,7 @@ export async function sheetHandler(job: GenerationJob): Promise<JobOutcome> {
   const photos = await Promise.all(sheet.child.photos.map((p) => loadImage(p.storageKey).then(toReference)));
   if (!photos.length) throw new PermanentProviderError("No photos to draw from. Add a photo and try again.");
   const { value, usage } = await getImageProvider().generateCharacterSheet({
+    subject: sheet.child.kind === "grownup" ? "grownup" : "child",
     photos,
     style: sheet.style as ArtStyle,
     outfit: sheet.outfit ?? undefined,

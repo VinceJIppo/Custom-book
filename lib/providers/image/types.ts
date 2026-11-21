@@ -22,6 +22,23 @@ export interface IllustrationRequest {
   note?: string;
   /** The whole story, so each picture fits its place in it. */
   story?: StoryContextForArt;
+  /** Other real people in this picture, each drawn from their own character sheet (sent after the hero's) or description. */
+  cast?: CastRef[];
+}
+
+export interface CastRef {
+  /** The name used in the story, e.g. "Mama". */
+  name: string;
+  /** Who they are, e.g. "Oliver's mom". */
+  label: string;
+  image: ImageData | null;
+  bible: CharacterBible | null;
+  look?: string;
+}
+
+/** Reference images in the order adapters attach them: the hero's sheet, then each cast member's. */
+export function referenceImages(req: Pick<IllustrationRequest, "characterRef" | "cast">): ImageData[] {
+  return [req.characterRef, ...(req.cast ?? []).map((c) => c.image)].filter((x): x is ImageData => !!x);
 }
 
 export interface StoryContextForArt {
@@ -35,8 +52,10 @@ export interface StoryContextForArt {
 }
 
 export interface CharacterSheetRequest {
-  /** Raw photos of the child. Only ever sent for character sheets. */
+  /** Raw photos of the person. Only ever sent for character sheets. */
   photos: ImageData[];
+  /** A child (keep their age) or a grown-up. */
+  subject?: "child" | "grownup";
   style: ArtStyle;
   outfit?: string;
   count: number;

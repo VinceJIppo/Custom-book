@@ -33,6 +33,12 @@ Personal details
 - If a lesson is given, show it through a choice the hero makes that changes what happens. Never state it as a slogan or moral.
 - The theme's story beats are inspiration, not a checklist: use the ones that serve this story's chain of cause and effect.
 
+Real family and friends in the story
+- When otherPeopleInTheStory is given, these are real people the child loves. Portray them warmly and respectfully, use the name the child calls them, and give each one a real part that matters to the plot.
+- Follow each person's theirPartInThisStory closely: it is the parent's wish for the book. A secret (for example "Mom is secretly a superhero and the child doesn't know") is a gift to the reader: keep it hidden from the child character until the moment the parent planned (or keep it a fun secret the reader shares), and plant small clues along the way.
+- storyCentersOn says whose story it is. If it is a grown-up, the child still has an important, active part, and the story should help the child see that grown-up in a new, admiring light.
+- whatThisStoryIsAbout comes first: build the plot around it and use the theme for the setting, supporting cast and mood. If it describes a real job or a real life situation (a hospital stay, a move, a new sibling), keep the facts true, simple and reassuring for the child's age.
+
 Pictures follow the words
 - Every page is one clear moment an illustrator can draw.
 - When the world changes in a way you can see (everything upside down, nighttime, rain), it stays that way on every page until the story changes it back, and the words keep reminding the reader.
@@ -94,8 +100,15 @@ export function voiceBlock(ctx: StoryContext): string {
   return `STORY VOICE: ${voice.label}\n${voice.guide}\nThe voice changes how the story sounds, never the safety and story rules above.`;
 }
 
+/** Who the story centers on: the child, or one of the cast. */
+export function spotlightName(ctx: StoryContext): string {
+  const c = ctx.cast?.find((m) => m.id === ctx.options.spotlightId);
+  return c ? c.nickname || c.name : ctx.child.nickname || ctx.child.firstName;
+}
+
 export function describeContext(ctx: StoryContext): string {
   const { child, theme, options } = ctx;
+  const cast = ctx.cast ?? [];
   const payload = {
     child: {
       name: child.firstName,
@@ -116,6 +129,18 @@ export function describeContext(ctx: StoryContext): string {
       mood: theme.artDirection.mood,
       contentRules: theme.contentRules,
     },
+    otherPeopleInTheStory: cast.length
+      ? cast.map((m) => ({
+          name: m.name,
+          whatTheChildCallsThem: m.nickname ?? null,
+          whoTheyAre: m.kind === "grownup" ? `${m.relationship ?? "a grown-up"} (a real grown-up in ${child.nickname || child.firstName}'s life)` : `a child${m.age ? ` aged ${m.age}` : ""}`,
+          pronouns: m.pronouns,
+          about: m.about ?? null,
+          theirPartInThisStory: m.part ?? null,
+        }))
+      : null,
+    storyCentersOn: spotlightName(ctx),
+    whatThisStoryIsAbout: options.storyAbout || null,
     options: {
       storyPages: options.length,
       readingLevel: readingRule(ctx),
@@ -236,11 +261,14 @@ export function rewritePrompt(
 }
 
 export function artDirectionPrompt(ctx: StoryContext, outline: Outline, pages: Array<{ pageNumber: number; text: string }>, problems?: string[]): string {
-  const cast = ctx.theme.supportingCast.map((c) => `${c.name} (${c.role}): ${c.look}`).join("\n");
+  const cast = [
+    ...(ctx.cast ?? []).map((m) => `${m.nickname || m.name} (${m.kind === "grownup" ? (m.relationship ?? "grown-up") : "child"}, a real person): ${m.look ?? "drawn from their character reference sheet"}`),
+    ...ctx.theme.supportingCast.map((c) => `${c.name} (${c.role}): ${c.look}`),
+  ].join("\n");
   return [
     `Theme: ${ctx.theme.name}. Setting: ${ctx.theme.setting}. Mood: ${ctx.theme.artDirection.mood}.`,
     `The hero: ${ctx.child.nickname || ctx.child.firstName}, age ${ctx.child.age}.`,
-    "Supporting characters as they must look:",
+    "Characters as they must look (name real people in each scene's characters exactly as written here, so the illustrator can match their reference sheets):",
     cast,
     "",
     "Lasting visual facts from the story plan:",

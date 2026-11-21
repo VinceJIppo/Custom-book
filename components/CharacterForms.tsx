@@ -15,7 +15,7 @@ function submitKeeping(action: (fd: FormData) => void) {
   };
 }
 
-export function PhotoUpload({ childId, consentGiven, remaining }: { childId: string; consentGiven: boolean; remaining: number }) {
+export function PhotoUpload({ childId, consentGiven, remaining, grownUp = false }: { childId: string; consentGiven: boolean; remaining: number; grownUp?: boolean }) {
   const [state, action, pending] = useActionState(uploadPhotosAction, null);
   const formRef = useRef<HTMLFormElement>(null);
   if (remaining <= 0) return <p className="text-sm text-[color:var(--muted)]">You have 3 photos, the most we use. Remove one to add another.</p>;
@@ -32,7 +32,11 @@ export function PhotoUpload({ childId, consentGiven, remaining }: { childId: str
       {!consentGiven && (
         <label className="flex items-start gap-3 text-sm">
           <input type="checkbox" name="consent" required className="mt-0.5 size-5 accent-[color:var(--color-cobalt)]" />
-          <span>I am this child&apos;s parent or legal guardian, or I have their permission to upload these photos.</span>
+          <span>
+            {grownUp
+              ? "These are photos of me, or this person has given me permission to upload them."
+              : "I am this child\u2019s parent or legal guardian, or I have their permission to upload these photos."}
+          </span>
         </label>
       )}
       <button disabled={pending} className="btn btn-primary">

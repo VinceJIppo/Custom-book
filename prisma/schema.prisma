@@ -63,8 +63,17 @@ model ChildProfile {
   id        String  @id @default(cuid())
   userId    String
   user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// "child" (a book can be made for them) or "grownup" (a parent, grandparent... who can star in a child's book)
+  kind      String  @default("child")
   firstName String
   nickname  String?
+  /// Grown-ups: who they are to the children, e.g. "Mom", "Grandpa"
+  relationship String?
+  /// Grown-ups: a few words about them (job, hobbies, personality), used by the story writer
+  about     String?
+  /// How they look, for people without a photo character
+  look      String?
+  /// Children: 1 to 12. Grown-ups: 0 (not used)
   age       Int
   pronouns  String // "he" | "she" | "they"
   /// { colors: string[], animals: string[], foods: string[], activities: string[] }
@@ -177,6 +186,8 @@ model Book {
   themeSnapshot    Json
   /// Frozen copy of the child details used for this book.
   childSnapshot    Json
+  /// Frozen copies of the other people in the story (CastMemberSnapshot[]), with their character sheet ids
+  castSnapshot     Json?
   characterSheetId String?
   characterSheet   CharacterSheet? @relation(fields: [characterSheetId], references: [id], onDelete: SetNull)
   style            String

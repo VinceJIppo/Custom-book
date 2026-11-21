@@ -12,8 +12,9 @@ const STATUS: Record<string, string> = { generating: "Being made", ready: "Ready
 export default async function Home({ searchParams }: { searchParams: Promise<{ deleted?: string }> }) {
   const user = await requireOnboardedUser();
   const { deleted } = await searchParams;
+  const grownUps = await db.childProfile.findMany({ where: { userId: user.id, kind: "grownup" }, orderBy: { createdAt: "asc" } });
   const children = await db.childProfile.findMany({
-    where: { userId: user.id },
+    where: { userId: user.id, kind: "child" },
     orderBy: { createdAt: "asc" },
     include: { books: { orderBy: { createdAt: "desc" }, select: { id: true, title: true, status: true, createdAt: true } } },
   });
@@ -75,6 +76,27 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ d
           ))}
         </div>
       )}
+
+      <section className="space-y-3" data-testid="grownups">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <div>
+            <h2 className="font-display text-2xl font-medium">Family &amp; friends</h2>
+            <p className="text-sm text-[color:var(--muted)]">Grown-ups who can star in your children&apos;s books: a secret-superhero mom, what Grandpa does at work...</p>
+          </div>
+          <Link href="/people/new" className="btn btn-secondary btn-sm">
+            + Add a grown-up
+          </Link>
+        </div>
+        {grownUps.length > 0 && (
+          <div className="flex flex-wrap gap-3">
+            {grownUps.map((g) => (
+              <Link key={g.id} href={`/children/${g.id}`} className="rounded-xl bg-white px-4 py-3 ring-1 ring-[color:var(--line)] hover:ring-cobalt">
+                <span className="font-semibold">{g.nickname || g.firstName}</span> <span className="text-sm text-[color:var(--muted)]">{g.relationship}</span>
+              </Link>
+            ))}
+          </div>
+        )}
+      </section>
 
       <p className="text-xs text-[color:var(--muted)]">
         Providers: story <b>{providers.story}</b>

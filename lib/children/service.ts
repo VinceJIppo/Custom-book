@@ -1,7 +1,7 @@
 import type { Prisma } from "@prisma/client";
 import { db } from "../db";
 import { getStorage, keys } from "../storage";
-import { ChildProfileInputSchema, ChildSnapshotSchema, type ChildProfileInput } from "../schemas/child";
+import { ChildProfileInputSchema, ChildSnapshotSchema, GrownUpInputSchema, type ChildProfileInput, type GrownUpInput } from "../schemas/child";
 import { checkFieldsForProtectedNames } from "../safety/protectedNames";
 import { getModeration } from "../providers/registry";
 import { log } from "../log";
@@ -65,9 +65,61 @@ export async function createChild(userId: string, raw: unknown): Promise<SaveRes
 export async function updateChild(userId: string, childId: string, raw: unknown): Promise<SaveResult> {
   const v = await validateChildInput(raw);
   if (!v.ok) return v;
-  const res = await db.childProfile.updateMany({ where: { id: childId, userId }, data: toRow(v.data) });
+  const res = await db.childProfile.updateMany({ where: { id: childId, userId, kind: "child" }, data: toRow(v.data) });
   if (res.count !== 1) return { ok: false, errors: {}, message: "Child not found." };
   return { ok: true, id: childId };
+}
+
+/** Grown-ups (parents, grandparents...) who can star in a child's book. */
+export async function validateGrownUpInput(raw: unknown): Promise<{ ok: true; data: GrownUpInput } | Extract<SaveResult, { ok: false }>> {
+  const parsed = GrownUpInputSchema.safeParse({ ...(raw as object), kind: "grownup" });
+  if (!parsed.success) {
+    const errors: FieldErrors = {};
+    for (const i of parsed.error.issues) errors[i.path.join(".")] ??= i.message;
+    return { ok: false, errors, message: "Please fix the highlighted fields." };
+  }
+  const d = parsed.data;
+  const hit = checkFieldsForProtectedNames({ about: d.about, look: d.look });
+  if (hit) return { ok: false, errors: { [hit.field]: hit.match.message }, message: hit.match.message, suggestedThemeIds: hit.match.suggestedThemeIds };
+  const text = [d.relationship, d.about, d.look].filter(Boolean).join(". ");
+  const mod = await getModeration().check(text);
+  if (!mod.ok) return { ok: false, errors: {}, message: mod.message };
+  return { ok: true, data: d };
+}
+
+function grownUpRow(d: GrownUpInput) {
+  return {
+    kind: "grownup",
+    firstName: d.firstName,
+    nickname: d.nickname ?? null,
+    relationship: d.relationship,
+    pronouns: d.pronouns,
+    about: d.about ?? null,
+    look: d.look ?? null,
+    age: 0,
+    favorites: { colors: [], animals: [], foods: [], activities: [] } as unknown as Prisma.InputJsonValue,
+    friends: [] as unknown as Prisma.InputJsonValue,
+  };
+}
+
+export async function createGrownUp(userId: string, raw: unknown): Promise<SaveResult> {
+  const v = await validateGrownUpInput(raw);
+  if (!v.ok) return v;
+  const p = await db.childProfile.create({ data: { userId, ...grownUpRow(v.data) } });
+  return { ok: true, id: p.id };
+}
+
+export async function updateGrownUp(userId: string, id: string, raw: unknown): Promise<SaveResult> {
+  const v = await validateGrownUpInput(raw);
+  if (!v.ok) return v;
+  const res = await db.childProfile.updateMany({ where: { id, userId, kind: "grownup" }, data: grownUpRow(v.data) });
+  if (res.count !== 1) return { ok: false, errors: {}, message: "Person not found." };
+  return { ok: true, id };
+}
+
+/** Everyone a book can include: the parent's children and grown-ups. */
+export async function listPeople(userId: string) {
+  return db.childProfile.findMany({ where: { userId }, orderBy: { createdAt: "asc" } });
 }
 
 export async function getChild(userId: string, childId: string) {

@@ -20,6 +20,8 @@ export interface BookView {
   id: string;
   title: string;
   childName: string;
+  /** "Oliver and Mama": the hero plus the other real people in the book. */
+  starring: string;
   themeName: string;
   /** Story voice label, e.g. "Rhyming and mischievous". */
   voiceLabel: string;

@@ -55,11 +55,14 @@ export async function buildBookView(book: Book & { pages: Page[] }, opts: BookVi
   }
 
   const childName = ctx.child.nickname || ctx.child.firstName;
+  const names = [childName, ...(ctx.cast ?? []).map((c) => c.nickname || c.name)];
+  const starring = names.length > 1 ? `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}` : childName;
   const contentKey = [book.id, book.version, book.title, book.coverImageKey, ...pages.map((p) => `${p.id}:${p.version}:${p.imageStatus}:${p.imageKey ?? ""}:${p.text.length}`)].join("|");
   return {
     id: book.id,
     title: book.title ?? "Your story",
     childName,
+    starring,
     themeName: ctx.theme.name,
     voiceLabel: voiceFor(ctx.options).label,
     style: book.style,

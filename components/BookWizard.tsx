@@ -7,6 +7,7 @@ import { ART_STYLES, ART_STYLE_LABELS, type ArtStyle } from "@/lib/schemas/theme
 import { READING_LEVELS, READING_LEVEL_RULES, STORY_LENGTHS, type ReadingLevel } from "@/lib/schemas/book";
 import { DEFAULT_VOICE, VOICES, VOICE_IDS, type VoiceId } from "@/lib/schemas/voices";
 import type { CostEstimate } from "@/lib/cost/estimate";
+import { CastPicker, type CastOption } from "./CastPicker";
 
 export interface WizardTheme {
   id: string;
@@ -29,11 +30,13 @@ export interface WizardProps {
   approvedStyles: string[];
   /** True when a real image provider is on, so a character is required. */
   needsCharacter: boolean;
+  /** Other people who can be in the story. */
+  people: CastOption[];
 }
 
 const input = "mt-1 w-full rounded-xl border border-[color:var(--line)] bg-white px-3 py-2.5 outline-none focus:border-cobalt focus:ring-2 focus:ring-sky";
 
-export function BookWizard({ child, themes, defaultReadingLevel, estimates, storyProvider, approvedStyles, needsCharacter }: WizardProps) {
+export function BookWizard({ child, themes, defaultReadingLevel, estimates, storyProvider, approvedStyles, needsCharacter, people }: WizardProps) {
   const [state, action, pending] = useActionState(createBookAction, null);
   const [themeId, setThemeId] = useState<string | null>(null);
   const theme = themes.find((t) => t.id === themeId) ?? null;
@@ -100,6 +103,8 @@ export function BookWizard({ child, themes, defaultReadingLevel, estimates, stor
           })}
         </div>
       </section>
+
+      <CastPicker heroId={child.id} heroName={child.name} people={people} style={style ?? theme?.defaultStyle ?? null} needsCharacter={needsCharacter} />
 
       <fieldset disabled={!theme} className={theme ? "" : "opacity-40"}>
         <legend className="font-display text-xl font-medium">2. Book options</legend>
