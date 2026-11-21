@@ -99,6 +99,19 @@ export function BookLive({ bookId, initial }: { bookId: string; initial: LiveSta
               <button className="btn btn-primary btn-sm">Try again</button>
             </form>
           )}
+          {!generating && p.problems && p.problems.length > 0 && (
+            <div className="mt-4 space-y-2 rounded-lg bg-amber-50 p-3 text-sm text-amber-900 ring-1 ring-amber-200" data-testid="failure-details">
+              <p className="font-semibold">Why it stopped (only admins see this)</p>
+              {p.problems.map((x, i) => (
+                <div key={i}>
+                  <p>
+                    {x.hint} {x.count > 1 && <span className="text-amber-800/80">({x.count} times)</span>}
+                  </p>
+                  <p className="mt-0.5 break-words font-mono text-xs text-amber-800/80">{x.detail}</p>
+                </div>
+              ))}
+            </div>
+          )}
           <p className="mt-3 text-xs text-[color:var(--muted)]">You can leave this page; the book keeps going in the background. Spent so far: ${p.costUsd.toFixed(4)}</p>
         </div>
       )}

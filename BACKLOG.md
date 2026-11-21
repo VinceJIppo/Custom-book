@@ -31,7 +31,7 @@ Known places that show raw errors today (found 2026-11-21):
 | Print files page (`app/books/[id]/print/page.tsx`) | `Making the files failed: {e.error}` and Lulu validation problems/job errors | Chromium or render errors |
 | Page editor (`app/books/[id]/pages/[pageId]/page.tsx`) | `The last picture change didn't work: {lastJob.error}` | Gemini/OpenAI API errors |
 | Character options (`app/children/[id]/character/page.tsx`) | `This set didn't work: {s.error}` | Image provider errors |
-| Book progress (`components/BookLive.tsx`, `/api/books/[id]/status`) | Failed story or picture job errors | Claude errors such as "outline failed after 3 attempts: ..." |
+| Book progress (`components/BookLive.tsx`, `/api/books/[id]/status`) | Admins now see grouped failure reasons with advice; parents see only the generic message (2026-11-21) | Claude errors such as "outline failed after 3 attempts: ..." |
 | Server actions that redirect with `?error=` | Whatever message the service returned | |
 | Next.js error pages | Done: friendly `app/error.tsx` and `app/not-found.tsx` (2026-11-21) | |
 

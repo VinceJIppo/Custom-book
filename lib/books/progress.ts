@@ -8,6 +8,19 @@ export interface BookProgress {
   failedJobs: number;
   costUsd: number;
   percent: number;
+  /** Admins only: why jobs failed, grouped, with a plain-English hint. */
+  problems?: Array<{ count: number; hint: string; detail: string }>;
+}
+
+/** Turns a provider error into advice an admin can act on. */
+export function explainFailure(error: string): string {
+  const e = error.toLowerCase();
+  if (/credit|prepay|billing|balance|payment required|402/.test(e)) return "The image or story service is out of credits or has no billing set up. Add credits (Gemini: aistudio.google.com/billing; Anthropic: console.anthropic.com), then click Try again.";
+  if (/429|resource_exhausted|quota|rate limit|too many requests/.test(e)) return "Too many requests at once for your account's limit. Set WORKER_CONCURRENCY=1 in .env.local, restart, then click Try again.";
+  if (/401|403|api key|permission|unauthenticated|invalid.*key/.test(e)) return "The API key was refused. Check the key in .env.local (GEMINI_API_KEY or ANTHROPIC_API_KEY) and restart.";
+  if (/safety|blocked|refus|declined|prohibited/.test(e)) return "The service declined this picture or text for safety reasons. Try again, or change the page note or theme wording.";
+  if (/timeout|timed out|econnreset|fetch failed|network|503|502|500|overloaded|unavailable/.test(e)) return "The service was busy or unreachable for a moment. Click Try again in a few minutes.";
+  return "See the detail below. Click Try again; if it keeps failing, send the detail to support.";
 }
 
 function stateOf(jobs: Array<{ status: string }>): StepState {
@@ -19,7 +32,7 @@ function stateOf(jobs: Array<{ status: string }>): StepState {
 }
 
 /** Plain-English progress for the live progress panel. */
-export async function getBookProgress(bookId: string, expectedStoryPages: number): Promise<BookProgress> {
+export async function getBookProgress(bookId: string, expectedStoryPages: number, opts: { withProblems?: boolean } = {}): Promise<BookProgress> {
   const [jobs, pages] = await Promise.all([
     db.generationJob.findMany({ where: { bookId }, select: { type: true, status: true, costUsd: true, error: true, attempts: true, maxAttempts: true } }),
     db.page.findMany({ where: { bookId, kind: "story" }, select: { imageStatus: true } }),
@@ -48,5 +61,18 @@ export async function getBookProgress(bookId: string, expectedStoryPages: number
     failedJobs: jobs.filter((j) => j.status === "failed").length,
     costUsd: Math.round(jobs.reduce((s, j) => s + j.costUsd, 0) * 10000) / 10000,
     percent: Math.round((finished / Math.max(units, 1)) * 100),
+    problems: opts.withProblems ? groupProblems(jobs.filter((j) => j.status === "failed" && j.error).map((j) => j.error!)) : undefined,
   };
+}
+
+function groupProblems(errors: string[]) {
+  const groups = new Map<string, { count: number; detail: string }>();
+  for (const e of errors) {
+    const detail = e.replace(/\s+/g, " ").slice(0, 300);
+    const key = detail.slice(0, 80);
+    const g = groups.get(key);
+    if (g) g.count++;
+    else groups.set(key, { count: 1, detail });
+  }
+  return [...groups.values()].map((g) => ({ ...g, hint: explainFailure(g.detail) })).sort((a, b) => b.count - a.count).slice(0, 4);
 }
