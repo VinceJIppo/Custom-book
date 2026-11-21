@@ -2,26 +2,37 @@
 @import "../components/book/book.css";
 
 @theme {
-  --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Fraunces", Georgia, serif;
-  /* Palette: crisp boutique children's brand. Cobalt for type and actions,
-     coral for headlines, sunny mustard and pale sky for accents, warm white ground. */
-  --color-navy: #1d2b4f;
-  --color-cobalt: #2a63c9;
-  --color-cobalt-dark: #1f4f9f;
-  --color-coral: #e4572e;
-  --color-sun: #f2b33d;
-  --color-sky: #cfe7ef;
-  --color-tint: #eef5fa;
-  --color-cream: #fbf7f0;
-  --color-blush: #f7ece2;
+  --font-sans: "Figtree", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Newsreader", Georgia, serif;
+  /* Palette: classic preppy gift-shop. Deep navy type, a clear medium blue for
+     actions, pale blues for calm backgrounds, and pink, olive and chartreuse
+     stripes as accents. */
+  --color-navy: #14334c;
+  --color-cobalt: #3175b3;
+  --color-cobalt-dark: #245d92;
+  --color-coral: #d9566b;
+  --color-sun: #cfc65a;
+  --color-sky: #dfebf6;
+  --color-bluebell: #a9d0ea;
+  --color-tint: #eef5fb;
+  --color-cream: #faf6ec;
+  --color-blush: #f8e9ea;
+  --color-pink: #e58a96;
+  --color-olive: #4f6b3e;
+  --color-chartreuse: #d8d46a;
+  /* Crisp, nearly square corners. */
+  --radius-sm: 2px;
+  --radius-md: 3px;
+  --radius-lg: 3px;
+  --radius-xl: 4px;
+  --radius-2xl: 6px;
 }
 
 :root {
-  --bg: #fffdf9;
-  --fg: #1d2b4f;
-  --muted: #5d6b8a;
-  --line: #e3e8f0;
+  --bg: #ffffff;
+  --fg: #14334c;
+  --muted: #5a7184;
+  --line: #dde5ec;
 }
 
 html,
@@ -30,15 +41,15 @@ body {
   color: var(--fg);
 }
 
-/* Headlines: soft display serif in coral (book pages keep their own type).
+/* Headlines: soft serif in navy, regular weight (book pages keep their own type).
    In the base layer so a color or weight class on a heading still wins. */
 @layer base {
   main h1:not(.bk-display),
   main h2:not(.bk-display) {
-    color: var(--color-coral);
+    color: var(--color-navy);
     font-family: var(--font-display);
-    font-weight: 500;
-    letter-spacing: -0.01em;
+    font-weight: 400;
+    letter-spacing: 0;
   }
 }
 
@@ -47,14 +58,14 @@ body {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 0.4rem;
-    border-radius: 6px;
-    padding: 0.7rem 1.25rem;
-    font-size: 0.78rem;
-    font-weight: 600;
-    line-height: 1.1;
-    letter-spacing: 0.09em;
-    text-transform: uppercase;
+    gap: 0.45rem;
+    border-radius: 0;
+    border: 1px solid transparent;
+    padding: 0.7rem 1.3rem;
+    font-size: 0.92rem;
+    font-weight: 500;
+    line-height: 1.15;
+    letter-spacing: 0.01em;
     white-space: nowrap;
     transition: background-color 150ms, color 150ms, border-color 150ms;
     cursor: pointer;
@@ -64,13 +75,14 @@ body {
     cursor: not-allowed;
   }
   .btn-sm {
-    padding: 0.45rem 0.8rem;
-    font-size: 0.7rem;
+    padding: 0.45rem 0.85rem;
+    font-size: 0.82rem;
   }
   .btn-lg {
-    padding: 0.95rem 1.75rem;
-    font-size: 0.85rem;
+    padding: 0.95rem 1.8rem;
+    font-size: 1rem;
   }
+  /* Filled blue, for the main action on a page. */
   .btn-primary {
     background: var(--color-cobalt);
     color: #fff;
@@ -83,28 +95,27 @@ body {
     color: var(--color-navy);
   }
   .btn-sky:hover:not(:disabled) {
-    background: #b9dde8;
+    background: var(--color-bluebell);
   }
+  /* Navy outline, the everyday button. */
   .btn-secondary {
     background: #fff;
     color: var(--color-navy);
-    border: 1px solid #cdd6e4;
+    border-color: var(--color-navy);
   }
   .btn-secondary:hover:not(:disabled) {
-    border-color: var(--color-cobalt);
-    color: var(--color-cobalt);
-  }
-  /* The one call to buy: coral, a touch bigger, with a soft lift. */
-  .btn-order {
-    background: var(--color-coral);
+    background: var(--color-navy);
     color: #fff;
-    padding: 0.95rem 1.6rem;
-    font-size: 0.85rem;
-    box-shadow: 0 6px 16px -6px rgb(228 87 46 / 0.55);
+  }
+  /* The one call to buy: olive green with cream type. */
+  .btn-order {
+    background: var(--color-olive);
+    color: var(--color-cream);
+    padding: 0.95rem 1.7rem;
+    font-size: 1rem;
   }
   .btn-order:hover:not(:disabled) {
-    background: #c9471f;
-    box-shadow: 0 8px 20px -6px rgb(228 87 46 / 0.65);
+    background: #3f5731;
   }
   .btn-danger {
     background: #b42318;
@@ -118,7 +129,7 @@ body {
   .card {
     background: #fff;
     border: 1px solid var(--line);
-    border-radius: 10px;
+    border-radius: 0;
   }
   .eyebrow {
     font-size: 0.7rem;
@@ -129,7 +140,7 @@ body {
   }
   .chip {
     display: inline-block;
-    border-radius: 4px;
+    border-radius: 0;
     padding: 0.15rem 0.45rem;
     font-size: 0.65rem;
     font-weight: 600;
@@ -140,10 +151,22 @@ body {
     background: var(--color-sun);
     color: var(--color-navy);
   }
-  /* Thin pinstripe band, used under the header. */
+  /* Preppy ribbon stripe (pink, cream pinstripe, olive), used under the header. */
   .stripe-band {
-    height: 8px;
-    background: repeating-linear-gradient(90deg, var(--color-sky) 0 3px, #fff 3px 6px);
+    height: 10px;
+    background: linear-gradient(
+      to bottom,
+      var(--color-pink) 0 4px,
+      var(--color-cream) 4px 5px,
+      var(--color-pink) 5px 6px,
+      var(--color-olive) 6px 10px
+    );
+  }
+  /* A framed picture, like a gift-shop feature tile. */
+  .preppy-frame {
+    border: 10px solid var(--color-pink);
+    outline: 6px solid var(--color-chartreuse);
+    outline-offset: 0;
   }
 }
 

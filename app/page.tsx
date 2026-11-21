@@ -67,7 +67,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ d
                   <li key={b.id}>
                     <Link href={`/books/${b.id}`} className="flex items-center justify-between rounded-xl bg-cream px-3 py-2 hover:bg-tint">
                       <span className="font-semibold">{b.title ?? "New story"}</span>
-                      <span className="text-xs text-[color:var(--muted)]">{STATUS[b.status] ?? b.status}</span>
+                      <span className="shrink-0 whitespace-nowrap pl-3 text-xs text-[color:var(--muted)]">{STATUS[b.status] ?? b.status}</span>
                     </Link>
                   </li>
                 ))}
