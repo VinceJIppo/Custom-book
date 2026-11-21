@@ -40,3 +40,16 @@ describe("local storage", () => {
     expect(await s.exists("users/u1/children/c1/a.txt")).toBe(true);
   });
 });
+
+describe("stable signed links", () => {
+  it("the same file gets the same link for a few minutes, so browsers can reuse it", async () => {
+    const { LocalStorage } = await import("@/lib/storage/local");
+    const s = new LocalStorage(".data/test-storage", "secret-secret-secret-secret", "key-key-key-key-key-key-key", "", 300, "http://localhost:3000");
+    const a = await s.signedUrl("users/u/x.png");
+    const b = await s.signedUrl("users/u/x.png");
+    expect(a).toBe(b);
+    const exp = Number(new URL(a, "http://localhost").searchParams.get("exp"));
+    expect(exp % 300).toBe(0);
+    expect(exp - Date.now() / 1000).toBeGreaterThanOrEqual(299);
+  });
+});

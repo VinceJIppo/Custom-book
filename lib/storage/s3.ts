@@ -33,6 +33,14 @@ function isNotFound(err: unknown) {
   return e?.name === "NoSuchKey" || e?.name === "NotFound" || e?.$metadata?.httpStatusCode === 404;
 }
 
+const STEP_SECONDS = 300;
+function stepStart() {
+  return new Date(Math.floor(Date.now() / 1000 / STEP_SECONDS) * STEP_SECONDS * 1000);
+}
+function stepOffset() {
+  return Math.floor(Date.now() / 1000) % STEP_SECONDS;
+}
+
 export class S3Storage implements Storage {
   readonly driver = "s3";
   private readonly client: Pick<S3Client, "send">;
@@ -110,7 +118,9 @@ export class S3Storage implements Storage {
     return getSignedUrl(
       this.realClient!,
       new GetObjectCommand({ Bucket: this.opts.bucket, Key: key, ...(name ? { ResponseContentDisposition: `attachment; filename="${name}"` } : {}) }),
-      { expiresIn: ttl },
+      // Sign as of the start of the current 5-minute step, so repeated requests get the
+      // same link (and browsers reuse the download); the expiry is extended to match.
+      { expiresIn: Math.min(MAX_PRESIGN_SECONDS, ttl + stepOffset()), signingDate: stepStart() },
     );
   }
 }

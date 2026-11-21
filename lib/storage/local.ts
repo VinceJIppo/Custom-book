@@ -73,7 +73,9 @@ export class LocalStorage implements Storage {
 
   async signedUrl(key: string, ttlSeconds?: number, opts: SignedUrlOptions = {}) {
     assertSafeKey(key);
-    const exp = Math.floor(Date.now() / 1000) + (ttlSeconds ?? this.defaultTtl);
+    // Round the expiry up to a 5-minute step so the same file gets the same link
+    // for a few minutes (browsers can then reuse it instead of downloading again).
+    const exp = Math.ceil((Math.floor(Date.now() / 1000) + (ttlSeconds ?? this.defaultTtl)) / 300) * 300;
     const sig = signParts([key, String(exp)], this.signingSecret);
     const base = (opts.absolute ? this.publicUrl || this.appUrl : this.appUrl).replace(/\/$/, "");
     const dl = opts.downloadName ? `&dl=${encodeURIComponent(opts.downloadName.replace(/[^A-Za-z0-9 ._-]/g, ""))}` : "";

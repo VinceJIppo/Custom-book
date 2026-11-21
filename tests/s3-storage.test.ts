@@ -77,7 +77,11 @@ describe("S3 / R2 storage driver", () => {
     // Bucket-in-hostname form, as in R2's own presigned URL example.
     expect(url.host).toBe("storystar.0123456789abcdef.r2.cloudflarestorage.com");
     expect(url.pathname).toBe("/users/u1/books/b/exports/e-interior.pdf");
-    expect(url.searchParams.get("X-Amz-Expires")).toBe("600");
+    // At least the 10 minutes asked for, rounded to a 5-minute step so repeat requests reuse the link.
+    const expires = Number(url.searchParams.get("X-Amz-Expires"));
+    expect(expires).toBeGreaterThanOrEqual(600);
+    expect(expires).toBeLessThan(900);
+    expect(await s.signedUrl("users/u1/books/b/exports/e-interior.pdf", 600, { downloadName: "Oliver's book.pdf" })).toBe(url.toString());
     expect(url.searchParams.get("X-Amz-Signature")).toMatch(/^[0-9a-f]{64}$/);
     expect(url.searchParams.get("response-content-disposition")).toBe('attachment; filename="Olivers book.pdf"');
     // Longer requests are capped at the 7-day maximum.
