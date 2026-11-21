@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { MockStoryProvider } from "@/lib/providers/story/mock";
 import { AnthropicStoryProvider } from "@/lib/providers/anthropic/story";
-import type { ModelCallResult, ModelCaller } from "@/lib/providers/anthropic/client";
+import { jsonFormat, type ModelCallResult, type ModelCaller } from "@/lib/providers/anthropic/client";
 import { OutlineSchema, StoryPagesResultSchema, validateStoryPages } from "@/lib/schemas/story";
 import { PermanentProviderError } from "@/lib/providers/types";
 import { loadBuiltInThemeFiles } from "@/lib/themes";
@@ -165,6 +165,22 @@ describe("AnthropicStoryProvider (no network)", () => {
     const { caller, prompts } = scripted([reply(manuscript("Draft")), reply({ verdict: "pass", overall: "ok", issues: [] }), reply(missing), reply(a)]);
     await provider(caller).generatePages(outline, ctx);
     expect(prompts[3]).toMatch(/List mustShow details for pages 3/);
+  });
+
+  it("retries a cut-off answer (max tokens) with feedback instead of crashing", async () => {
+    const good = await spineOutline(ctx);
+    const cut = JSON.stringify(good).slice(0, 500);
+    const { caller, prompts } = scripted([reply(cut, { stopReason: "max_tokens" }), reply(good)]);
+    const res = await provider(caller).generateOutline(ctx);
+    expect(res.value.pages).toHaveLength(12);
+    expect(prompts[1]).toMatch(/cut off because it was too long/);
+  });
+
+  it("sends the JSON schema without the SDK's own parser, so our retry loop sees cut-offs", () => {
+    const f = jsonFormat(OutlineSchema);
+    expect(f.type).toBe("json_schema");
+    expect(f.schema).toBeTypeOf("object");
+    expect("parse" in f).toBe(false);
   });
 
   it("treats a refusal as permanent (no pointless retries)", async () => {

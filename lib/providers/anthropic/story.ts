@@ -167,7 +167,7 @@ export class AnthropicStoryProvider implements StoryProvider {
         if (badSetups.length) problems.push(`Set these up before they pay off: ${badSetups.join(", ")}.`);
         return problems;
       },
-      maxTokens: 24000,
+      maxTokens: 48000,
     });
   }
 
@@ -193,7 +193,7 @@ export class AnthropicStoryProvider implements StoryProvider {
         wire: WireManuscript,
         schema: ManuscriptSchema,
         extraCheck: (m) => numberingProblems(m.pages, n),
-        maxTokens: 24000,
+        maxTokens: 48000,
       }),
     );
 
@@ -206,7 +206,7 @@ export class AnthropicStoryProvider implements StoryProvider {
           build: () => editorPrompt(ctx, outline, manuscript.pages),
           wire: WireEditor,
           schema: EditorReportSchema,
-          maxTokens: 12000,
+          maxTokens: 24000,
         }),
       );
       editorNotes.push(report);
@@ -219,7 +219,7 @@ export class AnthropicStoryProvider implements StoryProvider {
           wire: WireManuscript,
           schema: ManuscriptSchema,
           extraCheck: (m) => numberingProblems(m.pages, n),
-          maxTokens: 24000,
+          maxTokens: 48000,
         }),
       );
     }
@@ -239,7 +239,7 @@ export class AnthropicStoryProvider implements StoryProvider {
           if (empty.length) problems.push(`List mustShow details for pages ${empty.join(", ")}.`);
           return problems;
         },
-        maxTokens: 32000,
+        maxTokens: 64000,
       }),
     );
 

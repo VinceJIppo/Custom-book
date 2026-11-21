@@ -24,9 +24,24 @@ export interface ModelCallResult {
 export type ModelCaller = (args: {
   system: string;
   content: UserContent;
-  format: ReturnType<typeof betaZodOutputFormat>;
+  format: JsonFormat;
   maxTokens: number;
 }) => Promise<ModelCallResult>;
+
+export interface JsonFormat {
+  type: "json_schema";
+  schema: Record<string, unknown>;
+}
+
+/**
+ * The JSON schema to send, WITHOUT the SDK's built-in parser: with it, the SDK
+ * throws on a cut-off or malformed answer before our retry-with-feedback loop
+ * can see the stop reason and try again.
+ */
+export function jsonFormat(wire: z.ZodType): JsonFormat {
+  const { type, schema } = betaZodOutputFormat(wire as Parameters<typeof betaZodOutputFormat>[0]);
+  return { type, schema };
+}
 
 export type Effort = "low" | "medium" | "high" | "xhigh" | "max";
 
@@ -108,7 +123,7 @@ export class ClaudeJson {
     const usages: Usage[] = [];
     let problems: string[] | undefined;
     for (let attempt = 1; attempt <= this.maxAttempts; attempt++) {
-      const res = await this.call({ system: opts.system, content: opts.build(problems), format: betaZodOutputFormat(opts.wire), maxTokens: opts.maxTokens });
+      const res = await this.call({ system: opts.system, content: opts.build(problems), format: jsonFormat(opts.wire), maxTokens: opts.maxTokens });
       usages.push(this.toUsage(res));
       if (res.stopReason === "refusal") {
         const err = new PermanentProviderError("The AI service declined this request. Try different wording or a different theme.");
@@ -116,7 +131,8 @@ export class ClaudeJson {
         throw err;
       }
       if (res.stopReason === "max_tokens") {
-        problems = ["The answer was cut off. Keep every field concise."];
+        problems = ["The answer was cut off because it was too long. Keep every field concise and think less before answering."];
+        log.warn(`${opts.label}: cut off at max tokens`, { attempt });
         continue;
       }
       let raw: unknown;
