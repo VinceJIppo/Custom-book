@@ -81,7 +81,8 @@ async function main() {
     const provider = buildImageProvider(w);
     const row = { provider: provider.name, model: provider.model, cells: [] as Array<{ file: string; seconds: number; cost: number; error?: string }>, total: 0 };
     for (const [i, s] of SCENES.entries()) {
-      const scene = { ...s.scene, action: s.scene.action.replace("{name}", values.name!), characters: s.scene.characters.map((c) => c.replace("{name}", values.name!)) };
+      const action = s.scene.action.replace("{name}", values.name!);
+      const scene = { ...s.scene, action, characters: s.scene.characters.map((c) => c.replace("{name}", values.name!)), mustShow: [action], continuity: "" };
       const target = illustrationTargetPx(s.layout, trim);
       const t0 = Date.now();
       process.stdout.write(`${provider.name}: scene ${i + 1}/4 ... `);

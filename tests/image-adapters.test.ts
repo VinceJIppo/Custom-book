@@ -15,7 +15,7 @@ async function request(over: Partial<IllustrationRequest> = {}): Promise<Illustr
     characterRef: { data: await png(), mimeType: "image/png", width: 64, height: 64 },
     bible: { hair: "curly red hair", eyes: "green", skinTone: "fair", faceShape: "round", glasses: "round blue glasses", freckles: "light freckles", signatureOutfit: "yellow raincoat", otherDetails: "" },
     childName: "Teddy",
-    scene: { action: "Teddy waves at a whale", characters: ["Teddy"], setting: "a boat", mood: "happy", framing: "wide" },
+    scene: { action: "Teddy waves at a whale", characters: ["Teddy"], setting: "a boat", mood: "happy", framing: "wide", mustShow: ["Teddy waving at a whale"], continuity: "" },
     style: "watercolor-storybook",
     aspect: 1,
     targetPx: illustrationTargetPx("fullBleed", square),

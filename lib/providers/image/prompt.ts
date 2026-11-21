@@ -57,7 +57,13 @@ export function buildIllustrationPrompt(req: IllustrationRequest): string {
       ? `The first attached image is the approved character sheet for ${req.childName}. Draw ${req.childName} with exactly the same face, hair, skin tone, proportions and outfit as in that sheet, in the same art style.`
       : "",
     req.bible ? describeBible(req.childName, req.bible) : "",
+    req.story?.summary ? `The whole story, for context (draw only this page's moment): ${req.story.summary}` : "",
+    req.story?.previousMoment ? `The page before shows: ${req.story.previousMoment}.` : "",
+    req.story?.nextMoment ? `The page after shows: ${req.story.nextMoment}.` : "",
+    req.story?.pageText ? `The words on this page (for meaning only; never draw any words): ${JSON.stringify(req.story.pageText)}` : "",
     `Scene: ${req.scene.action}.`,
+    req.scene.mustShow?.length ? `The picture MUST clearly show, exactly as described: ${req.scene.mustShow.join("; ")}.` : "",
+    req.scene.continuity ? `Keep consistent with the rest of the book: ${req.scene.continuity}.` : "",
     `Characters present: ${req.scene.characters.join(", ") || req.childName}.`,
     `Setting: ${req.scene.setting}.`,
     `Mood: ${req.scene.mood}. Camera: ${req.scene.framing}.`,

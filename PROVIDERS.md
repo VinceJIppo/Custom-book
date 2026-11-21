@@ -7,10 +7,10 @@ imports outside each vendor's folder (`lib/providers/anthropic`, `gemini`, `open
 
 | Interface | Implementations | Used for |
 |---|---|---|
-| StoryProvider | Mock, Anthropic (Claude) | Outline, pages, text rewrites, Character Bible, Custom Theme drafts |
+| StoryProvider | Mock, Anthropic (Claude) | Story spine, manuscript, editor review and rewrite, art direction, text rewrites, Character Bible, Custom Theme drafts |
 | ImageProvider | Mock, **Gemini** (default), OpenAI | Character sheets, page art, picture edits |
 | Upscaler | Mock, Sharp (local) | Exact print pixels at 300 ppi |
-| VisionProvider | Mock, Anthropic (Claude) | One-face photo check, page-vs-character likeness check |
+| VisionProvider | Mock, Anthropic (Claude) | One-face photo check; page check (likeness to the character, and words versus picture) |
 | ModerationProvider | Mock (word list), Anthropic | Parent free text: favorites, notes, themes, instructions |
 | PrintProvider + PrintRouter | Mock, **Lulu** | Products, cover size, file validation (ordering in Phase 4) |
 
@@ -75,14 +75,22 @@ Adapter: `lib/providers/openai/image.ts` (raw HTTP).
 Adapter folder: `lib/providers/anthropic/` (shared caller in `client.ts`).
 
 - **Story:** `STORY_MODEL` (default `claude-sonnet-5-5`), structured JSON output,
-  Zod-validated, retry with feedback. 16-page story about $0.10 to $0.18 (high-side
-  estimate $0.26).
+  Zod-validated, retry with feedback. Four to six calls per book: story spine, manuscript,
+  editor review, (rewrite and second review when the editor finds problems), art direction.
+  16-page story about $0.30 to $0.45 (high-side estimate $0.63). `npm run story:lab` runs
+  just this part.
 - **Vision:** `VISION_MODEL` (default `claude-sonnet-5-5`, effort `medium`):
   - Photo check: counts faces, checks the face is clear, returns friendly tips. About $0.01.
-  - Likeness check: compares each page with the approved sheet and Character Bible,
-    scoring 0 to 1. Below 0.7, the page is redrawn once with the specific drift as a
-    correction (for example "hair is blond instead of brown"). If it still drifts, it's
-    flagged for the parent. About $0.01 to $0.02 per check.
+  - Page check, one call per picture, two scores from 0 to 1:
+    - Likeness (when the hero is in the scene): compares the page with the approved sheet and
+      Character Bible.
+    - Words versus picture: compares the picture with the page's words, its must-show list and
+      continuity notes (for example the words say the hat is on his head but it's on his toes,
+      or the town is no longer upside down).
+
+    Below 0.7 on either, the page is redrawn once with the specific problems as corrections.
+    If it still fails, it's flagged for the parent with "Likeness:" and "Story:" notes.
+    About $0.01 to $0.02 per check.
 - **Moderation:** word list first (free), then Claude for anything that passes.
 - **Character Bible and theme drafts:** one call each.
 - Refusal fallbacks are on (`STORY_FALLBACKS`): a request a safety classifier declines

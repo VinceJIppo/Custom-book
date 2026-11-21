@@ -27,14 +27,15 @@ export function estimateBookCost(args: {
   let storyUsd = 0;
   if (args.storyProvider !== "mock") {
     const b = STORY_TOKEN_BUDGET;
+    const call = (c: { base: { input: number; output: number }; perPage: { input: number; output: number } }) =>
+      tokenCostUsd(args.storyModel, { inputTokens: c.base.input + c.perPage.input * storyPages, outputTokens: c.base.output + c.perPage.output * storyPages });
     storyUsd =
       tokenCostUsd(args.storyModel, { inputTokens: b.outline.input, outputTokens: b.outline.output }) +
-      tokenCostUsd(args.storyModel, {
-        inputTokens: b.pagesBase.input + b.pagesPerStoryPage.input * storyPages,
-        outputTokens: b.pagesBase.output + b.pagesPerStoryPage.output * storyPages,
-      });
+      2 * call(b.manuscript) + // first draft and one rewrite
+      2 * call(b.editor) +
+      call(b.artDirection);
   }
-  lines.push({ label: args.storyProvider === "mock" ? "Story text (mock, free)" : `Story text (${args.storyModel}, 2 calls)`, usd: round(storyUsd) });
+  lines.push({ label: args.storyProvider === "mock" ? "Story text (mock, free)" : `Story: plan, write, edit, rewrite, art direction (${args.storyModel}, up to 6 calls)`, usd: round(storyUsd) });
 
   const img = IMAGE_PRICES[args.imageProvider] ?? PLANNING_IMAGE_PRICE;
   lines.push({
@@ -45,9 +46,9 @@ export function estimateBookCost(args: {
   lines.push({ label: `${illustrations} upscales for print (${args.upscaler})`, usd: round(illustrations * up.perUpscale) });
   const vision = args.vision ?? "mock";
   if (vision !== "mock" && args.imageProvider !== "mock") {
-    // One check per page, plus a retry and re-check on about a quarter of pages.
+    // One check per page (likeness and words-vs-picture), plus a redraw and re-check on about a quarter of pages.
     const checks = Math.ceil(illustrations * 1.25);
-    lines.push({ label: `Likeness checks (${checks}) and occasional redraws`, usd: round(checks * (VISION_CHECK_USD[vision] ?? 0.02) + Math.ceil(illustrations / 4) * img.perIllustration) });
+    lines.push({ label: `Picture checks (${checks}: likeness and words match) and occasional redraws`, usd: round(checks * (VISION_CHECK_USD[vision] ?? 0.02) + Math.ceil(illustrations / 4) * img.perIllustration) });
   }
 
   const totalUsd = round(lines.reduce((s, l) => s + l.usd, 0));

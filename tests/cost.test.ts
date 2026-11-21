@@ -14,7 +14,7 @@ describe("cost", () => {
   it("a 16-page Claude story is estimated high-side at well under a dollar", () => {
     const e = estimateBookCost({ storyPages: 16, storyProvider: "anthropic", storyModel: "claude-sonnet-5-5", imageProvider: "mock", upscaler: "mock" });
     expect(e.totalUsd).toBeGreaterThan(0.1);
-    expect(e.totalUsd).toBeLessThan(0.5);
+    expect(e.totalUsd).toBeLessThan(1); // plan, draft, review, rewrite, review, art direction
     expect(e.withRealImagesUsd).toBeGreaterThan(e.totalUsd);
   });
 });

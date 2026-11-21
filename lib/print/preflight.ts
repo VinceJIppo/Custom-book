@@ -68,7 +68,7 @@ export function runPreflight(input: PreflightInput): PreflightReport {
 
   // Likeness flags
   const flagged = view.pages.filter((p) => p.imageStatus === "flagged" && p.half !== "right");
-  if (flagged.length) warn("likeness", `${flagged.length} picture(s) may not look like the character sheet (first: page ${flagged[0].number}). Review them in the page editor, or keep them if they look right.`, flagged[0].number);
+  if (flagged.length) warn("likeness", `${flagged.length} picture(s) may not match their words or the character sheet (first: page ${flagged[0].number}). Review them in the page editor, or keep them if they look right.`, flagged[0].number);
 
   // Resolution
   const all = [...interior.images, ...cover.images.map((i) => ({ ...i, page: 0 }))];

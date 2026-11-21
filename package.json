@@ -21,7 +21,8 @@
     "db:studio": "dotenv -e .env.local -- prisma studio",
     "compare": "tsx scripts/compare-image-providers.ts",
     "lulu:check": "tsx scripts/lulu-check.ts",
-    "render:pdfs": "tsx scripts/render-pdfs.ts"
+    "render:pdfs": "tsx scripts/render-pdfs.ts",
+    "story:lab": "tsx scripts/story-lab.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.11.0",

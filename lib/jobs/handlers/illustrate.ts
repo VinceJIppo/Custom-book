@@ -13,6 +13,7 @@ import { loadImage } from "./characters";
 import { snapshotPage } from "../../books/pages";
 import type { JobOutcome } from "../types";
 import type { ArtStyle } from "../../schemas/theme";
+import type { StoryContextForArt } from "../../providers/image/types";
 
 function extFor(mime: string) {
   return mime === "image/svg+xml" ? "svg" : mime === "image/jpeg" ? "jpg" : mime === "image/webp" ? "webp" : "png";
@@ -44,9 +45,11 @@ export interface RenderResult {
 }
 
 /**
- * Draws one illustration with the character reference, checks the likeness,
- * retries once with the specific drift as a correction, and flags the page if
- * it still drifts. Then upscales to exact print pixels.
+ * Draws one illustration with the character reference and the whole-story
+ * context, then checks it: does the hero match the character sheet, and does
+ * the picture show what the words say? If either check fails, it redraws once
+ * with the specific problems as corrections, keeps the better picture, and
+ * flags the page for the parent if it still fails. Then upscales to print pixels.
  */
 export async function renderArt(args: {
   book: Book;
@@ -58,6 +61,8 @@ export async function renderArt(args: {
   /** When editing, the current working image to modify. */
   editFrom?: ImageData;
   aspectOverride?: number;
+  /** Story summary, this page's words and the neighboring moments. */
+  story?: StoryContextForArt;
 }): Promise<RenderResult> {
   const { book } = args;
   const ctx = storyContextFor(book);
@@ -93,6 +98,7 @@ export async function renderArt(args: {
           palette: ctx.theme.artDirection.palette,
           label: args.label,
           note,
+          story: args.story,
         });
     usages.push(r.usage);
     return r.value;
@@ -103,28 +109,42 @@ export async function renderArt(args: {
   let qaIssues: string[] = [];
   let flagged = false;
 
-  const canCheck = getConfig().CONSISTENCY_QA && working.mimeType !== "image/svg+xml" && args.scene.characters.some((c) => c.toLowerCase().includes(childName.toLowerCase()) || c.toLowerCase().includes(ctx.child.firstName.toLowerCase()));
-  if (canCheck && character) {
+  const heroInScene = args.scene.characters.some((c) => c.toLowerCase().includes(childName.toLowerCase()) || c.toLowerCase().includes(ctx.child.firstName.toLowerCase()));
+  const canCheck = getConfig().CONSISTENCY_QA && working.mimeType !== "image/svg+xml";
+  if (canCheck) {
     const vision = getVisionProvider();
+    const sheet = heroInScene ? character : null;
     const check = async (img: ImageData) => {
-      const r = await vision.compareCharacter({ sheet: character.image, page: await toReference(img), bible: character.bible, childName });
+      const r = await vision.checkPage({
+        page: await toReference(img),
+        sheet: sheet?.image ?? null,
+        bible: sheet?.bible ?? null,
+        childName,
+        pageText: args.story?.pageText ?? "",
+        mustShow: args.scene.mustShow ?? [],
+        continuity: args.scene.continuity ?? "",
+      });
       usages.push(r.usage);
       return r.value;
     };
+    const scoreOf = (c: Awaited<ReturnType<typeof check>>) => Math.min(c.likeness?.score ?? 1, c.story.score);
     let result = await check(working);
-    if (!result.consistent) {
-      // One automatic retry, telling the model exactly what drifted.
-      const fix = `Important correction: ${childName} must match the character sheet. Fix: ${result.issues.join("; ") || "match the face, hair and skin tone"}.`;
-      const second = await draw(fix);
+    if (!result.ok) {
+      // One automatic redraw, telling the model exactly what was wrong.
+      const fixes: string[] = [];
+      if (result.likeness && result.likeness.issues.length) fixes.push(`${childName} must match the character sheet: ${result.likeness.issues.join("; ")}.`);
+      else if (result.likeness && !result.ok) fixes.push(`${childName} must match the character sheet (face, hair and skin tone).`);
+      if (result.story.missing.length) fixes.push(`The picture must match the words on the page. Fix: ${result.story.missing.join("; ")}.`);
+      const second = await draw(`Important corrections: ${fixes.join(" ")}`);
       const secondResult = await check(second);
-      if (secondResult.score >= result.score) {
+      if (scoreOf(secondResult) >= scoreOf(result)) {
         working = second;
         result = secondResult;
       }
     }
-    qaScore = result.score;
-    qaIssues = result.issues;
-    flagged = !result.consistent;
+    qaScore = scoreOf(result);
+    qaIssues = [...(result.likeness?.issues ?? []).map((i) => `Likeness: ${i}`), ...result.story.missing.map((m) => `Story: ${m}`)];
+    flagged = !result.ok;
   }
 
   const up = await getUpscaler().upscale(working, { widthPx: target.widthPx, heightPx: target.heightPx });
@@ -154,6 +174,19 @@ function pageUpdate(r: RenderResult, keys: { printKey: string; workingKey: strin
   };
 }
 
+/** The whole-story context for one page: summary, its words, and what the pages around it show. */
+async function storyFor(book: Book, page: Page | null): Promise<StoryContextForArt> {
+  const summary = String((book.outline as { storySummary?: unknown } | null)?.storySummary ?? "");
+  if (!page) return { summary, pageText: "" };
+  const all = await db.page.findMany({ where: { bookId: book.id, storyNumber: { not: null } }, orderBy: { index: "asc" }, select: { id: true, scene: true } });
+  const i = all.findIndex((p) => p.id === page.id);
+  const moment = (p?: { scene: unknown }) => {
+    const parsed = p ? SceneSchema.safeParse(p.scene) : null;
+    return parsed?.success ? parsed.data.action : undefined;
+  };
+  return { summary, pageText: page.text ?? "", previousMoment: i > 0 ? moment(all[i - 1]) : undefined, nextMoment: i >= 0 ? moment(all[i + 1]) : undefined };
+}
+
 async function loadPage(job: GenerationJob) {
   const pageId = (job.payload as { pageId?: string }).pageId;
   const page = pageId ? await db.page.findUnique({ where: { id: pageId }, include: { book: true } }) : null;
@@ -173,6 +206,7 @@ export async function illustrateHandler(job: GenerationJob): Promise<JobOutcome>
     textZone: page.layout === "textSpot" ? null : (page.textZone as TextZone),
     label: `Page ${page.storyNumber ?? page.index}`,
     note,
+    story: await storyFor(page.book, page),
   });
   const stored = await storeRender(page.book, page, version, r);
   await db.page.update({ where: { id: page.id }, data: pageUpdate(r, stored) });
@@ -197,6 +231,7 @@ export async function editHandler(job: GenerationJob): Promise<JobOutcome> {
     label: `Page ${page.storyNumber ?? page.index}`,
     note,
     editFrom: source,
+    story: await storyFor(page.book, page),
   });
   const stored = await storeRender(page.book, page, version, r);
   await db.page.update({ where: { id: page.id }, data: pageUpdate(r, stored) });
@@ -207,7 +242,7 @@ export async function coverHandler(job: GenerationJob): Promise<JobOutcome> {
   const book = job.bookId ? await db.book.findUnique({ where: { id: job.bookId } }) : null;
   if (!book) throw new PermanentProviderError("Book no longer exists");
   const coverScene = SceneSchema.parse((book.outline as { coverScene?: unknown } | null)?.coverScene);
-  const r = await renderArt({ book, scene: coverScene, layout: "fullBleed", textZone: "top", label: "Cover" });
+  const r = await renderArt({ book, scene: coverScene, layout: "fullBleed", textZone: "top", label: "Cover", story: await storyFor(book, null) });
   const ext = extFor(r.print.mimeType);
   const key = keys.coverImage(book.userId, book.childId, book.id, book.version, ext);
   await getStorage().put(key, r.print.data, r.print.mimeType);

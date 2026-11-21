@@ -67,7 +67,7 @@ describe("story page validation", () => {
   const page = (n: number, layout: StoryPage["layout"] = "fullBleed"): StoryPage => ({
     pageNumber: n,
     text: "Hi.",
-    scene: { action: "waves", characters: ["Teddy"], setting: "park", mood: "happy", framing: "wide" },
+    scene: { action: "waves", characters: ["Teddy"], setting: "park", mood: "happy", framing: "wide", mustShow: ["Teddy waving"], continuity: "" },
     layout,
     textZone: "bottom",
   });

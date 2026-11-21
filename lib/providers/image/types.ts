@@ -20,6 +20,18 @@ export interface IllustrationRequest {
   label: string;
   /** Optional parent note, e.g. "make him smile". */
   note?: string;
+  /** The whole story, so each picture fits its place in it. */
+  story?: StoryContextForArt;
+}
+
+export interface StoryContextForArt {
+  /** The whole story in a few sentences. */
+  summary: string;
+  /** The words printed on this page (for meaning; never drawn as text). */
+  pageText: string;
+  /** What the previous and next pages show, for continuity. */
+  previousMoment?: string;
+  nextMoment?: string;
 }
 
 export interface CharacterSheetRequest {

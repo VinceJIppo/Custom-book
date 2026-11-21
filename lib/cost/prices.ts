@@ -28,12 +28,15 @@ export function tokenCostUsd(
 
 /**
  * High-side token budgets per story call (input, output including the model's
- * thinking). Output scales with story length for the pages call.
+ * thinking). A book is: outline (story spine), manuscript, editor review,
+ * at most one rewrite plus a second review, and art direction. The estimate
+ * assumes the rewrite happens.
  */
 export const STORY_TOKEN_BUDGET = {
   outline: { input: 2_500, output: 6_000 },
-  pagesPerStoryPage: { input: 300, output: 900 },
-  pagesBase: { input: 3_000, output: 4_000 },
+  manuscript: { base: { input: 4_000, output: 3_000 }, perPage: { input: 300, output: 700 } },
+  editor: { base: { input: 4_000, output: 3_000 }, perPage: { input: 150, output: 0 } },
+  artDirection: { base: { input: 5_000, output: 4_000 }, perPage: { input: 300, output: 600 } },
   revise: { input: 1_000, output: 1_500 },
 };
 
@@ -51,5 +54,5 @@ export const IMAGE_PRICES: Record<string, { perIllustration: number; perUpscale:
 /** Planning figure when the image provider is not configured yet. */
 export const PLANNING_IMAGE_PRICE = { perIllustration: 0.115, perUpscale: 0, perSheetOption: 0.06 };
 
-/** High-side cost of one vision check (character consistency or photo check). */
+/** High-side cost of one vision check (page check: likeness plus words-vs-picture; or photo check). */
 export const VISION_CHECK_USD: Record<string, number> = { mock: 0, anthropic: 0.02 };

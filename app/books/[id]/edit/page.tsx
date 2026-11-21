@@ -10,7 +10,7 @@ import { AutoRefresh } from "@/components/AutoRefresh";
 export const dynamic = "force-dynamic";
 
 const BADGE: Record<string, [string, string]> = {
-  flagged: ["Check likeness", "bg-amber-100 text-amber-900"],
+  flagged: ["Check picture", "bg-amber-100 text-amber-900"],
   pending: ["Drawing...", "bg-sky text-cobalt"],
   failed: ["Picture failed", "bg-red-100 text-red-800"],
 };

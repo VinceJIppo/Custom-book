@@ -10,17 +10,32 @@ export interface PhotoCheck {
   problems: string[];
 }
 
-export interface ConsistencyCheck {
-  consistent: boolean;
-  /** 0 to 1: how closely the page matches the character sheet. */
-  score: number;
-  /** Plain-English drift, e.g. "hair is blond instead of brown". */
-  issues: string[];
+export interface PageCheckInput {
+  page: ImageData;
+  /** Approved character sheet; null skips the likeness part. */
+  sheet: ImageData | null;
+  bible: CharacterBible | null;
+  childName: string;
+  /** The words printed on this page. */
+  pageText: string;
+  /** Concrete things the words say the picture must show. */
+  mustShow: string[];
+  /** World state that must be visible (e.g. "the whole town is upside down"). */
+  continuity: string;
+}
+
+export interface PageCheck {
+  /** 0 to 1: how closely the hero matches the character sheet (null when not checked). */
+  likeness: { score: number; issues: string[] } | null;
+  /** 0 to 1: how well the picture shows what the words say and keeps the world consistent. */
+  story: { score: number; missing: string[] };
+  ok: boolean;
 }
 
 export interface VisionProvider {
   readonly name: string;
   readonly model: string;
   checkPhoto(photo: ImageData): Promise<WithUsage<PhotoCheck>>;
-  compareCharacter(input: { sheet: ImageData; page: ImageData; bible: CharacterBible | null; childName: string }): Promise<WithUsage<ConsistencyCheck>>;
+  /** One check per page: likeness to the character sheet, and words versus picture. */
+  checkPage(input: PageCheckInput): Promise<WithUsage<PageCheck>>;
 }

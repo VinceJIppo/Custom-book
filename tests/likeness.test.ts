@@ -12,8 +12,8 @@ import { listThemesForUser, syncBuiltInThemes } from "@/lib/themes";
 import { MockUpscaler } from "@/lib/providers/upscale/mock";
 import { MockStoryProvider } from "@/lib/providers/story/mock";
 import { MockModerationProvider } from "@/lib/providers/moderation/mock";
-import type { ImageProvider } from "@/lib/providers/image/types";
-import type { VisionProvider } from "@/lib/providers/vision/types";
+import type { IllustrationRequest, ImageProvider } from "@/lib/providers/image/types";
+import type { PageCheckInput, VisionProvider } from "@/lib/providers/vision/types";
 import type { ImageData } from "@/lib/providers/types";
 import { makeUser, resetDb } from "./helpers";
 
@@ -25,7 +25,7 @@ const png = async (w: number, h: number, color = "#ccddee"): Promise<ImageData> 
 });
 
 function fakeImage() {
-  const calls = { sheet: 0, illustrate: 0, edit: 0, refs: [] as Array<ImageData | null> };
+  const calls = { sheet: 0, illustrate: 0, edit: 0, refs: [] as Array<ImageData | null>, reqs: [] as IllustrationRequest[] };
   const p: ImageProvider = {
     name: "fake",
     model: "fake-image",
@@ -36,6 +36,7 @@ function fakeImage() {
     async generateIllustration(req) {
       calls.illustrate++;
       calls.refs.push(req.characterRef);
+      calls.reqs.push(req);
       return { value: await png(256, Math.round(256 / req.aspect)), usage: { provider: "fake", costUsd: 0.05 } };
     },
     async editIllustration() {
@@ -46,21 +47,31 @@ function fakeImage() {
   return { p, calls };
 }
 
-function fakeVision(scores: () => number) {
+function fakeVision(scores: () => number, storyScores?: () => number) {
   let compares = 0;
+  const inputs: PageCheckInput[] = [];
   const v: VisionProvider = {
     name: "fake",
     model: "fake-vision",
     async checkPhoto() {
       return { value: { faces: 1, ok: true, problems: [] }, usage: { provider: "fake", costUsd: 0.01 } };
     },
-    async compareCharacter() {
+    async checkPage(input) {
       compares++;
+      inputs.push(input);
       const score = scores();
-      return { value: { consistent: score >= 0.7, score, issues: score >= 0.7 ? [] : ["hair is blond instead of brown"] }, usage: { provider: "fake", costUsd: 0.01 } };
+      const story = storyScores ? storyScores() : 1;
+      return {
+        value: {
+          likeness: input.sheet ? { score, issues: score >= 0.7 ? [] : ["hair is blond instead of brown"] } : null,
+          story: { score: story, missing: story >= 0.7 ? [] : ["the hat should be on the Mayor's head"] },
+          ok: (!input.sheet || score >= 0.7) && story >= 0.7,
+        },
+        usage: { provider: "fake", costUsd: 0.01 },
+      };
     },
   };
-  return { v, count: () => compares };
+  return { v, count: () => compares, inputs };
 }
 
 const childInput = {
@@ -164,7 +175,7 @@ describe("character likeness pipeline", () => {
     await drainQueue();
     const pages = await db.page.findMany({ where: { bookId: res.bookId, kind: "story" } });
     expect(pages.every((p) => p.imageStatus === "flagged")).toBe(true);
-    expect(pages[0].qaIssues).toEqual(["hair is blond instead of brown"]);
+    expect(pages[0].qaIssues).toEqual(["Likeness: hair is blond instead of brown"]);
     expect(img.calls.illustrate).toBe(26); // one retry per picture (12 pages + cover)
     expect((await db.book.findUniqueOrThrow({ where: { id: res.bookId } })).status).toBe("ready");
   });
@@ -179,6 +190,27 @@ describe("character likeness pipeline", () => {
     await drainQueue();
     const pages = await db.page.findMany({ where: { bookId: res.bookId, kind: "story" } });
     expect(pages.every((p) => p.imageStatus === "ready" && p.qaScore === 0.85)).toBe(true);
+  });
+
+  it("pictures get the whole-story context, and a picture that contradicts its words is redrawn with the fix, then flagged", async () => {
+    const img = fakeImage();
+    const vis = fakeVision(() => 0.9, () => 0.3);
+    const { childId } = await approvedCharacter(img.p, vis.v);
+    const res = await createAndStartBook(userId, { childId, themeId, options });
+    if (!res.ok) throw new Error(res.message);
+    await drainQueue();
+    const pages = await db.page.findMany({ where: { bookId: res.bookId, kind: "story" }, orderBy: { index: "asc" } });
+    expect(pages.every((p) => p.imageStatus === "flagged")).toBe(true);
+    expect(pages[0].qaIssues).toEqual(["Story: the hat should be on the Mayor's head"]);
+    expect(img.calls.illustrate).toBe(26);
+    // Every page request carries the summary and its own words; middle pages know their neighbors.
+    const pageReqs = img.calls.reqs.filter((r) => r.label.startsWith("Page"));
+    expect(pageReqs.every((r) => r.story && r.story.summary.length > 0 && r.story.pageText.length > 0)).toBe(true);
+    expect(pageReqs.some((r) => r.story?.previousMoment && r.story?.nextMoment)).toBe(true);
+    // The redraw names what was missing.
+    expect(pageReqs.some((r) => r.note?.includes("must match the words on the page") && r.note.includes("the hat should be on the Mayor's head"))).toBe(true);
+    // The vision check sees the words and the must-show list.
+    expect(vis.inputs.some((i) => i.pageText.length > 0 && i.mustShow.length > 0)).toBe(true);
   });
 
   it("with a real image provider, a book needs an approved character in its style", async () => {

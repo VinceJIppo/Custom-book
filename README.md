@@ -39,8 +39,11 @@ See [PROVIDERS.md](PROVIDERS.md) for exactly what is sent where and what it cost
 2. **Photos & character:** upload 1 to 3 photos (JPG, PNG or HEIC). Location data is stripped and
    each photo is checked for one clear face. Pick an art style; we draw 3 character options.
    Approve one (originals are deleted by default), then correct the Character Bible if needed.
-3. **New book:** pick a built-in or custom theme, a **story voice**, and options. Every page is drawn from the
-   approved character, checked for likeness, redrawn once on drift, and flagged if it still drifts.
+3. **New book:** pick a built-in or custom theme, a **story voice**, and options. The story is
+   planned, written, edited and art-directed (see "How stories are written"). Every page is drawn
+   from the approved character with the whole-story summary, then checked twice: does the hero
+   match the character, and does the picture show what the words say? A page that fails is redrawn
+   once with the specific fix, and flagged for the parent if it still fails.
 4. **Read** in the flipbook. **Edit pages:** change text (or ask for a rewrite), change or redraw
    one picture with a note, swap layout, reorder, restore any earlier version.
 5. **Themes:** describe what your child loves and get an editable original theme; duplicate any theme.
@@ -61,6 +64,40 @@ Lulu downloads the PDFs from a public link, and `localhost` isn't public. Use a 
 
 `npm run lulu:check` tests your keys (it prints cover sizes for each product), and
 `npm run lulu:check -- <exportId>` validates one set of files from the command line.
+
+## How stories are written
+
+A story is written like a real picture book, in stages (`lib/providers/anthropic/story.ts`):
+
+1. **Story spine** (outline): the world rule and why the obvious fix fails, the problem and goal,
+   attempts that fail for clear reasons, a turning point the child causes, the resolution, the
+   lesson shown through a choice, setups with the page they pay off on, and continuity facts
+   (for example "the whole town stays upside down until page 11"). Every page says how it follows
+   from the one before. Outlines missing these are sent back.
+2. **Manuscript:** the whole book in one go, so it reads as one story.
+3. **Editor review:** a separate pass reads it like a parent and a five-year-old would, listing
+   anything confusing (unexplained rules, objects from nowhere, actions that don't fit, like
+   cheese for a drippy nose). If it finds problems, the book is **rewritten once** and reviewed again.
+4. **Art direction:** for the final words, each page gets a scene, a **must-show** list phrased
+   exactly as the words say ("the teapot hat on the Mayor's head"), and continuity notes, plus a
+   short **story summary** that goes into every illustration prompt along with the page's words and
+   what the pages before and after show.
+
+The editor's notes and the summary are saved on the book. About $0.30 to $0.60 of Claude per book.
+
+### Story Lab: tune stories without making a book
+
+```bash
+npm run story:lab -- --theme topsy-turvy-town --name Oliver --age 5
+npm run story:lab -- --theme space-explorer --name Mia --age 7 --voice adventure --length 16 --lesson "sharing" --runs 3
+npm run story:lab -- --list
+```
+
+Runs the same story pipeline with no images and no database, and writes a readable file to
+`story-lab/` (gitignored): the spine, the editor's notes, every page with its picture plan and
+must-show list, and the summary. Use it to judge stories, tweak the prompts in
+`lib/providers/anthropic/storyPrompts.ts` or the voices, and run again. Without an Anthropic key it
+uses the offline writer (free, formulaic).
 
 ## Story voices
 
@@ -91,6 +128,7 @@ stay "Classic storybook".
 | `npm run compare -- --a gemini --b openai --character sheet.png` | Same 4 scenes from 2 image providers, side by side |
 | `npm run render:pdfs -- <bookId> [productId]` | Render a book's print PDFs and preflight from the command line (to `exports/`) |
 | `npm run lulu:check [-- <exportId>]` | Check Lulu keys and cover sizes; optionally validate an export with Lulu |
+| `npm run story:lab -- --theme <id> --name <name> --age <n>` | Write a story only (no images, no database) to `story-lab/` for review |
 
 ## How it fits together
 

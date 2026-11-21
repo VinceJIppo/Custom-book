@@ -28,6 +28,8 @@ export default async function EditPage({ params }: { params: Promise<{ id: strin
   const pending = page.imageStatus === "pending";
   const lastJob = await db.generationJob.findFirst({ where: { pageId: page.id }, orderBy: { createdAt: "desc" }, select: { status: true, error: true } });
   const issues = (page.qaIssues as string[] | null) ?? [];
+  const likenessIssues = issues.filter((i) => !i.startsWith("Story: ")).map((i) => i.replace(/^Likeness: /, ""));
+  const storyIssues = issues.filter((i) => i.startsWith("Story: ")).map((i) => i.slice(7));
 
   return (
     <div className="space-y-6">
@@ -62,8 +64,15 @@ export default async function EditPage({ params }: { params: Promise<{ id: strin
           {!pending && lastJob?.status === "failed" && <p className="text-sm text-red-700">The last picture change didn&apos;t work: {lastJob.error}. Your previous picture is kept.</p>}
           {page.imageStatus === "flagged" && (
             <div className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900 ring-1 ring-amber-200" data-testid="flagged">
-              <p className="font-semibold">The hero may not look quite like the character sheet here.</p>
-              {issues.length > 0 && <p>Noticed: {issues.join("; ")}.</p>}
+              <p className="font-semibold">
+                {storyIssues.length && !likenessIssues.length
+                  ? "This picture may not match the words on the page."
+                  : storyIssues.length
+                    ? "This picture may not match the words, and the hero may not look quite like the character sheet."
+                    : "The hero may not look quite like the character sheet here."}
+              </p>
+              {storyIssues.length > 0 && <p>The words say: {storyIssues.join("; ")}.</p>}
+              {likenessIssues.length > 0 && <p>Likeness: {likenessIssues.join("; ")}.</p>}
               <p className="mt-1">Change or redraw the picture, or keep it if it looks right to you.</p>
               <form action={acceptFlaggedAction} className="mt-2">
                 <input type="hidden" name="bookId" value={book.id} />

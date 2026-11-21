@@ -453,13 +453,25 @@ export class MockStoryProvider implements StoryProvider {
         pageNumber: i + 1,
         beat: beats[Math.min(beats.length - 1, Math.floor((i * beats.length) / n))],
         summary: cap(fill(tpl.action, v)),
+        causeFromPrevious: i === 0 ? "" : "Follows from the page before (offline template).",
         characters: tpl.who(v),
+        visualState: "",
       };
     });
     return {
       value: {
         title: `${v.name} and the ${titleNoun(ctx.theme.name)}`,
         premise: fill(ctx.theme.pitch.replace(/^The child/i, "{name}"), v),
+        worldRule: "",
+        problem: "",
+        goal: "",
+        attempts: [],
+        turningPoint: "",
+        resolution: "",
+        lessonShown: "",
+        setups: [],
+        continuity: [],
+        endingEcho: "",
         pages,
       },
       usage: mockUsage(),
@@ -496,6 +508,8 @@ export class MockStoryProvider implements StoryProvider {
         setting: ctx.theme.setting,
         mood: tpl.mood,
         framing: fill(tpl.framing, v),
+        mustShow: [cap(fill(tpl.action, v))],
+        continuity: "",
       };
       return { pageNumber: op.pageNumber, text, scene, layout, textZone };
     });
@@ -510,7 +524,11 @@ export class MockStoryProvider implements StoryProvider {
           setting: ctx.theme.setting,
           mood: ctx.theme.artDirection.mood,
           framing: "heroic full-body shot, open sky above for the title",
+          mustShow: [`${v.name} smiling in the center`],
+          continuity: "",
         },
+        storySummary: `${outline.premise} (Offline template story: add an Anthropic key for a real story with a planned arc.)`,
+        editorNotes: [],
       },
       usage: mockUsage(),
     };

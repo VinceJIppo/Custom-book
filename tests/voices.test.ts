@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { DEFAULT_VOICE, VOICES, VOICE_IDS, voiceFor } from "@/lib/schemas/voices";
 import { BookOptionsSchema } from "@/lib/schemas/book";
-import { outlinePrompt, pagesPrompt, readingRule, revisePrompt } from "@/lib/providers/anthropic/storyPrompts";
+import { artDirectionPrompt, editorPrompt, manuscriptPrompt, outlinePrompt, readingRule, rewritePrompt, revisePrompt } from "@/lib/providers/anthropic/storyPrompts";
 import { MockStoryProvider } from "@/lib/providers/story/mock";
 import { createChild } from "@/lib/children/service";
 import { createAndStartBook } from "@/lib/books/service";
@@ -48,11 +48,14 @@ describe("story prompts carry the voice", () => {
     const c = ctx("rhyming-mischief", "2-4");
     expect(readingRule(c)).toMatch(/One rhyming couplet per page/);
     const outline = (await new MockStoryProvider().generateOutline(c)).value;
-    for (const p of [outlinePrompt(c), pagesPrompt(c, outline), revisePrompt("Old text", "a scene", "make it shorter", c)]) {
+    const draft = [{ pageNumber: 1, text: "A line." }];
+    for (const p of [outlinePrompt(c), manuscriptPrompt(c, outline), rewritePrompt(c, outline, draft, [{ page: 1, problem: "x", fix: "y" }]), revisePrompt("Old text", "a scene", "make it shorter", c)]) {
       expect(p).toContain("STORY VOICE: Rhyming and mischievous");
       expect(p).toMatch(/rhyming couplets/);
     }
-    expect(pagesPrompt(c, outline)).toMatch(/One rhyming couplet per page/);
+    expect(manuscriptPrompt(c, outline)).toMatch(/One rhyming couplet per page/);
+    expect(editorPrompt(c, outline, draft)).toContain('"Rhyming and mischievous" voice');
+    expect(artDirectionPrompt(c, outline, draft)).toContain("A line.");
   });
 
   it("classic voice keeps the default reading rules", () => {

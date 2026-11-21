@@ -47,10 +47,11 @@ Rhythm and rhyme
 - Rhyme on stressed syllables. Never force a rhyme by twisting word order or picking a word that doesn't fit the meaning.
 - Put each line of verse on its own line (use a line break between lines).
 - Save the best rhyme for the last line on a page so turning the page feels like a reward.
-- Use a short refrain that comes back three or four times in the book and changes slightly at the end.
+- A short refrain may come back at most three times. Characters should say or chant it for a reason in the story, it changes slightly at the end, and it never states the lesson.
+- The story always comes first: never let a rhyme bend what happens, add a filler word ("ho ho", "oh my"), or introduce something that isn't part of the plot. Use a near-rhyme or a plain line instead.
 
 Invented words
-- Invent one or two silly words per page at most. They must be easy to pronounce, and their meaning must be clear from context ("a squishy, squelchy, splorchy bog").
+- Invent a silly word on some pages, never more than one or two per page. They must be easy to pronounce, and their meaning must be clear from context ("a squishy, squelchy, splorchy bog").
 - Make up every word yourself.
 
 The narrator

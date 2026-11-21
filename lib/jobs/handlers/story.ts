@@ -63,7 +63,8 @@ export async function pagesHandler(job: GenerationJob): Promise<JobOutcome> {
       data: {
         dedication,
         backBlurb: value.backCoverBlurb,
-        outline: { ...outline, coverScene: value.coverScene } as unknown as Prisma.InputJsonValue,
+        // The illustrator reads the summary before every page; editor notes are kept for review.
+        outline: { ...outline, coverScene: value.coverScene, storySummary: value.storySummary, editorNotes: value.editorNotes } as unknown as Prisma.InputJsonValue,
       },
     });
     const storyPages = await tx.page.findMany({ where: { bookId: book.id, kind: "story" }, select: { id: true } });
