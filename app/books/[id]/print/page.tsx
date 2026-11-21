@@ -88,7 +88,7 @@ export default async function PrintFiles({ params, searchParams }: { params: Pro
           {e.status === "ready" && (
             <>
               {e.preflightOk && !stale && e.validationStatus !== "failed" && (
-                <Link href={`/books/${book.id}/order`} className="btn btn-primary" data-testid="order-from-print">
+                <Link href={`/books/${book.id}/order`} className="btn btn-order self-start" data-testid="order-from-print">
                   Order a printed copy
                 </Link>
               )}

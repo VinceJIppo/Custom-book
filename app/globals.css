@@ -94,6 +94,18 @@ body {
     border-color: var(--color-cobalt);
     color: var(--color-cobalt);
   }
+  /* The one call to buy: coral, a touch bigger, with a soft lift. */
+  .btn-order {
+    background: var(--color-coral);
+    color: #fff;
+    padding: 0.95rem 1.6rem;
+    font-size: 0.85rem;
+    box-shadow: 0 6px 16px -6px rgb(228 87 46 / 0.55);
+  }
+  .btn-order:hover:not(:disabled) {
+    background: #c9471f;
+    box-shadow: 0 8px 20px -6px rgb(228 87 46 / 0.65);
+  }
   .btn-danger {
     background: #b42318;
     color: #fff;

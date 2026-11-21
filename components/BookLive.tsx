@@ -43,33 +43,36 @@ export function BookLive({ bookId, initial }: { bookId: string; initial: LiveSta
   const p = state.progress;
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-1">
-        <h1 className="font-display text-3xl font-medium" data-testid="book-title">
-          {state.title ?? "Writing your story..."}
-        </h1>
-        {state.view && (
-          <p className="text-sm text-[color:var(--muted)]">
-            {state.view.themeName} · {state.view.voiceLabel} voice · {state.view.pages.length} printed pages ·{" "}
-            <Link href={`/print/${bookId}`} className="underline" target="_blank">
-              print layout preview
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div className="flex flex-col gap-1">
+          <h1 className="font-display text-3xl font-medium" data-testid="book-title">
+            {state.title ?? "Writing your story..."}
+          </h1>
+          {state.view && (
+            <p className="text-sm text-[color:var(--muted)]">
+              {state.view.themeName} · {state.view.voiceLabel} voice · {state.view.pages.length} printed pages ·{" "}
+              <Link href={`/print/${bookId}`} className="underline" target="_blank">
+                print layout preview
+              </Link>
+            </p>
+          )}
+        </div>
+        {state.view && !generating && (
+          <div className="flex flex-wrap items-center gap-3">
+            <Link href={`/books/${bookId}/edit`} className="btn btn-secondary" data-testid="edit-pages">
+              Edit pages
             </Link>
-            {!generating && (
-              <>
-                {" · "}
-                <Link href={`/books/${bookId}/edit`} className="font-semibold text-cobalt underline" data-testid="edit-pages">
-                  Edit pages
-                </Link>
-                {" · "}
-                <Link href={`/books/${bookId}/print`} className="font-semibold text-cobalt underline" data-testid="print-files">
-                  Print files
-                </Link>
-                {" · "}
-                <Link href={`/books/${bookId}/order`} className="font-semibold text-coral underline" data-testid="order-book">
-                  Order a printed copy
-                </Link>
-              </>
-            )}
-          </p>
+            <Link href={`/books/${bookId}/print`} className="btn btn-secondary" data-testid="print-files">
+              Print files
+            </Link>
+            <Link href={`/books/${bookId}/order`} className="btn btn-order order-first w-full sm:order-none sm:w-auto" data-testid="order-book">
+              <svg aria-hidden viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2V5Z" />
+                <path d="M4 19a2 2 0 0 1 2-2h13" />
+              </svg>
+              Order a printed copy
+            </Link>
+          </div>
         )}
       </div>
 
