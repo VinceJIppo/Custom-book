@@ -55,7 +55,7 @@ Check, in order of importance:
 9. Can each page be drawn as one moment? Are lasting visual changes (an upside-down town, night) carried by the words on every page until they end? Are there contradictions (a hat on his head on one page and on his toes the next)?
 10. Does the ending resolve the problem and echo the opening?
 
-Return "pass" only when a parent would find nothing confusing. Otherwise return "revise" with the most important issues first (at most 8), each tied to a page number (0 for the whole book) with a concrete fix.`;
+Return "pass" only when a parent would find nothing confusing. Otherwise return "revise" with the most important issues first (at most 8), each tied to a page number (0 for the whole book) with a concrete fix. Keep each problem and each fix to one or two short sentences (under 300 characters).`;
 
 export const ART_SYSTEM_PROMPT = `You are the art director for a children's picture book. You turn a finished manuscript into precise picture instructions so that every illustration shows exactly what its words say, and the world stays consistent from page to page.
 
@@ -134,7 +134,7 @@ export function outlinePrompt(ctx: StoryContext, problems?: string[]): string {
     "- attempts: two or three tries that fail, each with the clear reason it fails. turningPoint: the idea or choice that changes things (it must use something set up earlier). resolution: how the problem is solved by the hero.",
     "- lessonShown: the choice that shows the lesson (empty if there is no lesson). endingEcho: how the last page echoes the first.",
     "- setups: every object, character or ability the plot relies on, with the page where it is set up and the page where it pays off (set up first).",
-    "- continuity: lasting visual facts the illustrator must keep (world changes, recurring props, who travels with the hero) with the page range they apply to.",
+    "- continuity: lasting visual facts the illustrator must keep (world changes, recurring props, who travels with the hero) with the page range they apply to. One short sentence per fact.",
     `- pages: exactly ${n} pages numbered 1 to ${n}. For each: the beat (a short label), a one or two sentence summary, causeFromPrevious (how it follows from the page before; empty only for page 1), the characters present, and visualState (what the world looks like on that page).`,
     retryNote(problems),
   ]

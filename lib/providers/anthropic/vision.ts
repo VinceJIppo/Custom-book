@@ -1,12 +1,13 @@
 import { z } from "zod";
 import type { PageCheck, PageCheckInput, PhotoCheck, VisionProvider } from "../vision/types";
 import type { ImageData, WithUsage } from "../types";
+import { list, note } from "../../schemas/story";
 import { ClaudeJson, imageBlock, type ClaudeOptions } from "./client";
 
 const VISION_SYSTEM = `You check images for a children's picture book app used by parents. Be accurate and concise. Report only what you can see. Never identify real people; describe visual traits only.`;
 
 const WirePhoto = z.object({ faces: z.number().int(), faceClearlyVisible: z.boolean(), problems: z.array(z.string()) });
-const PhotoSchema = z.object({ faces: z.number().int().min(0).max(50), faceClearlyVisible: z.boolean(), problems: z.array(z.string().max(200)).max(5) });
+const PhotoSchema = z.object({ faces: z.number().int().min(0).max(50), faceClearlyVisible: z.boolean(), problems: list(note(200), 5) });
 
 const WirePage = z.object({
   likenessScore: z.number(),
@@ -16,9 +17,9 @@ const WirePage = z.object({
 });
 const PageSchema = z.object({
   likenessScore: z.number().min(0).max(1),
-  likenessIssues: z.array(z.string().max(200)).max(6),
+  likenessIssues: list(note(200), 6),
   storyScore: z.number().min(0).max(1),
-  missing: z.array(z.string().max(240)).max(8),
+  missing: list(note(240), 8),
 });
 
 /** Pages scoring below this (on either check) are redrawn once, then flagged for the parent. */

@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { describe, expect, it } from "vitest";
 import { MockStoryProvider } from "@/lib/providers/story/mock";
 import { AnthropicStoryProvider } from "@/lib/providers/anthropic/story";
@@ -158,6 +159,21 @@ describe("AnthropicStoryProvider (no network)", () => {
     expect(res.usage.costUsd).toBeCloseTo(0.11, 6);
   });
 
+  it("trims wordy editor notes and continuity facts instead of failing the step", async () => {
+    const long = "The bell rule is never stated, so a reader wonders why pulling the rope does nothing at all. ".repeat(8);
+    const outline = { ...(await spineOutline(ctx)), continuity: [{ fact: long, fromPage: 1, toPage: 12 }] };
+    const { caller, prompts } = scripted([reply(outline), reply(manuscript("Draft")), reply({ verdict: "pass", overall: long, issues: Array.from({ length: 15 }, (_, i) => ({ page: i, problem: long, fix: long })) }), reply(await art())]);
+    const p = provider(caller);
+    const o = await p.generateOutline(ctx);
+    expect(o.value.continuity[0].fact.length).toBeLessThanOrEqual(240);
+    expect(o.value.continuity[0].fact).toMatch(/\.\.\.$/);
+    const res = await p.generatePages(o.value, ctx);
+    expect(prompts).toHaveLength(4); // no retries
+    const notes = res.value.editorNotes[0];
+    expect(notes.issues).toHaveLength(12);
+    expect(notes.issues.every((x) => x.problem.length <= 400 && x.fix.length <= 400)).toBe(true);
+  });
+
   it("asks art direction again when a page has no must-show details", async () => {
     const outline = await spineOutline(ctx);
     const a = await art();
@@ -177,7 +193,7 @@ describe("AnthropicStoryProvider (no network)", () => {
   });
 
   it("sends the JSON schema without the SDK's own parser, so our retry loop sees cut-offs", () => {
-    const f = jsonFormat(OutlineSchema);
+    const f = jsonFormat(z.object({ title: z.string(), pages: z.array(z.object({ text: z.string() })) }));
     expect(f.type).toBe("json_schema");
     expect(f.schema).toBeTypeOf("object");
     expect("parse" in f).toBe(false);

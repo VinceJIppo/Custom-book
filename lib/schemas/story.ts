@@ -1,5 +1,26 @@
 import { z } from "zod";
 
+/**
+ * Forgiving text for notes and descriptions (editor notes, scene details,
+ * story-spine fields): an over-long answer is trimmed at a word boundary
+ * instead of failing the whole step. Printed text (page words, title,
+ * dedication, blurb) stays strict, because there length really matters.
+ */
+export function note(max: number, min = 0) {
+  const base = min > 0 ? z.string().min(min) : z.string();
+  return base.transform((s) => {
+    if (s.length <= max) return s;
+    const cut = s.slice(0, max - 3);
+    const space = cut.lastIndexOf(" ");
+    return `${(space > max * 0.6 ? cut.slice(0, space) : cut).trimEnd()}...`;
+  });
+}
+
+/** A list where extra items beyond `max` are dropped instead of failing. */
+export function list<T extends z.ZodType>(item: T, max: number) {
+  return z.array(item).transform((a) => a.slice(0, max));
+}
+
 /** Layouts a story page may use. Front/back matter layouts are fixed by page kind. */
 export const STORY_LAYOUTS = ["fullBleed", "imageTop", "spread", "textSpot"] as const;
 export const StoryLayoutSchema = z.enum(STORY_LAYOUTS);
@@ -14,37 +35,37 @@ export const TextZoneSchema = z.enum(TEXT_ZONES);
 export type TextZone = z.infer<typeof TextZoneSchema>;
 
 export const SceneSchema = z.object({
-  action: z.string().min(3).max(400),
-  characters: z.array(z.string().min(1).max(60)).max(6),
-  setting: z.string().min(3).max(240),
-  mood: z.string().min(2).max(80),
-  framing: z.string().min(2).max(80),
+  action: note(400, 3),
+  characters: list(note(60, 1), 6),
+  setting: note(240, 3),
+  mood: note(80, 2),
+  framing: note(80, 2),
   /** Concrete things the words on this page say that the picture must show (e.g. "the Mayor upside down, balancing on his teapot hat"). */
-  mustShow: z.array(z.string().min(2).max(200)).max(6).default([]),
+  mustShow: list(note(200, 2), 6).default([]),
   /** World state that must be visible on this page (e.g. "the whole town is upside down"). */
-  continuity: z.string().max(300).default(""),
+  continuity: note(300).default(""),
 });
 export type Scene = z.infer<typeof SceneSchema>;
 
 export const OutlineBeatSchema = z.object({
   pageNumber: z.number().int().min(1),
-  beat: z.string().min(2).max(80),
-  summary: z.string().min(5).max(400),
+  beat: note(80, 2),
+  summary: note(400, 5),
   /** How this page follows from the previous one ("because...", "but...", "so..."). */
-  causeFromPrevious: z.string().max(300).default(""),
-  characters: z.array(z.string().min(1).max(60)).max(6),
+  causeFromPrevious: note(300).default(""),
+  characters: list(note(60, 1), 6),
   /** What the world looks like on this page (carried into the picture). */
-  visualState: z.string().max(300).default(""),
+  visualState: note(300).default(""),
 });
 
 export const SetupPayoffSchema = z.object({
-  item: z.string().min(2).max(120),
+  item: note(120, 2),
   setUpOnPage: z.number().int().min(1),
   paysOffOnPage: z.number().int().min(1),
 });
 
 export const ContinuityFactSchema = z.object({
-  fact: z.string().min(3).max(240),
+  fact: note(240, 3),
   fromPage: z.number().int().min(1),
   toPage: z.number().int().min(1),
 });
@@ -55,22 +76,22 @@ export const ContinuityFactSchema = z.object({
  */
 export const OutlineSchema = z.object({
   title: z.string().min(2).max(80),
-  premise: z.string().min(10).max(300),
+  premise: note(300, 10),
   /** How this world works, stated so readers can follow (e.g. "the bell only rings when everyone laughs together"). */
-  worldRule: z.string().max(400).default(""),
+  worldRule: note(400).default(""),
   /** What is wrong and WHY, in kid logic. */
-  problem: z.string().max(400).default(""),
+  problem: note(400).default(""),
   /** What the hero wants. */
-  goal: z.string().max(300).default(""),
+  goal: note(300).default(""),
   /** Attempts that fail for a clear reason before the one that works. */
-  attempts: z.array(z.object({ attempt: z.string().min(3).max(300), whyItFails: z.string().min(3).max(300) })).max(4).default([]),
-  turningPoint: z.string().max(400).default(""),
-  resolution: z.string().max(400).default(""),
+  attempts: list(z.object({ attempt: note(300, 3), whyItFails: note(300, 3) }), 4).default([]),
+  turningPoint: note(400).default(""),
+  resolution: note(400).default(""),
   /** How the lesson is shown through what happens (empty when there is no lesson). */
-  lessonShown: z.string().max(300).default(""),
-  setups: z.array(SetupPayoffSchema).max(8).default([]),
-  continuity: z.array(ContinuityFactSchema).max(10).default([]),
-  endingEcho: z.string().max(300).default(""),
+  lessonShown: note(300).default(""),
+  setups: list(SetupPayoffSchema, 8).default([]),
+  continuity: list(ContinuityFactSchema, 10).default([]),
+  endingEcho: note(300).default(""),
   pages: z.array(OutlineBeatSchema).min(4).max(30),
 });
 export type Outline = z.infer<typeof OutlineSchema>;
@@ -86,8 +107,8 @@ export type StoryPage = z.infer<typeof StoryPageSchema>;
 
 export const EditorIssueSchema = z.object({
   page: z.number().int().min(0),
-  problem: z.string().min(3).max(400),
-  fix: z.string().min(3).max(400),
+  problem: note(400, 3),
+  fix: note(400, 3),
 });
 export type EditorIssue = z.infer<typeof EditorIssueSchema>;
 
@@ -95,8 +116,8 @@ export const EditorReportSchema = z.object({
   /** "pass" when the story already works as a whole. */
   verdict: z.enum(["pass", "revise"]),
   /** One or two sentences on how the story reads as a whole. */
-  overall: z.string().max(600),
-  issues: z.array(EditorIssueSchema).max(12),
+  overall: note(600),
+  issues: list(EditorIssueSchema, 12),
 });
 export type EditorReport = z.infer<typeof EditorReportSchema>;
 
@@ -106,21 +127,21 @@ export const StoryPagesResultSchema = z.object({
   backCoverBlurb: z.string().min(10).max(500),
   coverScene: SceneSchema,
   /** The whole story in a short paragraph, given to the illustrator for every page. */
-  storySummary: z.string().max(1200).default(""),
+  storySummary: note(1200).default(""),
   /** What the editor pass found (kept for Story Lab and debugging). */
-  editorNotes: z.array(EditorReportSchema).max(3).default([]),
+  editorNotes: list(EditorReportSchema, 3).default([]),
 });
 export type StoryPagesResult = z.infer<typeof StoryPagesResultSchema>;
 
 export const CharacterBibleSchema = z.object({
-  hair: z.string().min(2).max(160),
-  eyes: z.string().min(2).max(80),
-  skinTone: z.string().min(2).max(80),
-  faceShape: z.string().min(2).max(80),
-  glasses: z.string().max(80),
-  freckles: z.string().max(80),
-  signatureOutfit: z.string().min(2).max(200),
-  otherDetails: z.string().max(240).default(""),
+  hair: note(160, 2),
+  eyes: note(80, 2),
+  skinTone: note(80, 2),
+  faceShape: note(80, 2),
+  glasses: note(80),
+  freckles: note(80),
+  signatureOutfit: note(200, 2),
+  otherDetails: note(240).default(""),
 });
 export type CharacterBible = z.infer<typeof CharacterBibleSchema>;
 

@@ -15,6 +15,7 @@ import {
   type StoryPage,
   type StoryPagesResult,
 } from "../../schemas/story";
+import { note } from "../../schemas/story";
 import { ART_STYLES, ThemeConfigSchema, type ThemeConfig } from "../../schemas/theme";
 import { sumUsage, type ImageData, type Usage, type WithUsage } from "../types";
 import { ClaudeJson, imageBlock, type ClaudeOptions } from "./client";
@@ -102,7 +103,7 @@ const WireArt = z.object({
 });
 const ArtSchema = z.object({
   pages: z.array(z.object({ pageNumber: z.number().int().min(1), scene: SceneSchema, layout: StoryLayoutSchema, textZone: TextZoneSchema })).min(4).max(30),
-  storySummary: z.string().min(20).max(1200),
+  storySummary: note(1200, 20),
   coverScene: SceneSchema,
 });
 
