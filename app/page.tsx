@@ -7,7 +7,7 @@ import { PlanCard } from "@/components/PlanCard";
 
 export const dynamic = "force-dynamic";
 
-const STATUS: Record<string, string> = { generating: "Being made", ready: "Ready to read", failed: "Needs attention", draft: "Draft" };
+const STATUS: Record<string, string> = { generating: "Being made", story_review: "Story ready to read", ready: "Ready to read", failed: "Needs attention", draft: "Draft" };
 
 export default async function Home({ searchParams }: { searchParams: Promise<{ deleted?: string }> }) {
   const user = await requireOnboardedUser();

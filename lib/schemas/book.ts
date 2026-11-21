@@ -25,6 +25,10 @@ export const TrimSizeSchema = z.enum(["square-8.5", "portrait-8.5x11", "portrait
 export const OFFERED_TRIM_SIZES = ["square-8.5", "portrait-8.5x11"] as const;
 export type TrimSizeId = z.infer<typeof TrimSizeSchema>;
 
+/** "now": pictures start right away. "overnight": Google's batch service, about half price, ready within a day. */
+export const PictureSpeedSchema = z.enum(["now", "overnight"]);
+export type PictureSpeed = z.infer<typeof PictureSpeedSchema>;
+
 export const BookOptionsSchema = z.object({
   length: z.coerce
     .number()
@@ -50,5 +54,7 @@ export const BookOptionsSchema = z.object({
   spotlightId: z.string().optional(),
   /** What the story is about, in the parent's words (a parent's job, a family secret, a life moment...). */
   storyAbout: z.string().trim().max(400).optional(),
+  /** When the pictures are drawn. Optional so older books parse (they read as "now"). */
+  pictureSpeed: PictureSpeedSchema.optional(),
 });
 export type BookOptions = z.infer<typeof BookOptionsSchema>;

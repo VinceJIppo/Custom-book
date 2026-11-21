@@ -78,3 +78,31 @@ export interface ImageProvider {
   generateIllustration(req: IllustrationRequest): Promise<WithUsage<ImageData>>;
   editIllustration(input: EditRequest): Promise<WithUsage<ImageData>>;
 }
+
+/** One picture in an overnight batch. The key comes back with its result. */
+export interface BatchItem {
+  key: string;
+  req: IllustrationRequest;
+}
+
+export type BatchState = "pending" | "running" | "succeeded" | "failed" | "expired" | "cancelled";
+
+export interface BatchResult {
+  key: string;
+  image?: WithUsage<ImageData>;
+  error?: string;
+}
+
+/**
+ * Image services with a cheaper, slower batch queue (Gemini Batch Mode: half
+ * price, done within 24 hours). A submit may be split into several batches.
+ */
+export interface BatchImageProvider {
+  submitIllustrationBatch(items: BatchItem[], label: string): Promise<string[]>;
+  getIllustrationBatch(name: string): Promise<{ state: BatchState; results?: BatchResult[] }>;
+}
+
+export function supportsBatch(p: ImageProvider): p is ImageProvider & BatchImageProvider {
+  const b = p as Partial<BatchImageProvider>;
+  return typeof b.submitIllustrationBatch === "function" && typeof b.getIllustrationBatch === "function";
+}

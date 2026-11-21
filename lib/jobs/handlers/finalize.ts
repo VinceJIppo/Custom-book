@@ -12,5 +12,9 @@ export async function maybeFinalizeBook(bookId: string) {
     if (coverActive > 0) return false;
   }
   const res = await db.book.updateMany({ where: { id: bookId, status: "generating" }, data: { status: "ready" } });
+  if (res.count === 1) {
+    const { notifyBookReady } = await import("../../books/notify");
+    await notifyBookReady(bookId);
+  }
   return res.count === 1;
 }

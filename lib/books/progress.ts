@@ -7,6 +7,8 @@ export interface BookProgress {
   illustrations: { done: number; failed: number; total: number };
   failedJobs: number;
   costUsd: number;
+  /** Pictures are waiting in the overnight (batch) queue. */
+  overnight?: boolean;
   percent: number;
   /** Admins only: why jobs failed, grouped, with a plain-English hint. */
   problems?: Array<{ count: number; hint: string; detail: string }>;
@@ -52,6 +54,8 @@ export async function getBookProgress(bookId: string, expectedStoryPages: number
     { id: "art", label: "Painting the pictures", state: art, detail: total ? `${done} of ${total}${failed ? `, ${failed} need another try` : ""}` : undefined },
     { id: "cover", label: "Making the cover", state: cover },
   ];
+  const overnight = jobs.some((j) => (j.type === "book.batch" || j.type === "book.batch.poll") && (j.status === "queued" || j.status === "running"));
+  if (overnight) steps[2].detail = "Overnight: usually a few hours, always within a day";
   if (retrying) steps[steps.findIndex((s) => s.state === "working") >= 0 ? steps.findIndex((s) => s.state === "working") : 0].detail = "Hit a snag, retrying automatically...";
   const units = 2 + Math.max(total, expectedStoryPages) + 1;
   const finished = (outline === "done" ? 1 : 0) + (text === "done" ? 1 : 0) + done + failed + (cover === "done" || cover === "failed" ? 1 : 0);
@@ -59,6 +63,7 @@ export async function getBookProgress(bookId: string, expectedStoryPages: number
     steps,
     illustrations: { done, failed, total },
     failedJobs: jobs.filter((j) => j.status === "failed").length,
+    overnight,
     costUsd: Math.round(jobs.reduce((s, j) => s + j.costUsd, 0) * 10000) / 10000,
     percent: Math.round((finished / Math.max(units, 1)) * 100),
     problems: opts.withProblems ? groupProblems(jobs.filter((j) => j.status === "failed" && j.error).map((j) => j.error!)) : undefined,

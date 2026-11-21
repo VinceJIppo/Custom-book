@@ -1,4 +1,4 @@
-import type { CharacterSheetRequest, EditRequest, ImageProvider, IllustrationRequest } from "./types";
+import type { BatchImageProvider, BatchItem, BatchResult, BatchState, CharacterSheetRequest, EditRequest, ImageProvider, IllustrationRequest } from "./types";
 import type { ImageData, WithUsage } from "../types";
 
 /**
@@ -108,7 +108,11 @@ function toImage(markup: string, width: number, height: number): ImageData {
 
 const free = { provider: "mock", model: "mock-image", imageCalls: 1, costUsd: 0 };
 
-export class MockImageProvider implements ImageProvider {
+/** Mock batches live in memory: a restarted server reads them as expired (and falls back). */
+const mockBatches = new Map<string, BatchItem[]>();
+let mockBatchSeq = 0;
+
+export class MockImageProvider implements ImageProvider, BatchImageProvider {
   readonly name = "mock";
   readonly model = "mock-image";
 
@@ -147,5 +151,19 @@ export class MockImageProvider implements ImageProvider {
       seed: hash(input.instruction),
     });
     return { value: toImage(markup, width, height), usage: free };
+  }
+
+  async submitIllustrationBatch(items: BatchItem[]): Promise<string[]> {
+    const name = `batches/mock-${++mockBatchSeq}-${Date.now()}`;
+    mockBatches.set(name, items);
+    return [name];
+  }
+
+  async getIllustrationBatch(name: string): Promise<{ state: BatchState; results?: BatchResult[] }> {
+    const items = mockBatches.get(name);
+    if (!items) return { state: "expired" };
+    const results: BatchResult[] = [];
+    for (const it of items) results.push({ key: it.key, image: await this.generateIllustration(it.req) });
+    return { state: "succeeded", results };
   }
 }

@@ -1,6 +1,8 @@
 import type { GenerationJob, Prisma } from "@prisma/client";
 import { db } from "../../db";
 import { enqueue } from "../queue";
+import { getConfig } from "../../config";
+import { queuePictures } from "../../books/pictures";
 import { getStoryProvider } from "../../providers/registry";
 import { outlineFor, storyContextFor } from "../../books/context";
 import type { JobOutcome } from "../types";
@@ -67,11 +69,12 @@ export async function pagesHandler(job: GenerationJob): Promise<JobOutcome> {
         outline: { ...outline, coverScene: value.coverScene, storySummary: value.storySummary, editorNotes: value.editorNotes } as unknown as Prisma.InputJsonValue,
       },
     });
-    const storyPages = await tx.page.findMany({ where: { bookId: book.id, kind: "story" }, select: { id: true } });
-    for (const p of storyPages) {
-      await enqueue("page.illustrate", { pageId: p.id }, { userId: book.userId, bookId: book.id, pageId: p.id }, tx);
+    if (getConfig().STORY_REVIEW) {
+      // Stop here: the parent reads (and can edit) the words before any picture is paid for.
+      await tx.book.update({ where: { id: book.id }, data: { status: "story_review" } });
+    } else {
+      await queuePictures(book, tx);
     }
-    await enqueue("book.cover", {}, { userId: book.userId, bookId: book.id }, tx);
   });
   return { usage, result: { pages: value.pages.length } };
 }

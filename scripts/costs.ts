@@ -54,7 +54,7 @@ async function main() {
     `Created ${book.createdAt.toLocaleString()} · status ${book.status} · style ${book.style}`,
   );
   console.log(
-    `Settings now: GEMINI_PAGE_SIZE=${cfg.GEMINI_PAGE_SIZE}, WORKER_CONCURRENCY=${cfg.WORKER_CONCURRENCY}, JOB_LEASE_SECONDS=${leaseSec}, CONSISTENCY_QA=${cfg.CONSISTENCY_QA}\n`,
+    `Settings now: GEMINI_PAGE_SIZE=${cfg.GEMINI_PAGE_SIZE}, WORKER_CONCURRENCY=${cfg.WORKER_CONCURRENCY}, JOB_LEASE_SECONDS=${leaseSec}, CONSISTENCY_QA=${cfg.CONSISTENCY_QA}, PICTURE_CHECK=${cfg.PICTURE_CHECK}\n`,
   );
 
   let recorded = 0;

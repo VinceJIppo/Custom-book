@@ -44,6 +44,7 @@ export function BookWizard({ child, themes, defaultReadingLevel, estimates, stor
   const [length, setLength] = useState(16);
   const [voice, setVoice] = useState<VoiceId>(DEFAULT_VOICE);
   const [level, setLevel] = useState<ReadingLevel>(defaultReadingLevel);
+  const [speed, setSpeed] = useState<"now" | "overnight">("now");
   const est = estimates[length];
   const suggested = state && !state.ok ? themes.filter((t) => state.suggestedThemeIds?.includes(t.slug)) : [];
 
@@ -207,6 +208,27 @@ export function BookWizard({ child, themes, defaultReadingLevel, estimates, stor
             <span className="font-semibold">Anything else?</span> <span className="text-sm text-[color:var(--muted)]">optional</span>
             <textarea name="instructions" maxLength={500} rows={2} placeholder="Grandma's garden should appear. Make it rhyme." className={input} />
           </label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend className="font-display text-xl font-medium">When should we draw the pictures?</legend>
+        <p className="mt-1 text-sm text-[color:var(--muted)]">You&apos;ll read the story first either way. Pictures start after you approve it.</p>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2" role="radiogroup" aria-label="Picture speed">
+          {(
+            [
+              { id: "now", title: "Right away", text: "Pictures are ready in about 10 to 20 minutes." },
+              { id: "overnight", title: "Overnight, about half the cost", text: "Pictures are drawn in Google's slower queue, usually within a few hours and always within a day. We'll email you when your book is ready." },
+            ] as const
+          ).map((o) => (
+            <label key={o.id} className={`flex cursor-pointer gap-3 rounded-xl bg-white p-4 ring-1 ${speed === o.id ? "ring-2 ring-cobalt" : "ring-[color:var(--line)]"}`}>
+              <input type="radio" name="pictureSpeed" value={o.id} checked={speed === o.id} onChange={() => setSpeed(o.id)} className="mt-1" data-testid={`speed-${o.id}`} />
+              <span>
+                <span className="block font-semibold">{o.title}</span>
+                <span className="block text-sm text-[color:var(--muted)]">{o.text}</span>
+              </span>
+            </label>
+          ))}
         </div>
       </fieldset>
 

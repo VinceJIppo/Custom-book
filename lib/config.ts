@@ -57,7 +57,7 @@ const EnvSchema = z.object({
   GEMINI_API_KEY: z.string().optional(),
   GEMINI_IMAGE_MODEL: z.string().default("gemini-nano-banana-2.1"),
   /** Output size for page art: auto picks per layout from print pixels. */
-  GEMINI_PAGE_SIZE: z.enum(["auto", "1K", "2K", "4K"]).default("auto"),
+  GEMINI_PAGE_SIZE: z.enum(["auto", "1K", "2K", "4K"]).default("2K"),
   OPENAI_API_KEY: z.string().optional(),
   OPENAI_IMAGE_MODEL: z.string().default("gpt-image-2.6-sunburst"),
   OPENAI_IMAGE_QUALITY: z
@@ -70,8 +70,17 @@ const EnvSchema = z.object({
   VISION_EFFORT: z
     .enum(["low", "medium", "high", "xhigh", "max"])
     .default("medium"),
-  /** Compare each page with the character sheet and retry once on drift. */
+  /** Compare each page with the character sheet and its words. */
   CONSISTENCY_QA: bool.default(true),
+  /**
+   * What a failed picture check does. "flag" (cheaper): keep the picture and show the parent a
+   * note so they can redraw it if they want. "redraw": redraw once automatically, then flag.
+   */
+  PICTURE_CHECK: z.enum(["flag", "redraw"]).default("flag"),
+  /** Parents read and approve the story before any pictures are drawn (and paid for). */
+  STORY_REVIEW: bool.default(true),
+  /** How often to check on an overnight (batch) picture job, in seconds. */
+  BATCH_POLL_SECONDS: z.coerce.number().int().min(0).default(300),
   MODERATION_PROVIDER: z.enum(["auto", "mock", "anthropic"]).default("auto"),
   PRINT_PROVIDER: z.enum(["auto", "mock", "lulu"]).default("auto"),
   LULU_API_BASE: z.string().url().default("https://api.sandbox.lulu.com"),

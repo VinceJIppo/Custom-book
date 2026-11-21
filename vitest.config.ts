@@ -16,6 +16,10 @@ export default defineConfig({
       STORY_PROVIDER: "mock",
       // Allowances are tested on their own (tests/allowance.test.ts); other tests make many books.
       ALLOWANCES_ENABLED: "false",
+      // Most tests make whole books in one go and check the automatic redraw; both have their own tests.
+      STORY_REVIEW: "false",
+      PICTURE_CHECK: "redraw",
+      BATCH_POLL_SECONDS: "0",
     },
   },
 });

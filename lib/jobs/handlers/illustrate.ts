@@ -30,7 +30,8 @@ import { loadImage } from "./characters";
 import { snapshotPage } from "../../books/pages";
 import type { JobOutcome } from "../types";
 import type { ArtStyle } from "../../schemas/theme";
-import type { CastRef, StoryContextForArt } from "../../providers/image/types";
+import type { CastRef, IllustrationRequest, StoryContextForArt } from "../../providers/image/types";
+import type { WithUsage } from "../../providers/types";
 
 function extFor(mime: string) {
   return mime === "image/svg+xml"
@@ -142,7 +143,7 @@ export interface RenderResult {
  * with the specific problems as corrections, keeps the better picture, and
  * flags the page for the parent if it still fails. Then upscales to print pixels.
  */
-export async function renderArt(args: {
+export interface ArtArgs {
   book: Book;
   scene: Scene;
   layout: Layout;
@@ -156,7 +157,12 @@ export async function renderArt(args: {
   story?: StoryContextForArt;
   /** Pictures already drawn (and paid for) by earlier tries of the same job. */
   priorDraws?: number;
-}): Promise<RenderResult> {
+  /** A picture already drawn elsewhere (an overnight batch): checked and finished, not redrawn first. */
+  predrawn?: WithUsage<ImageData>;
+}
+
+/** Everything the image model needs for one new picture. Shared by single pictures and overnight batches. */
+export async function prepareIllustration(args: ArtArgs) {
   const { book } = args;
   const ctx = storyContextFor(book);
   const trim = getTrim(book.trimSize);
@@ -165,6 +171,27 @@ export async function renderArt(args: {
   const character = await characterFor(book);
   const childName = ctx.child.nickname || ctx.child.firstName;
   const cast = await castRefsFor(ctx, args.scene, childName);
+  const request = (note?: string): IllustrationRequest => ({
+    characterRef: character?.image ?? null,
+    bible: character?.bible ?? null,
+    childName,
+    scene: args.scene,
+    style: book.style as ArtStyle,
+    aspect,
+    targetPx: target,
+    textZone: args.textZone,
+    palette: ctx.theme.artDirection.palette,
+    label: args.label,
+    note,
+    story: args.story,
+    cast,
+  });
+  return { ctx, target, character, childName, request };
+}
+
+export async function renderArt(args: ArtArgs): Promise<RenderResult> {
+  const { book } = args;
+  const { ctx, target, character, childName, request } = await prepareIllustration(args);
   const image = getImageProvider();
   const usages: Usage[] = [];
   let draws = 0;
@@ -188,6 +215,11 @@ export async function renderArt(args: {
       );
     }
     const note = [args.note, extraNote].filter(Boolean).join(" ") || undefined;
+    if (args.predrawn && draws === 0 && !extraNote) {
+      usages.push(args.predrawn.usage);
+      draws++;
+      return args.predrawn.value;
+    }
     const r = args.editFrom
       ? await image.editIllustration({
           image: await toReference(args.editFrom),
@@ -198,21 +230,7 @@ export async function renderArt(args: {
           textZone: args.textZone,
           targetPx: target,
         })
-      : await image.generateIllustration({
-          characterRef: character?.image ?? null,
-          bible: character?.bible ?? null,
-          childName,
-          scene: args.scene,
-          style: book.style as ArtStyle,
-          aspect,
-          targetPx: target,
-          textZone: args.textZone,
-          palette: ctx.theme.artDirection.palette,
-          label: args.label,
-          note,
-          story: args.story,
-          cast,
-        });
+      : await image.generateIllustration(request(note));
     usages.push(r.usage);
     draws++;
     return r.value;
@@ -278,7 +296,8 @@ export async function renderArt(args: {
           fixes.push(
             `The picture must match the words on the page. Fix: ${result.story.missing.join("; ")}.`,
           );
-        if ((args.priorDraws ?? 0) + draws < maxDraws) {
+        // In "flag" mode (the default) the parent decides whether to redraw.
+        if (getConfig().PICTURE_CHECK === "redraw" && (args.priorDraws ?? 0) + draws < maxDraws) {
           const second = await draw(
             `Important corrections: ${fixes.join(" ")}`,
           );
@@ -408,6 +427,46 @@ async function loadPage(job: GenerationJob) {
   return page;
 }
 
+/** Picture settings for a story page. */
+export async function pageArtArgs(page: Page & { book: Book }, note?: string): Promise<ArtArgs> {
+  return {
+    book: page.book,
+    scene: SceneSchema.parse(page.scene),
+    layout: page.layout as Layout,
+    textZone: page.layout === "textSpot" ? null : (page.textZone as TextZone),
+    label: `Page ${page.storyNumber ?? page.index}`,
+    note,
+    story: await storyFor(page.book, page),
+  };
+}
+
+/** Picture settings for the cover. */
+export async function coverArtArgs(book: Book): Promise<ArtArgs> {
+  return {
+    book,
+    scene: SceneSchema.parse((book.outline as { coverScene?: unknown } | null)?.coverScene),
+    layout: "fullBleed",
+    textZone: "top",
+    label: "Cover",
+    story: await storyFor(book, null),
+  };
+}
+
+/** A picture an overnight batch already drew (stored by the batch job), if this job has one. */
+async function predrawnFor(job: GenerationJob): Promise<WithUsage<ImageData> | undefined> {
+  const p = job.payload as { predrawnKey?: string; predrawnUsage?: Usage };
+  if (!p.predrawnKey || priorDraws(job) > 0) return undefined;
+  const stored = await getStorage().get(p.predrawnKey);
+  if (!stored) return undefined;
+  const image = await loadImage(p.predrawnKey);
+  return { value: image, usage: p.predrawnUsage ?? { provider: getImageProvider().name, costUsd: 0, imageCalls: 1 } };
+}
+
+async function dropPredrawn(job: GenerationJob) {
+  const key = (job.payload as { predrawnKey?: string }).predrawnKey;
+  if (key) await getStorage().delete(key).catch(() => undefined);
+}
+
 /** First illustration for a story page, or a fresh redraw with an optional note. */
 export async function illustrateHandler(
   job: GenerationJob,
@@ -418,15 +477,11 @@ export async function illustrateHandler(
     ? await snapshotPage(page.id, note ? `Redraw: ${note}` : "Redraw")
     : page.version;
   const r = await renderArt({
-    book: page.book,
-    scene: SceneSchema.parse(page.scene),
-    layout: page.layout as Layout,
-    textZone: page.layout === "textSpot" ? null : (page.textZone as TextZone),
-    label: `Page ${page.storyNumber ?? page.index}`,
-    note,
-    story: await storyFor(page.book, page),
+    ...(await pageArtArgs(page, note)),
     priorDraws: priorDraws(job),
+    predrawn: await predrawnFor(job),
   });
+  await dropPredrawn(job);
   const stored = await storeRender(page.book, page, version, r);
   await db.page.update({ where: { id: page.id }, data: pageUpdate(r, stored) });
   await maybeFinalizeBook(page.book.id);
@@ -470,18 +525,12 @@ export async function coverHandler(job: GenerationJob): Promise<JobOutcome> {
     ? await db.book.findUnique({ where: { id: job.bookId } })
     : null;
   if (!book) throw new PermanentProviderError("Book no longer exists");
-  const coverScene = SceneSchema.parse(
-    (book.outline as { coverScene?: unknown } | null)?.coverScene,
-  );
   const r = await renderArt({
-    book,
-    scene: coverScene,
-    layout: "fullBleed",
-    textZone: "top",
-    label: "Cover",
-    story: await storyFor(book, null),
+    ...(await coverArtArgs(book)),
     priorDraws: priorDraws(job),
+    predrawn: await predrawnFor(job),
   });
+  await dropPredrawn(job);
   const ext = extFor(r.print.mimeType);
   const key = keys.coverImage(
     book.userId,

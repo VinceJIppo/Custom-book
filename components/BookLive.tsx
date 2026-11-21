@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Flipbook } from "@/components/flipbook/Flipbook";
 import { retryBookAction } from "@/app/actions";
 import type { BookView } from "@/lib/books/viewTypes";
@@ -21,6 +22,11 @@ const COLOR: Record<StepState, string> = { waiting: "text-neutral-400", working:
 export function BookLive({ bookId, initial }: { bookId: string; initial: LiveState }) {
   const [state, setState] = useState(initial);
   const generating = state.status === "generating";
+  const router = useRouter();
+  // The words are written: show the story review screen.
+  useEffect(() => {
+    if (state.status === "story_review") router.refresh();
+  }, [state.status, router]);
 
   useEffect(() => {
     if (!generating) return;
@@ -112,7 +118,9 @@ export function BookLive({ bookId, initial }: { bookId: string; initial: LiveSta
               ))}
             </div>
           )}
-          <p className="mt-3 text-xs text-[color:var(--muted)]">You can leave this page; the book keeps going in the background. Spent so far: ${p.costUsd.toFixed(4)}</p>
+          <p className="mt-3 text-xs text-[color:var(--muted)]">
+            {p.overnight ? "Overnight pictures are drawn in Google's slower, cheaper queue. You can close this page; we'll email you when the book is ready." : "You can leave this page; the book keeps going in the background."} Spent so far: ${p.costUsd.toFixed(4)}
+          </p>
         </div>
       )}
 

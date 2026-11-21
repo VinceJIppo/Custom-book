@@ -77,7 +77,7 @@ export default async function ChildPage({ params, searchParams }: { params: Prom
           {books.map((b) => (
             <li key={b.id}>
               <Link href={`/books/${b.id}`} className="block rounded-xl bg-white px-4 py-3 ring-1 ring-[color:var(--line)] hover:bg-tint">
-                {b.title ?? "New story"} <span className="text-sm text-[color:var(--muted)]">· {b.status}</span>
+                {b.title ?? "New story"} <span className="text-sm text-[color:var(--muted)]">· {b.status === "story_review" ? "story ready to read" : b.status}</span>
               </Link>
             </li>
           ))}

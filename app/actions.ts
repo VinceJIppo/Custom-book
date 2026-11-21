@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { createChild, deleteChildEverything, getChild, updateChild, type SaveResult } from "@/lib/children/service";
 import { createAndStartBook, retryFailedJobs, type CreateBookResult } from "@/lib/books/service";
+import { approveStory } from "@/lib/books/pictures";
 import { acceptFlagged, changeLayout, movePage, requestNewArt, restoreVersion, reviseTextWithAI, updatePageText } from "@/lib/books/pages";
 import { deleteCustomTheme, draftCustomTheme, duplicateTheme, saveCustomTheme } from "@/lib/customThemes";
 import { startExport, startValidation } from "@/lib/books/export";
@@ -87,6 +88,7 @@ export async function createBookAction(_prev: CreateBookResult | null, fd: FormD
     cast: fd.getAll("cast").map((v) => String(v)).filter(Boolean).map((id) => ({ profileId: id, part: opt(fd.get(`part_${id}`)) })),
     spotlightId: opt(fd.get("spotlightId")),
     storyAbout: opt(fd.get("storyAbout")),
+    pictureSpeed: opt(fd.get("pictureSpeed")),
   };
   const res = await createAndStartBook(user.id, { childId: String(fd.get("childId") ?? ""), themeId: String(fd.get("themeId") ?? ""), options });
   if (!res.ok) return res;
@@ -98,6 +100,32 @@ export async function retryBookAction(fd: FormData) {
   const id = String(fd.get("bookId") ?? "");
   await retryFailedJobs(user.id, id);
   redirect(`/books/${id}`);
+}
+
+/** The parent approved the story: start the pictures. */
+export async function approveStoryAction(fd: FormData) {
+  const user = await getCurrentUser();
+  const id = String(fd.get("bookId") ?? "");
+  const res = await approveStory(user.id, id, String(fd.get("pictureSpeed") ?? ""));
+  redirect(res.ok ? `/books/${id}` : `/books/${id}?error=${encodeURIComponent(res.message)}`);
+}
+
+/** Save one page's words while reviewing the story (stays on the review screen). */
+export async function reviewTextAction(_prev: EditState | null, fd: FormData): Promise<EditState> {
+  const user = await getCurrentUser();
+  const res = await updatePageText(user.id, String(fd.get("pageId") ?? ""), String(fd.get("text") ?? ""));
+  if (!res.ok) return { message: res.message };
+  revalidatePath(`/books/${String(fd.get("bookId") ?? "")}`);
+  return { ok: true, message: "Saved." };
+}
+
+/** Ask for a rewrite of one page while reviewing the story. */
+export async function reviewReviseAction(_prev: EditState | null, fd: FormData): Promise<EditState> {
+  const user = await getCurrentUser();
+  const res = await reviseTextWithAI(user.id, String(fd.get("pageId") ?? ""), String(fd.get("instruction") ?? ""));
+  if (!res.ok) return { message: res.message };
+  revalidatePath(`/books/${String(fd.get("bookId") ?? "")}`);
+  return { ok: true, message: "Rewritten." };
 }
 
 // ---------------------------------------------------------------- Photos and characters
