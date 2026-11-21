@@ -78,7 +78,7 @@ Adapter folder: `lib/providers/anthropic/` (shared caller in `client.ts`).
   Zod-validated, retry with feedback. Four to eight calls per book: story spine, manuscript
   (one more try if verse lines run long), editor review, then when the editor finds problems a
   targeted rewrite (changed pages only), a second review and a final polish, and art direction.
-  A story costs about $0.50 to $0.80 (see the in-app estimate). `npm run story:lab` runs
+  A story costs about $0.80 to $1.10 (see the in-app estimate). `npm run story:lab` runs
   just this part.
 - **Vision:** `VISION_MODEL` (default `claude-sonnet-5-5`, effort `medium`):
   - Photo check: counts faces, checks the face is clear, returns friendly tips. About $0.01.

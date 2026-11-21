@@ -31,14 +31,15 @@ export function tokenCostUsd(
  * thinking). A book is: outline (story spine), manuscript, editor review, a
  * targeted rewrite (changed pages only), a second review, a final polish, and
  * art direction. The estimate assumes the rewrite and polish both happen, and
- * one extra manuscript try for over-long verse lines.
+ * one extra manuscript try for over-long verse lines. Calibrated against real
+ * 12-page runs, which cost about $0.80 to $0.90 (thinking makes up much of the output).
  */
 export const STORY_TOKEN_BUDGET = {
-  outline: { input: 2_500, output: 6_000 },
-  manuscript: { base: { input: 4_000, output: 3_000 }, perPage: { input: 300, output: 700 } },
-  editor: { base: { input: 4_000, output: 3_000 }, perPage: { input: 150, output: 0 } },
-  patch: { base: { input: 6_000, output: 3_000 }, perPage: { input: 350, output: 150 } },
-  artDirection: { base: { input: 5_000, output: 4_000 }, perPage: { input: 300, output: 600 } },
+  outline: { input: 2_500, output: 10_000 },
+  manuscript: { base: { input: 4_000, output: 6_000 }, perPage: { input: 300, output: 700 } },
+  editor: { base: { input: 4_000, output: 6_000 }, perPage: { input: 150, output: 0 } },
+  patch: { base: { input: 6_000, output: 5_000 }, perPage: { input: 350, output: 150 } },
+  artDirection: { base: { input: 5_000, output: 8_000 }, perPage: { input: 300, output: 600 } },
   revise: { input: 1_000, output: 1_500 },
 };
 

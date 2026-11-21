@@ -89,7 +89,7 @@ A story is written like a real picture book, in stages (`lib/providers/anthropic
    what the pages before and after show. A picture may not show an object or character before the
    page whose words introduce it.
 
-The editor's notes and the summary are saved on the book. About $0.50 to $0.80 of Claude per book.
+The editor's notes and the summary are saved on the book. About $0.80 to $1.10 of Claude per book (most of it is the model thinking).
 
 ### Story Lab: tune stories without making a book
 
