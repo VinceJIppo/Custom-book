@@ -78,12 +78,6 @@ async function main() {
       j.type === "page.edit" ||
       j.type === "book.cover" ||
       j.type === "character.sheet";
-    // Each try draws at least once; a try that got as far as the check may have drawn twice.
-    const est = !isImageJob
-      ? 0
-      : exact
-        ? imgRec
-        : Math.max(imgRec, j.attempts) + (j.attempts > 1 ? j.attempts - 1 : 0);
     const took =
       j.startedAt && (j.finishedAt ?? j.updatedAt)
         ? Math.round(
@@ -91,16 +85,38 @@ async function main() {
               1000,
           )
         : null;
+    const err = j.error ?? "";
+    // Refused before drawing (out of Gemini credits, rate-limited, bad key): nothing billed.
+    const refusedBeforeDrawing =
+      /HTTP 40[123]|HTTP 429|prepayment credits/i.test(err) && (took ?? 0) < 10;
+    // Older jobs: each try that got past drawing paid for one picture.
+    const est = !isImageJob
+      ? 0
+      : exact || refusedBeforeDrawing
+        ? imgRec
+        : Math.max(imgRec, j.attempts);
     recorded += j.costUsd;
     recordedImageCalls += imgRec;
     estimatedImageCalls += est;
-    if (j.attempts > 1 && !j.error)
+    if (j.attempts > 1 && !j.error && took != null && took > leaseSec)
       findings.add(
         `Some jobs ran more than once without an error: they took longer than JOB_LEASE_SECONDS (${leaseSec}s), so the worker started a second copy while the first was still running. Both were billed.`,
       );
-    if (j.attempts > 1 && j.error)
+    if (j.attempts > 1 && j.error && isImageJob && !refusedBeforeDrawing)
       findings.add(
-        "Some jobs failed and were retried; each retry drew the picture again from scratch.",
+        "Some picture jobs failed after drawing and were retried; each retry paid for a new picture.",
+      );
+    if (/credit balance is too low/i.test(err))
+      findings.add(
+        "Claude (Anthropic) ran out of credits. The picture check runs AFTER Gemini draws, so each of those tries paid Gemini for a picture that was then thrown away.",
+      );
+    if (/prepayment credits|HTTP 402/i.test(err))
+      findings.add(
+        "Gemini ran out of prepaid credits. Those tries were refused before drawing, so they cost nothing.",
+      );
+    if (/fetch failed/i.test(err))
+      findings.add(
+        '"fetch failed" is a dropped network connection. A try is billed only if the drop came after Gemini finished drawing.',
       );
     if (took != null && took > leaseSec)
       findings.add(
@@ -114,6 +130,36 @@ async function main() {
       `${j.type.padEnd(16)} ${pageLabel(j.pageId).padEnd(9)} ${j.status.padEnd(10)} ${String(j.attempts).padStart(5)}  ${took == null ? "   -  " : `${String(took).padStart(4)}s `} $${j.costUsd.toFixed(3).padStart(7)}  ${String(imgRec).padStart(5)}/${String(est).padEnd(9)} ${(j.error ?? "").replace(/\s+/g, " ").slice(0, 110)}`,
     );
   }
+  // Character sets aren't tied to a book, so show the rest of that day's image work too.
+  const dayStart = new Date(book.createdAt);
+  dayStart.setHours(0, 0, 0, 0);
+  const otherJobs = await db.generationJob.findMany({
+    where: {
+      userId: book.userId,
+      createdAt: {
+        gte: dayStart,
+        lt: new Date(dayStart.getTime() + 86400_000),
+      },
+      OR: [{ bookId: null }, { bookId: { not: book.id } }],
+    },
+  });
+  const sheets = otherJobs.filter((j) => j.type === "character.sheet");
+  const sheetPics = sheets.reduce(
+    (n, j) =>
+      n +
+      Math.max(
+        Number((j.usage as { imageCalls?: number } | null)?.imageCalls ?? 0),
+        j.status === "succeeded" ? 3 : 0,
+      ),
+    0,
+  );
+  const otherBooks = new Set(otherJobs.map((j) => j.bookId).filter(Boolean));
+  const otherPics = otherJobs.filter(
+    (j) => j.bookId && /illustrate|edit|cover/.test(j.type),
+  ).length;
+  console.log(
+    `\nSame day, outside this book: ${sheets.length} character set job(s) (about ${sheetPics} pictures), ${otherBooks.size} other book(s) with ${otherPics} picture job(s); recorded $${otherJobs.reduce((s, j) => s + j.costUsd, 0).toFixed(2)}.`,
+  );
   const perImage =
     { "1K": 0.034, "2K": 0.05, "4K": 0.113, auto: 0.113 }[
       cfg.GEMINI_PAGE_SIZE
