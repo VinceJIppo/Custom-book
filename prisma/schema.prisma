@@ -31,6 +31,32 @@ model User {
   themes   Theme[]
   jobs     GenerationJob[]
   orders   Order[]
+  sessions Session[]
+}
+
+/// One-time sign-in links. Only a hash of the token is stored.
+model LoginToken {
+  id        String    @id @default(cuid())
+  email     String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([email, createdAt])
+}
+
+/// Signed-in browsers. The cookie holds a random token; only its hash is stored.
+model Session {
+  id         String   @id @default(cuid())
+  tokenHash  String   @unique
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  lastSeenAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 model ChildProfile {

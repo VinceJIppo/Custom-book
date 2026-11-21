@@ -57,6 +57,26 @@ See [PROVIDERS.md](PROVIDERS.md) for exactly what is sent where and what it cost
    delivered, or rejected with the reason and a fix path) arrive by webhook, with polling as a
    fallback. **Orders** lists your orders; **/admin/orders** lists everyone's with the printer status.
 
+## Accounts, sign-in and rewards (Phase 5)
+
+- **Sign-in:** with `AUTH_MODE=email` (the default in production) parents sign in with an emailed
+  magic link: no passwords. Links are one-time, expire in 15 minutes and are stored only as hashes;
+  the link opens a "Sign in" button so email scanners can't use it up. Sessions are httpOnly
+  cookies (30 days). On your own computer the default is `single` (no sign-in). To try sign-in
+  locally, set `AUTH_MODE=email`; without `RESEND_API_KEY` the link appears on the page.
+- **Email:** Resend (`RESEND_API_KEY`, `EMAIL_FROM` on a domain you verified in Resend).
+- **Rewards:** making books costs real money, so allowances grow with printed orders:
+
+  | Tier | How | New books | Character sets | Picture redraws | AI rewrites | Custom themes |
+  |---|---|---|---|---|---|---|
+  | Starter | first visit | 1 | 4 | 8 | 15 | 1 (to try, for life) |
+  | Member | 1+ printed orders | 3 | 8 | 40 | 60 | 5 (every 30 days) |
+  | Star | 3+ printed orders | 8 | 20 | 120 | 200 | 15 (every 30 days) |
+
+  Failed generations and refunded orders don't count. Admins (`ADMIN_EMAILS`) are unlimited, and
+  **/admin/users** sets a tier for family and friends or grants bonus books, characters and redraws.
+  Blocked actions explain how to unlock more. The daily cost cap still applies as a safety net.
+
 ## Ordering (Phase 4)
 
 How a test order flows:

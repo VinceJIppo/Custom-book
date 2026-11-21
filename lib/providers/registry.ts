@@ -20,6 +20,9 @@ import { AnthropicModerationProvider } from "./anthropic/moderation";
 import { GeminiImageProvider } from "./gemini/image";
 import { OpenAIImageProvider } from "./openai/image";
 import type { PaymentProvider } from "./payment/types";
+import type { EmailProvider } from "./email/types";
+import { MockEmailProvider } from "./email/mock";
+import { ResendEmailProvider } from "./resend/email";
 import { MockPaymentProvider } from "./payment/mock";
 import { StripePaymentProvider } from "./stripe/payment";
 
@@ -36,6 +39,7 @@ interface Providers {
   vision?: VisionProvider;
   printRouter?: PrintRouter;
   payment?: PaymentProvider;
+  email?: EmailProvider;
 }
 let cache: Providers = {};
 
@@ -146,6 +150,19 @@ export function getPaymentProvider(): PaymentProvider {
     paymentProviderChoice() === "stripe"
       ? new StripePaymentProvider({ secretKey: requireKey("PAYMENT_PROVIDER", c.STRIPE_SECRET_KEY, "stripe"), webhookSecret: c.STRIPE_WEBHOOK_SECRET, allowLive: c.ALLOW_LIVE_ORDERS })
       : new MockPaymentProvider());
+}
+
+export function emailProviderChoice(): "mock" | "resend" {
+  const c = getConfig();
+  if (c.EMAIL_PROVIDER !== "auto") return c.EMAIL_PROVIDER;
+  return c.RESEND_API_KEY ? "resend" : "mock";
+}
+
+export function getEmailProvider(): EmailProvider {
+  if (cache.email) return cache.email;
+  const c = getConfig();
+  return (cache.email =
+    emailProviderChoice() === "resend" ? new ResendEmailProvider({ apiKey: requireKey("EMAIL_PROVIDER", c.RESEND_API_KEY, "resend"), from: c.EMAIL_FROM }) : new MockEmailProvider());
 }
 
 /** For tests: reset, or swap in specific implementations. */

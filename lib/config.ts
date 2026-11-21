@@ -15,6 +15,19 @@ const EnvSchema = z.object({
   DATABASE_URL: z.string().min(1).default("file:./.data/dev.db"),
 
   SINGLE_USER_EMAIL: z.string().email().default("parent@storystar.local"),
+  /**
+   * single: no sign-in, everyone is SINGLE_USER_EMAIL (your own computer only).
+   * email: magic-link sign-in; each parent sees only their own data.
+   * auto: email in production, single otherwise.
+   */
+  AUTH_MODE: z.enum(["auto", "single", "email"]).default("auto"),
+  /** How long a sign-in lasts on a browser. */
+  SESSION_DAYS: z.coerce.number().int().min(1).max(365).default(30),
+  /** Email: auto = Resend when RESEND_API_KEY is set, else mock (links appear on the sign-in page in development). */
+  EMAIL_PROVIDER: z.enum(["auto", "mock", "resend"]).default("auto"),
+  RESEND_API_KEY: z.string().optional(),
+  /** Sender, e.g. "StoryStar <hello@yourdomain.com>" (the domain must be verified in Resend). */
+  EMAIL_FROM: z.string().default("StoryStar <onboarding@resend.dev>"),
 
   STORAGE_DRIVER: z.enum(["local", "s3"]).default("local"),
   STORAGE_LOCAL_DIR: z.string().default(".data/storage"),

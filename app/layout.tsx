@@ -13,6 +13,8 @@ import "@fontsource/dm-sans/500.css";
 import "@fontsource/dm-sans/600.css";
 import "@fontsource/dm-sans/700.css";
 import "./globals.css";
+import { authMode, getOptionalUser } from "@/lib/auth";
+import { signOutAction } from "./signin/actions";
 
 export const metadata: Metadata = {
   title: "StoryStar",
@@ -21,7 +23,9 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = { width: "device-width", initialScale: 1 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const user = await getOptionalUser();
+  const signIn = authMode() === "email";
   return (
     <html lang="en">
       <body className="flex min-h-screen flex-col font-sans text-[15px] antialiased">
@@ -35,20 +39,38 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <span className="mx-0.5 text-sun">★</span>
               <span className="text-cobalt">Star</span>
             </Link>
-            <div className="flex gap-6 text-[0.72rem] font-semibold uppercase tracking-[0.12em] text-cobalt">
-              <Link href="/" className="hover:text-coral">
-                My books
-              </Link>
-              <Link href="/themes" className="hover:text-coral">
-                Themes
-              </Link>
-              <Link href="/orders" className="hover:text-coral">
-                Orders
-              </Link>
-              <Link href="/children/new" className="hover:text-coral">
-                Add a child
-              </Link>
-            </div>
+            {user ? (
+              <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-[0.72rem] font-semibold uppercase tracking-[0.12em] text-cobalt">
+                <Link href="/" className="hover:text-coral">
+                  My books
+                </Link>
+                <Link href="/themes" className="hover:text-coral">
+                  Themes
+                </Link>
+                <Link href="/orders" className="hover:text-coral">
+                  Orders
+                </Link>
+                <Link href="/children/new" className="hover:text-coral">
+                  Add a child
+                </Link>
+                {signIn && (
+                  <form action={signOutAction} className="flex items-center gap-3">
+                    <span className="hidden normal-case tracking-normal text-[color:var(--muted)] sm:inline" data-testid="signed-in-as">
+                      {user.email}
+                    </span>
+                    <button className="uppercase hover:text-coral" data-testid="sign-out">
+                      Sign out
+                    </button>
+                  </form>
+                )}
+              </div>
+            ) : (
+              signIn && (
+                <Link href="/signin" className="text-[0.72rem] font-semibold uppercase tracking-[0.12em] text-cobalt hover:text-coral">
+                  Sign in
+                </Link>
+              )
+            )}
           </nav>
           <div className="stripe-band" aria-hidden />
         </header>
