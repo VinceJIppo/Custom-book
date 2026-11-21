@@ -25,6 +25,7 @@ import {
   startCheckout,
 } from "@/lib/orders/service";
 import { resetConfigCache } from "@/lib/config";
+import { MockEmailProvider } from "@/lib/providers/email/mock";
 import { makeUser, resetDb } from "./helpers";
 
 const address = { name: "Grandma Rose", street1: "12 Elm Street", city: "Springfield", stateCode: "IL", postcode: "62704", countryCode: "US", phone: "217-555-0100" };
@@ -37,7 +38,7 @@ describe("print orders (mock printer and mock checkout)", () => {
   let exportId: string;
 
   beforeEach(async () => {
-    resetProviders({ printRouter: new PrintRouter([new MockPrintProvider(60)]), payment: new MockPaymentProvider() });
+    resetProviders({ printRouter: new PrintRouter([new MockPrintProvider(60)]), payment: new MockPaymentProvider(), email: new MockEmailProvider() });
     await resetDb();
     await syncBuiltInThemes(true);
     userId = (await makeUser()).id;
@@ -123,6 +124,9 @@ describe("print orders (mock printer and mock checkout)", () => {
     expect(order.providerOrderId).toMatch(/^mock-o-/);
     expect(order.providerStatus).toBe("PRODUCTION_DELAYED");
     expect((order.statusHistory as Array<{ status: string }>).map((h) => h.status)).toEqual(["awaiting_payment", "paid", "created"]);
+    // The parent gets an order confirmation.
+    const mail = (getPaymentProvider() && (await import("@/lib/providers/registry")).getEmailProvider()) as MockEmailProvider;
+    expect(mail.lastTo("test@example.com")?.subject).toMatch(/^Order confirmed: /);
   });
 
   it("status moves forward by polling and webhooks, with tracking", async () => {
@@ -154,6 +158,10 @@ describe("print orders (mock printer and mock checkout)", () => {
     await handlePrintWebhook("mock", body, { "x-mock-signature": sign(body, MOCK_WEBHOOK_SECRET) });
     o = await db.order.findUniqueOrThrow({ where: { id: order.id } });
     expect(o).toMatchObject({ status: "shipped", carrier: "Test Carrier" });
+    const { getEmailProvider } = await import("@/lib/providers/registry");
+    const shippedMail = (getEmailProvider() as MockEmailProvider).lastTo("test@example.com");
+    expect(shippedMail?.subject).toMatch(/^On its way: /);
+    expect(shippedMail?.text).toContain(o.trackingUrl!);
     expect(o.trackingUrl).toMatch(/^https:\/\/example.com\/track\//);
 
     // A bad signature changes nothing.

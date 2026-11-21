@@ -9,7 +9,7 @@ export default defineConfig({
     globalSetup: ["tests/global-setup.ts"],
     fileParallelism: false,
     env: {
-      DATABASE_URL: "file:./.data/test.db",
+      DATABASE_URL: process.env.TEST_DATABASE_URL ?? "file:./.data/test.db",
       STORAGE_LOCAL_DIR: ".data/test-storage",
       STORAGE_SIGNING_SECRET: "test-signing-secret-test-signing-secret",
       STORAGE_ENCRYPTION_KEY: "test-encryption-key-test-encryption-key",

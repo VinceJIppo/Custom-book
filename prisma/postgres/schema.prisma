@@ -1,0 +1,373 @@
+// GENERATED from prisma/schema.prisma by scripts/prisma-postgres.mjs. Do not edit.
+// StoryStar data model.
+// Dev uses SQLite; deploy uses Postgres. Avoid provider-specific features so the
+// only change needed to switch is `provider` + DATABASE_URL.
+// JSON columns are validated with Zod in /lib/schemas before use.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String    @id @default(cuid())
+  email          String    @unique
+  name           String?
+  ageConfirmedAt DateTime?
+  /// Rewards: an admin can set a tier ("starter" | "member" | "star") regardless of orders.
+  tierOverride   String?
+  /// Rewards: extra allowance granted by an admin, on top of the tier.
+  bonusBooks      Int      @default(0)
+  bonusCharacters Int      @default(0)
+  bonusRedraws    Int      @default(0)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  children ChildProfile[]
+  books    Book[]
+  themes   Theme[]
+  jobs     GenerationJob[]
+  orders   Order[]
+  sessions Session[]
+}
+
+/// One-time sign-in links. Only a hash of the token is stored.
+model LoginToken {
+  id        String    @id @default(cuid())
+  email     String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([email, createdAt])
+}
+
+/// Signed-in browsers. The cookie holds a random token; only its hash is stored.
+model Session {
+  id         String   @id @default(cuid())
+  tokenHash  String   @unique
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  lastSeenAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model ChildProfile {
+  id        String  @id @default(cuid())
+  userId    String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  firstName String
+  nickname  String?
+  age       Int
+  pronouns  String // "he" | "she" | "they"
+  /// { colors: string[], animals: string[], foods: string[], activities: string[] }
+  favorites Json
+  petName   String?
+  petType   String?
+  /// string[]
+  friends   Json
+  lesson    String?
+
+  activeCharacterSheetId          String?
+  deleteOriginalsAfterApproval    Boolean   @default(true)
+  guardianConsentAt               DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  photos          ChildPhoto[]
+  characterSheets CharacterSheet[]
+  books           Book[]
+  jobs            GenerationJob[]
+
+  @@index([userId])
+}
+
+model ChildPhoto {
+  id         String       @id @default(cuid())
+  childId    String
+  child      ChildProfile @relation(fields: [childId], references: [id], onDelete: Cascade)
+  storageKey String
+  width      Int
+  height     Int
+  /// Faces found by the photo check (null when no vision provider ran)
+  faces      Int?
+  createdAt  DateTime     @default(now())
+
+  @@index([childId])
+}
+
+model CharacterSheet {
+  id            String       @id @default(cuid())
+  childId       String
+  child         ChildProfile @relation(fields: [childId], references: [id], onDelete: Cascade)
+  style         String
+  outfit        String?
+  /// Which generation round this is for the child and style (capped by CHARACTER_SHEET_MAX_ROUNDS)
+  round         Int          @default(1)
+  status        String       @default("generating") // generating | draft | approved | rejected | failed
+  /// string[] storage keys, one per option
+  imageKeys     Json
+  selectedIndex Int?
+  /// CharacterBible
+  bible         Json?
+  bibleStatus   String       @default("none") // none | pending | ready | failed
+  costUsd       Float        @default(0)
+  error         String?
+  approvedAt    DateTime?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  books Book[]
+
+  @@index([childId])
+}
+
+model License {
+  id          String    @id @default(cuid())
+  licensor    String
+  scope       String
+  /// string[] ISO country codes
+  territories Json
+  /// string[] product types
+  products    Json
+  expiresAt   DateTime?
+  createdAt   DateTime  @default(now())
+
+  themes Theme[]
+}
+
+model Theme {
+  id        String   @id @default(cuid())
+  slug      String
+  name      String
+  /// ThemeConfig (validated by lib/schemas/theme.ts)
+  config    Json
+  isBuiltIn Boolean  @default(false)
+  ownerId   String?
+  owner     User?    @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  licensed  Boolean  @default(false)
+  licenseId String?
+  license   License? @relation(fields: [licenseId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  books Book[]
+
+  @@unique([slug, ownerId])
+  @@index([ownerId])
+}
+
+model Book {
+  id               String          @id @default(cuid())
+  userId           String
+  user             User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  childId          String
+  child            ChildProfile    @relation(fields: [childId], references: [id], onDelete: Cascade)
+  themeId          String
+  theme            Theme           @relation(fields: [themeId], references: [id])
+  /// Frozen copy of the theme config at creation time, so later theme edits never change a book.
+  themeSnapshot    Json
+  /// Frozen copy of the child details used for this book.
+  childSnapshot    Json
+  characterSheetId String?
+  characterSheet   CharacterSheet? @relation(fields: [characterSheetId], references: [id], onDelete: SetNull)
+  style            String
+  trimSize         String // see lib/print/geometry.ts TRIM_SIZES
+  /// BookOptions
+  options          Json
+  title            String?
+  dedication       String?
+  backBlurb        String?
+  /// Outline
+  outline          Json?
+  coverImageKey    String?
+  status           String          @default("draft") // draft | generating | ready | failed
+  version          Int             @default(1)
+  shareEnabled     Boolean         @default(false)
+  shareToken       String?         @unique
+  estimatedCostUsd Float?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  pages   Page[]
+  jobs    GenerationJob[]
+  orders  Order[]
+  exports BookExport[]
+
+  @@index([userId])
+  @@index([childId])
+}
+
+model Page {
+  id          String   @id @default(cuid())
+  bookId      String
+  book        Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  /// Order within the book's logical page list (front matter, story, back matter).
+  index       Int
+  kind        String // belongsTo | dedication | title | story | theEnd
+  /// 1-based story page number for kind=story
+  storyNumber Int?
+  text        String   @default("")
+  /// SceneSpec
+  scene       Json?
+  layout      String
+  textZone    String   @default("bottom")
+  imageKey    String?
+  imageStatus String   @default("none") // none | pending | ready | failed | flagged
+  /// Likeness check against the character sheet: 0..1, and plain-English drift
+  qaScore     Float?
+  qaIssues    Json?
+  /// Pre-upscale render kept for edits (smaller than the print file)
+  workingImageKey String?
+  version     Int      @default(1)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  versions PageVersion[]
+  jobs     GenerationJob[]
+
+  @@index([bookId, index])
+}
+
+model PageVersion {
+  id        String   @id @default(cuid())
+  pageId    String
+  page      Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  version   Int
+  text      String
+  scene     Json?
+  layout    String
+  textZone  String
+  imageKey  String?
+  workingImageKey String?
+  note      String?
+  createdAt DateTime @default(now())
+
+  @@index([pageId])
+}
+
+/// A set of print files (interior + cover PDF) for one product, with its preflight and provider validation.
+model BookExport {
+  id                 String   @id @default(cuid())
+  bookId             String
+  book               Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  userId             String
+  productId          String
+  provider           String
+  sku                String
+  status             String   @default("rendering") // rendering | ready | failed
+  pageCount          Int?
+  interiorKey        String?
+  coverKey           String?
+  /// { widthIn, heightIn, spineIn, spineTextAllowed, approximate }
+  coverDims          Json?
+  /// PreflightReport
+  preflight          Json?
+  preflightOk        Boolean  @default(false)
+  validationStatus   String   @default("none") // none | running | passed | failed
+  /// FileValidation from the print provider
+  validation         Json?
+  validationProgress String?
+  /// The book content these files were made from; differs when the book was edited since.
+  contentKey         String
+  error              String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([bookId])
+}
+
+model GenerationJob {
+  id          String    @id @default(cuid())
+  type        String
+  status      String    @default("queued") // queued | running | succeeded | failed | cancelled
+  payload     Json
+  result      Json?
+  attempts    Int       @default(0)
+  maxAttempts Int       @default(3)
+  runAfter    DateTime  @default(now())
+  lockedBy    String?
+  lockedUntil DateTime?
+  error       String?
+  provider    String?
+  costUsd     Float     @default(0)
+  /// { inputTokens, outputTokens, imageCalls, ... }
+  usage       Json?
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  childId     String?
+  child       ChildProfile? @relation(fields: [childId], references: [id], onDelete: Cascade)
+  bookId      String?
+  book        Book?     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  pageId      String?
+  page        Page?     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  startedAt   DateTime?
+  finishedAt  DateTime?
+
+  @@index([status, runAfter])
+  @@index([bookId])
+  @@index([userId, createdAt])
+}
+
+model Order {
+  id                String    @id @default(cuid())
+  userId            String
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// Null once the child and their books are deleted; the order record stays for history.
+  bookId            String?
+  book              Book?     @relation(fields: [bookId], references: [id], onDelete: SetNull)
+  bookTitle         String    @default("")
+  /// The print files this order was made from (BookExport id).
+  exportId          String?
+  productId         String    @default("")
+  provider          String
+  providerOrderId   String?
+  productSku        String?
+  pageCount         Int       @default(0)
+  /// awaiting_payment | payment_failed | expired | paid | created | in_production | shipped | delivered | rejected | cancelled | failed | refunded
+  status            String    @default("awaiting_payment")
+  /// Raw provider status, e.g. Lulu UNPAID or PRODUCTION_DELAYED
+  providerStatus    String?
+  statusReason      String?
+  /// [{ at, status, message }]
+  statusHistory     Json?
+  /// ShippingAddress
+  address           Json?
+  giftNote          String?
+  shippingLevel     String    @default("MAIL")
+  /// Internal quote breakdown: print, shipping, fulfillment, tax, margin, card fees, total
+  quote             Json?
+  currency          String    @default("USD")
+  totalCents        Int       @default(0)
+  paymentProvider   String    @default("mock")
+  checkoutSessionId String?   @unique
+  /// Payment intent (or mock payment) id, used for refunds
+  paymentRef        String?
+  paidAt            DateTime?
+  submittedAt       DateTime?
+  lastCheckedAt     DateTime?
+  estimatedArrival  String?
+  trackingUrl       String?
+  trackingNumber    String?
+  carrier           String?
+  /// Storage keys of the exact PDFs sent to the provider (frozen copies)
+  interiorPdfKey    String?
+  coverPdfKey       String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([bookId])
+  @@index([status])
+}

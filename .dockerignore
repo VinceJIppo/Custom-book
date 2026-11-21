@@ -1,0 +1,15 @@
+node_modules
+.next
+.data
+.git
+.env
+.env.local
+.env.*.local
+test-results
+playwright-report
+coverage
+comparisons
+exports
+story-lab
+screenshots
+prisma/.data

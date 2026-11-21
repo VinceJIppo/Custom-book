@@ -21,6 +21,7 @@ import type { PaymentEvent } from "../providers/payment/types";
 import { WebhookSignatureError, type PrintOrderState, type ShippingAddress, type ShippingLevel, SHIPPING_LEVELS } from "../providers/print/types";
 import { buildBookView } from "../books/view";
 import { isAdminEmail } from "../admin";
+import { notifyOrderStatus } from "./notify";
 import { GiftNoteSchema, parseAddress } from "./address";
 import { priceQuote, type CustomerQuote } from "./pricing";
 import { OPEN_PRINT_STATUSES, pushHistory, shouldApply, STATUS_LABELS, type OrderStatus } from "./status";
@@ -225,8 +226,12 @@ export async function fulfillCheckout(sessionId: string): Promise<Order | null> 
     if (r.count === 1) await enqueue("order.submit", { orderId: order.id }, { userId: order.userId, bookId: order.bookId ?? undefined, maxAttempts: 5 }, tx);
     return r.count === 1;
   });
-  if (moved) log.info("Order paid", { orderId: order.id });
-  return db.order.findUnique({ where: { id: order.id } });
+  const fresh = await db.order.findUnique({ where: { id: order.id } });
+  if (moved) {
+    log.info("Order paid", { orderId: order.id });
+    if (fresh) await notifyOrderStatus(fresh, "paid");
+  }
+  return fresh;
 }
 
 async function markExpired(order: Order) {
@@ -283,7 +288,9 @@ export async function applyPrintState(order: Order, state: PrintOrderState, sour
       message: [STATUS_LABELS[status as OrderStatus] ?? status, state.providerStatus ? `(${source}: ${state.providerStatus})` : `(${source})`, state.reason].filter(Boolean).join(" "),
     }) as unknown as Prisma.InputJsonValue;
   }
-  return db.order.update({ where: { id: order.id }, data });
+  const updated = await db.order.update({ where: { id: order.id }, data });
+  if (status !== order.status) await notifyOrderStatus(updated, status);
+  return updated;
 }
 
 /** The order.submit job: hands the frozen PDFs to the printer. */
@@ -333,10 +340,11 @@ export async function submitOrder(orderId: string, attempt: number) {
 export async function submitGaveUp(orderId: string, message: string) {
   const order = await db.order.findUnique({ where: { id: orderId } });
   if (!order || order.status !== "paid") return;
-  await db.order.update({
+  const failed = await db.order.update({
     where: { id: orderId },
     data: { status: "failed", statusReason: message, statusHistory: pushHistory(order.statusHistory, { status: "failed", message }) as unknown as Prisma.InputJsonValue },
   });
+  await notifyOrderStatus(failed, "failed");
 }
 
 /** Asks the printer for the latest status (the polling fallback, and the "Check now" button). */

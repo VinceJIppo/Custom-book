@@ -57,6 +57,11 @@ See [PROVIDERS.md](PROVIDERS.md) for exactly what is sent where and what it cost
    delivered, or rejected with the reason and a fix path) arrive by webhook, with polling as a
    fallback. **Orders** lists your orders; **/admin/orders** lists everyone's with the printer status.
 
+## Going online
+
+See **DEPLOY.md**: Cloudflare (domain and R2 storage), Render (web app, worker, Postgres, from
+`render.yaml` and the `Dockerfile`), Resend (email), then Stripe and Lulu webhooks.
+
 ## Accounts, sign-in and rewards (Phase 5)
 
 - **Sign-in:** with `AUTH_MODE=email` (the default in production) parents sign in with an emailed

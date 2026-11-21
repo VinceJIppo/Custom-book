@@ -33,7 +33,7 @@ Known places that show raw errors today (found 2026-11-21):
 | Character options (`app/children/[id]/character/page.tsx`) | `This set didn't work: {s.error}` | Image provider errors |
 | Book progress (`components/BookLive.tsx`, `/api/books/[id]/status`) | Failed story or picture job errors | Claude errors such as "outline failed after 3 attempts: ..." |
 | Server actions that redirect with `?error=` | Whatever message the service returned | |
-| Next.js error pages | Default error screens for unexpected crashes | Add `app/error.tsx` and `app/not-found.tsx` in the house style |
+| Next.js error pages | Done: friendly `app/error.tsx` and `app/not-found.tsx` (2026-11-21) | |
 
 When fixing, also check story/vision messages from `lib/providers/anthropic/client.ts`
 (retry summaries) and the Gemini 400 seen earlier (`response_format.mime_type`).

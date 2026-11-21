@@ -132,8 +132,13 @@ export function getConfig(): AppConfig {
   }
   const env = parsed.data;
   const isProd = env.NODE_ENV === "production";
-  if (isProd && (!env.STORAGE_SIGNING_SECRET || !env.STORAGE_ENCRYPTION_KEY)) {
-    throw new Error("STORAGE_SIGNING_SECRET and STORAGE_ENCRYPTION_KEY are required in production.");
+  // The production check runs when the app starts, not while `next build` prerenders pages.
+  if (isProd && process.env.NEXT_PHASE !== "phase-production-build") {
+    const problems: string[] = [];
+    if (env.STORAGE_DRIVER === "local" && (!env.STORAGE_SIGNING_SECRET || !env.STORAGE_ENCRYPTION_KEY)) problems.push("STORAGE_SIGNING_SECRET and STORAGE_ENCRYPTION_KEY are required with local storage.");
+    if (env.STORAGE_DRIVER === "s3" && (!env.S3_BUCKET || !env.S3_ACCESS_KEY_ID || !env.S3_SECRET_ACCESS_KEY)) problems.push("STORAGE_DRIVER=s3 needs S3_BUCKET, S3_ACCESS_KEY_ID and S3_SECRET_ACCESS_KEY (and S3_ENDPOINT for R2).");
+    if (env.APP_URL.startsWith("http://localhost")) problems.push("APP_URL must be the site's public https address (it goes into sign-in links and checkout).");
+    if (problems.length) throw new Error(`Production configuration is incomplete:\n  ${problems.join("\n  ")}`);
   }
   cached = {
     ...env,

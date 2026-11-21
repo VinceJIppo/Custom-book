@@ -24,6 +24,7 @@ export function proxy(request: NextRequest) {
   if (host !== publicHost) return NextResponse.next();
   const { pathname } = request.nextUrl;
   if (request.method === "GET" && pathname.startsWith("/api/files/") && pathname.endsWith(".pdf")) return NextResponse.next();
+  if (request.method === "GET" && pathname === "/api/health") return NextResponse.next();
   if (request.method === "POST" && (pathname === "/api/webhooks/payment" || /^\/api\/webhooks\/print\/[a-z0-9-]+$/.test(pathname))) return NextResponse.next();
   return new NextResponse("Not found", { status: 404 });
 }
