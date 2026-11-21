@@ -18,7 +18,7 @@ export class SharpUpscaler implements Upscaler {
       return { value: { ...image, width: target.widthPx, height: target.heightPx }, usage: { provider: this.name, costUsd: 0 } };
     }
     const data = await sharp(image.data)
-      .resize(target.widthPx, target.heightPx, { fit: "cover", position: "centre", kernel: "lanczos3" })
+      .resize(target.widthPx, target.heightPx, { fit: "cover", position: "north", kernel: "lanczos3" })
       .toColorspace("srgb")
       .withMetadata({ density: PRINT_PPI })
       .png({ compressionLevel: 9 })

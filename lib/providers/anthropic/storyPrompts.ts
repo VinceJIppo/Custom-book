@@ -39,6 +39,12 @@ Real family and friends in the story
 - storyCentersOn says whose story it is. If it is a grown-up, the child still has an important, active part, and the story should help the child see that grown-up in a new, admiring light.
 - whatThisStoryIsAbout comes first: build the plot around it and use the theme for the setting, supporting cast and mood. If it describes a real job or a real life situation (a hospital stay, a move, a new sibling), keep the facts true, simple and reassuring for the child's age.
 
+Characters stay the same from page to page
+- Every character keeps the same species, size, colors, clothes and accessories (glasses, hats, bags, capes) on every page. An animal is always the same kind of animal: a red fox on page 2 is the same red fox on page 12, never a dog, a cat or a "furry friend" of another kind. Always call it by its name or its kind consistently.
+- Nobody gains or loses glasses, a hat, an outfit or something they carry in the middle of the story unless a page shows it happening and why (finding a hat, taking off a coat at home). Characters out on an adventure cannot change clothes or fetch things from home.
+- The real people's looks (heroAppearance and each person's appearance) come from their character sheets. Never contradict them in the words: if the hero has no glasses, never mention glasses on the hero; if they wear glasses, they wear them on every page.
+- Do not introduce new physical details about a character late in the book. If a detail matters to the plot, set it up on the first page where that character appears.
+
 Pictures follow the words
 - Every page is one clear moment an illustrator can draw.
 - When the world changes in a way you can see (everything upside down, nighttime, rain), it stays that way on every page until the story changes it back, and the words keep reminding the reader.
@@ -63,7 +69,8 @@ Check, in order of importance:
 7. Is any lesson shown through a choice rather than preached? Is a refrain used at most three times, and kept free of the lesson?
 8. Is the reading level and voice respected? For verse, read every line aloud: flag lines that are too long, stumble off the beat, or rhyme by force (an odd word picked only because it rhymes, twisted word order, filler like "you see" or "big, big, BIG"). Quote the line.
 9. Can each page be drawn as one moment? Are lasting visual changes (an upside-down town, night) carried by the words on every page until they end? Are there contradictions (a hat on his head on one page and on his toes the next)?
-10. Does the ending resolve the problem and echo the opening?
+10. Do characters stay the same? Check every page against the character guide and appearances: flag any page where an animal changes kind or color, or where a character gains or loses glasses, a hat, an outfit or a carried item without the words showing it happen (no one can change clothes or put on glasses mid-adventure). Flag any physical detail about a character that first appears late in the book, or that contradicts their appearance.
+11. Does the ending resolve the problem and echo the opening?
 
 Return "pass" only when a parent would find nothing confusing. Otherwise return "revise" with the most important issues first (at most 8), each tied to a page number (0 for the whole book) with a concrete fix. Keep each problem and each fix to one or two short sentences (under 300 characters).`;
 
@@ -73,7 +80,8 @@ Rules for each page's scene:
 - Describe one clear moment that matches the words on that page: the action, who is present (the hero by name; the illustrator has a character reference), the setting, the mood and the camera framing.
 - mustShow: list every concrete thing the words say that a reader would look for in the picture, phrased exactly as the words describe it (for example "the Mayor upside down, balancing on his teapot hat", "Oliver handing the bigger half of his cheese to the Grumblesnoot"). Never contradict the words.
 - continuity: the world state that must be visible on this page from the story's lasting changes and recurring props (for example "the whole town is upside down: houses hang from the ground above, trees grow downward; Oliver wears his green backpack").
-- Characters look the same on every page; describe recurring characters the same way each time.
+- Characters look the same on every page. Follow the character guide exactly: in each scene, describe every recurring character the same way each time, and always name an animal's kind and color with its name (for example "Pip, the small red fox"), so it can never be drawn as a different animal.
+- Nobody's clothes or accessories change between pages unless the words show it happening. Never add glasses, hats or other accessories the guide doesn't list, and never remove ones it does.
 - Show an object or character only from the page whose words first bring it into the story. Before that page it must not appear in the action, mustShow, continuity or characters, even if the story plan says otherwise. Where the plan and the manuscript disagree, follow the manuscript.
 - Never ask for text, letters, words, signs, or labels to appear in the picture.
 
@@ -116,6 +124,7 @@ export function describeContext(ctx: StoryContext): string {
       age: child.age,
       pronouns: child.pronouns,
       favorites: child.favorites,
+      appearance: ctx.appearance?.hero ?? null,
       pet: options.includePet && child.petName ? { name: child.petName, type: child.petType ?? "pet" } : null,
       bestFriend: options.includeFriend ? (child.friends[0] ?? null) : null,
     },
@@ -136,11 +145,16 @@ export function describeContext(ctx: StoryContext): string {
           whoTheyAre: m.kind === "grownup" ? `${m.relationship ?? "a grown-up"} (a real grown-up in ${child.nickname || child.firstName}'s life)` : `a child${m.age ? ` aged ${m.age}` : ""}`,
           pronouns: m.pronouns,
           about: m.about ?? null,
+          appearance: ctx.appearance?.people?.[m.nickname || m.name] ?? m.look ?? null,
           theirPartInThisStory: m.part ?? null,
         }))
       : null,
     storyCentersOn: spotlightName(ctx),
     whatThisStoryIsAbout: options.storyAbout || null,
+    // A rewrite: the parent read a previous draft and asked for these changes. Follow them closely.
+    parentFeedbackOnPreviousDraft: options.storyFeedback
+      ? { whatToChange: options.storyFeedback.note, previousTitle: options.storyFeedback.previousTitle ?? null, previousDraftSummary: options.storyFeedback.previousSummary ?? null }
+      : null,
     options: {
       storyPages: options.length,
       readingLevel: readingRule(ctx),
@@ -167,6 +181,7 @@ export function outlinePrompt(ctx: StoryContext, problems?: string[]): string {
     "- lessonShown: the choice that shows the lesson (empty if there is no lesson). endingEcho: how the last page echoes the first.",
     "- setups: every object, character or ability the plot relies on, with the page where it is set up and the page where it pays off (set up first).",
     "- continuity: lasting visual facts the illustrator must keep (world changes, recurring props, who travels with the hero) with the page range they apply to. One short sentence per fact.",
+    "- characters: EVERY character who appears on more than one page, including the hero, the pet, friends, the real people and the theme's characters. For each: name; species (exactly what kind of being, with color and size for animals, for example \"a small red fox\" or \"a fluffy white rabbit\", never just \"an animal\"); look (the colors, clothes and accessories they keep for the whole book, and what they do NOT wear, for example \"blue scarf, no glasses, no hat\"). Use the real people's appearance exactly as given. These never change during the story.",
     `- pages: exactly ${n} pages numbered 1 to ${n}. For each: the beat (a short label), a one or two sentence summary, causeFromPrevious (how it follows from the page before; empty only for page 1), the characters present, and visualState (what the world looks like on that page).`,
     retryNote(problems),
   ]
@@ -190,6 +205,7 @@ export function manuscriptPrompt(ctx: StoryContext, outline: Outline, problems?:
     "- The story comes first and the voice second: if a rhyme would force nonsense or a filler word, choose a near-rhyme or a plain line instead.",
     "- Make every page follow from the one before, state the world's rule before it matters, and set up everything before it is used, exactly as the spine plans.",
     "- Keep lasting visual changes in the words on every page until they end, so the pictures can show them.",
+    "- Keep every character exactly as the spine's characters list describes them: same kind of animal, same colors, same clothes and accessories on every page. Never mention a feature (like glasses or a hat) a character doesn't have.",
     ctx.options.dedication
       ? `- dedication: use exactly ${JSON.stringify(ctx.options.dedication)}`
       : "- dedication: a short, warm dedication from the parent to the child (one or two lines, in the voice).",
@@ -209,13 +225,14 @@ export function editorPrompt(ctx: StoryContext, outline: Outline, pages: Array<{
   return [
     `This is a draft picture book for a ${ctx.child.age}-year-old (${readingRule(ctx)}), in the "${voiceFor(ctx.options).label}" voice.`,
     "The author's plan:",
-    JSON.stringify({ worldRule: outline.worldRule, problem: outline.problem, goal: outline.goal, attempts: outline.attempts, turningPoint: outline.turningPoint, resolution: outline.resolution, lessonShown: outline.lessonShown, setups: outline.setups, continuity: outline.continuity }, null, 2),
+    JSON.stringify({ worldRule: outline.worldRule, problem: outline.problem, goal: outline.goal, attempts: outline.attempts, turningPoint: outline.turningPoint, resolution: outline.resolution, lessonShown: outline.lessonShown, setups: outline.setups, continuity: outline.continuity, characters: outline.characters }, null, 2),
+    ctx.appearance?.hero ? `How ${ctx.child.nickname || ctx.child.firstName} looks (from the character sheet; the words must never contradict it): ${ctx.appearance.hero}` : "",
     "",
     "The draft:",
     manuscriptText(pages),
     "",
     "Review the draft against your checklist and return your verdict, a one or two sentence overall read, and the issues.",
-  ].join("\n");
+  ].filter(Boolean).join("\n");
 }
 
 /**
@@ -270,6 +287,10 @@ export function artDirectionPrompt(ctx: StoryContext, outline: Outline, pages: A
     `The hero: ${ctx.child.nickname || ctx.child.firstName}, age ${ctx.child.age}.`,
     "Characters as they must look (name real people in each scene's characters exactly as written here, so the illustrator can match their reference sheets):",
     cast,
+    ctx.appearance?.hero ? `${ctx.child.nickname || ctx.child.firstName} (the hero): ${ctx.appearance.hero}` : "",
+    "",
+    "Character guide for the whole book (species and fixed look; use it in every scene):",
+    JSON.stringify(outline.characters, null, 2),
     "",
     "Lasting visual facts from the story plan:",
     JSON.stringify(outline.continuity, null, 2),

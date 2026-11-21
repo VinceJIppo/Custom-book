@@ -2,6 +2,7 @@ import type { Book, Prisma } from "@prisma/client";
 import { db } from "../db";
 import { enqueue } from "../jobs/queue";
 import { PictureSpeedSchema, type PictureSpeed } from "../schemas/book";
+import { plansAreStale } from "./review";
 
 /** The picture speed chosen for a book (older books, and anything unknown, read as "now"). */
 export function pictureSpeedOf(book: Pick<Book, "options">): PictureSpeed {
@@ -41,6 +42,13 @@ export async function approveStory(userId: string, bookId: string, speed?: strin
       data: { status: "generating", options: options as Prisma.InputJsonValue },
     });
     if (claimed.count !== 1) return { ok: false as const, message: "The pictures for this story have already been started." };
+    const mode = chosen.success ? chosen.data : pictureSpeedOf(book);
+    // Words changed since the picture plans were made: refresh the plans first (that job starts the pictures).
+    const pages = await tx.page.findMany({ where: { bookId: book.id }, select: { storyNumber: true, text: true, kind: true } });
+    if (plansAreStale(book, pages)) {
+      await enqueue("book.artdirect", {}, { userId: book.userId, bookId: book.id }, tx);
+      return { ok: true as const, mode };
+    }
     const queued = await queuePictures({ ...book, options: options as Prisma.JsonValue }, tx);
     return { ok: true as const, mode: queued.mode };
   });

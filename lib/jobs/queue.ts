@@ -17,6 +17,7 @@ export type JobType =
   | "page.revise"
   | "book.cover"
   | "book.batch"
+  | "book.artdirect"
   | "book.batch.poll"
   | "book.finalize"
   | "character.sheet"

@@ -70,7 +70,11 @@ export async function buildBookView(book: Book & { pages: Page[] }, opts: BookVi
     trim: { id: trim.id, widthIn: trim.widthIn, heightIn: trim.heightIn },
     palette: ctx.theme.artDirection.palette,
     readingLevel: ctx.options.readingLevel,
-    cover: { imageUrl: await urlFor(book.coverImageKey), imageStatus: book.coverImageKey ? "ready" : "pending" },
+    cover: {
+      imageUrl: await urlFor(book.coverImageKey),
+      imageStatus: book.coverImageKey ? "ready" : "pending",
+      fit: (book.outline as { coverFit?: string } | null)?.coverFit === "below-title" ? "below-title" : "full",
+    },
     backBlurb: book.backBlurb ?? "",
     pages: views,
     warnings,

@@ -4,6 +4,7 @@ import { outlineHandler, pagesHandler } from "./story";
 import { coverHandler, editHandler, illustrateHandler } from "./illustrate";
 import { maybeFinalizeBook } from "./finalize";
 import { batchHandler, batchPollHandler } from "./batch";
+import { artDirectHandler } from "../../books/review";
 import { bibleHandler, sheetHandler } from "./characters";
 import { exportHandler, validateHandler } from "./export";
 import { orderStatusHandler, orderSubmitHandler } from "./orders";
@@ -17,6 +18,7 @@ export const handlers: Record<JobType, JobHandler> = {
   "page.revise": async () => ({}),
   "book.cover": coverHandler,
   "book.batch": batchHandler,
+  "book.artdirect": artDirectHandler,
   "book.batch.poll": batchPollHandler,
   "character.sheet": sheetHandler,
   "book.export": exportHandler,

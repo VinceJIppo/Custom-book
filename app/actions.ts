@@ -7,7 +7,8 @@ import { getCurrentUser } from "@/lib/auth";
 import { createChild, deleteChildEverything, getChild, updateChild, type SaveResult } from "@/lib/children/service";
 import { createAndStartBook, retryFailedJobs, type CreateBookResult } from "@/lib/books/service";
 import { approveStory } from "@/lib/books/pictures";
-import { acceptFlagged, changeLayout, movePage, requestNewArt, restoreVersion, reviseTextWithAI, updatePageText } from "@/lib/books/pages";
+import { rewritePageRange, rewriteWholeStory, undoRewrite } from "@/lib/books/review";
+import { acceptFlagged, changeLayout, movePage, requestNewArt, requestNewCover, restoreVersion, reviseTextWithAI, updatePageText } from "@/lib/books/pages";
 import { deleteCustomTheme, draftCustomTheme, duplicateTheme, saveCustomTheme } from "@/lib/customThemes";
 import { startExport, startValidation } from "@/lib/books/export";
 import { addPhoto, approveSheetOption, deleteCharacterSheet, deletePhoto, saveBible, setDeleteOriginals, startCharacterSheet } from "@/lib/characters/service";
@@ -117,6 +118,44 @@ export async function reviewTextAction(_prev: EditState | null, fd: FormData): P
   if (!res.ok) return { message: res.message };
   revalidatePath(`/books/${String(fd.get("bookId") ?? "")}`);
   return { ok: true, message: "Saved." };
+}
+
+/** Redraw the book's cover, with an optional note. */
+export async function redrawCoverAction(_prev: EditState | null, fd: FormData): Promise<EditState> {
+  const user = await getCurrentUser();
+  const bookId = String(fd.get("bookId") ?? "");
+  const res = await requestNewCover(user.id, bookId, String(fd.get("note") ?? ""));
+  if (!res.ok) return { message: res.message };
+  redirect(`/books/${bookId}`);
+}
+
+export interface StoryChangeState {
+  ok?: boolean;
+  message?: string;
+  undoTag?: string;
+}
+
+/** Rewrite the whole story, or a range of pages, from the parent's notes. */
+export async function changeStoryAction(_prev: StoryChangeState | null, fd: FormData): Promise<StoryChangeState> {
+  const user = await getCurrentUser();
+  const bookId = String(fd.get("bookId") ?? "");
+  const note = String(fd.get("instruction") ?? "");
+  if (fd.get("scope") === "all") {
+    const res = await rewriteWholeStory(user.id, bookId, note);
+    if (!res.ok) return { message: res.message };
+    redirect(`/books/${bookId}`);
+  }
+  const res = await rewritePageRange(user.id, bookId, Number(fd.get("from")), Number(fd.get("to")), note);
+  revalidatePath(`/books/${bookId}`);
+  return res.ok ? { ok: true, message: res.message, undoTag: res.undoTag } : { message: res.message };
+}
+
+export async function undoStoryChangeAction(_prev: StoryChangeState | null, fd: FormData): Promise<StoryChangeState> {
+  const user = await getCurrentUser();
+  const bookId = String(fd.get("bookId") ?? "");
+  const res = await undoRewrite(user.id, bookId, String(fd.get("undoTag") ?? ""));
+  revalidatePath(`/books/${bookId}`);
+  return { ok: res.ok, message: res.message };
 }
 
 /** Ask for a rewrite of one page while reviewing the story. */

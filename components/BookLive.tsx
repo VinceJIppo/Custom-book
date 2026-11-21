@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Flipbook } from "@/components/flipbook/Flipbook";
 import { retryBookAction } from "@/app/actions";
+import { RedrawCover } from "@/components/RedrawCover";
 import type { BookView } from "@/lib/books/viewTypes";
 import type { BookProgress, StepState } from "@/lib/books/progress";
 
@@ -71,6 +72,7 @@ export function BookLive({ bookId, initial }: { bookId: string; initial: LiveSta
             <Link href={`/books/${bookId}/print`} className="btn btn-secondary" data-testid="print-files">
               Print files
             </Link>
+            <RedrawCover bookId={bookId} />
             <Link href={`/books/${bookId}/order`} className="btn btn-order order-first w-full sm:order-none sm:w-auto" data-testid="order-book">
               <svg aria-hidden viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2V5Z" />

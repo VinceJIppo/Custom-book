@@ -56,5 +56,9 @@ export const BookOptionsSchema = z.object({
   storyAbout: z.string().trim().max(400).optional(),
   /** When the pictures are drawn. Optional so older books parse (they read as "now"). */
   pictureSpeed: PictureSpeedSchema.optional(),
+  /** The parent's notes on the previous draft when they asked for the whole story to be rewritten. */
+  storyFeedback: z
+    .object({ note: z.string().trim().max(600), previousTitle: z.string().max(120).optional(), previousSummary: z.string().max(1500).optional() })
+    .optional(),
 });
 export type BookOptions = z.infer<typeof BookOptionsSchema>;

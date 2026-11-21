@@ -5,6 +5,7 @@ import { getConfig } from "../../config";
 import { queuePictures } from "../../books/pictures";
 import { getStoryProvider } from "../../providers/registry";
 import { outlineFor, storyContextFor } from "../../books/context";
+import { storyContextWithLooks } from "../../books/appearance";
 import type { JobOutcome } from "../types";
 import { PermanentProviderError } from "../../providers/types";
 
@@ -17,7 +18,7 @@ async function loadBook(job: GenerationJob) {
 
 export async function outlineHandler(job: GenerationJob): Promise<JobOutcome> {
   const book = await loadBook(job);
-  const ctx = storyContextFor(book);
+  const ctx = await storyContextWithLooks(book, storyContextFor(book));
   const existing = outlineFor(book);
   let usage;
   if (!existing) {
@@ -31,7 +32,7 @@ export async function outlineHandler(job: GenerationJob): Promise<JobOutcome> {
 
 export async function pagesHandler(job: GenerationJob): Promise<JobOutcome> {
   const book = await loadBook(job);
-  const ctx = storyContextFor(book);
+  const ctx = await storyContextWithLooks(book, storyContextFor(book));
   const outline = outlineFor(book);
   if (!outline) throw new PermanentProviderError("Book has no outline yet");
 
@@ -66,7 +67,14 @@ export async function pagesHandler(job: GenerationJob): Promise<JobOutcome> {
         dedication,
         backBlurb: value.backCoverBlurb,
         // The illustrator reads the summary before every page; editor notes are kept for review.
-        outline: { ...outline, coverScene: value.coverScene, storySummary: value.storySummary, editorNotes: value.editorNotes } as unknown as Prisma.InputJsonValue,
+        // artText: the words the picture plans were made for, so later edits know to refresh them.
+        outline: {
+          ...outline,
+          coverScene: value.coverScene,
+          storySummary: value.storySummary,
+          editorNotes: value.editorNotes,
+          artText: Object.fromEntries(value.pages.map((p) => [p.pageNumber, p.text])),
+        } as unknown as Prisma.InputJsonValue,
       },
     });
     if (getConfig().STORY_REVIEW) {

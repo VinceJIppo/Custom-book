@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 import { lookFor } from "./BookPage";
-import type { Box } from "@/lib/print/geometry";
+import { COVER_TITLE_BAND, type Box } from "@/lib/print/geometry";
 import type { CoverLayout } from "@/lib/print/cover";
 import type { BookView } from "@/lib/books/viewTypes";
 import { tint, type PageMode } from "./BookPage";
@@ -16,7 +16,10 @@ const box = (b: Box): CSSProperties => ({ left: inch(b.x), top: inch(b.y), width
 export function CoverSpread({ book, layout, mode }: { book: BookView; layout: CoverLayout; mode: PageMode }) {
   const [c1, c2] = book.palette;
   const vars = { "--cw": layout.widthIn, "--ch": layout.heightIn } as CSSProperties;
-  const frontArt: Box = { x: layout.front.x, y: 0, width: layout.widthIn - layout.front.x, height: layout.heightIn };
+  // Newer covers: the picture sits under a title band, so the title never hides it.
+  const band = book.cover.fit === "below-title" ? layout.heightIn * COVER_TITLE_BAND : 0;
+  const frontArt: Box = { x: layout.front.x, y: band, width: layout.widthIn - layout.front.x, height: layout.heightIn - band };
+  const titleBox: Box = band ? { ...layout.frontSafe, height: band - layout.frontSafe.y } : { ...layout.frontSafe, height: layout.frontSafe.height * 0.42 };
   const backFill: Box = { x: 0, y: 0, width: layout.spine.x, height: layout.heightIn };
   const spineFill: Box = { x: layout.spine.x, y: 0, width: layout.spineIn, height: layout.heightIn };
 
@@ -32,7 +35,8 @@ export function CoverSpread({ book, layout, mode }: { book: BookView; layout: Co
           <div className="bk-art-placeholder" style={box(frontArt)} />
         )}
 
-        <div className="bk-cover-title" style={{ ...box({ ...layout.frontSafe, height: layout.frontSafe.height * 0.42 }), color: c1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+        {band > 0 && <div style={{ ...box({ x: layout.front.x, y: 0, width: layout.widthIn - layout.front.x, height: band }), background: "#ffffff" }} />}
+        <div className="bk-cover-title" style={{ ...box(titleBox), color: c1, display: "flex", flexDirection: "column", justifyContent: "center", ...(band ? { background: "transparent" } : {}) }}>
           <h1 className="bk-display" style={{ fontSize: inch(Math.min(0.62, layout.frontSafe.width / 12)) }}>
             {book.title}
           </h1>

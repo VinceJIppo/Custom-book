@@ -1,7 +1,7 @@
 "use client";
 
 import { startTransition, useActionState, useState } from "react";
-import { approveStoryAction, reviewReviseAction, reviewTextAction, type EditState } from "@/app/actions";
+import { approveStoryAction, changeStoryAction, reviewReviseAction, reviewTextAction, undoStoryChangeAction, type EditState } from "@/app/actions";
 
 export interface ReviewPage {
   id: string;
@@ -67,6 +67,89 @@ function PageCard({ bookId, page }: { bookId: string; page: ReviewPage }) {
   );
 }
 
+const IDEAS = ["Make it shorter", "Make it funnier", "Simpler words", "A gentler ending", "More about the pet", "Make it rhyme", "Give the grown-ups a bigger part", "A different problem to solve"];
+
+/** Rewrite the whole story or some pages from the parent's notes, with an Undo. */
+function ChangeStory({ bookId, pageCount }: { bookId: string; pageCount: number }) {
+  const [state, change, changing] = useActionState(changeStoryAction, null);
+  const [undone, undo, undoing] = useActionState(undoStoryChangeAction, null);
+  const [scope, setScope] = useState<"all" | "pages">("pages");
+  const [note, setNote] = useState("");
+  const numbers = Array.from({ length: pageCount }, (_, i) => i + 1);
+  const undoTag = state?.ok ? state.undoTag : undefined;
+  return (
+    <section className="space-y-3 rounded-xl bg-sky p-5 ring-1 ring-[color:var(--line)]" data-testid="change-story">
+      <h2 className="font-display text-xl font-medium">Change the story</h2>
+      <form onSubmit={submitWith(change)} className="space-y-3">
+        <input type="hidden" name="bookId" value={bookId} />
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-5">
+          <label className="flex items-center gap-2">
+            <input type="radio" name="scope" value="pages" checked={scope === "pages"} onChange={() => setScope("pages")} />
+            <span className="font-semibold">Some pages</span>
+          </label>
+          {scope === "pages" && (
+            <span className="flex items-center gap-2 text-sm">
+              from
+              <select name="from" defaultValue={1} className="rounded-lg border border-[color:var(--line)] bg-white px-2 py-1" aria-label="From page" data-testid="change-from">
+                {numbers.map((n) => (
+                  <option key={n}>{n}</option>
+                ))}
+              </select>
+              to
+              <select name="to" defaultValue={Math.min(3, pageCount)} className="rounded-lg border border-[color:var(--line)] bg-white px-2 py-1" aria-label="To page" data-testid="change-to">
+                {numbers.map((n) => (
+                  <option key={n}>{n}</option>
+                ))}
+              </select>
+            </span>
+          )}
+          <label className="flex items-center gap-2">
+            <input type="radio" name="scope" value="all" checked={scope === "all"} onChange={() => setScope("all")} data-testid="change-all" />
+            <span className="font-semibold">The whole story</span> <span className="text-sm text-[color:var(--muted)]">a fresh version from your notes</span>
+          </label>
+        </div>
+        <label className="block">
+          <span className="sr-only">What would you like to change?</span>
+          <textarea
+            name="instruction"
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            rows={2}
+            maxLength={600}
+            placeholder={scope === "all" ? "What should be different? For example: set it at the beach, and let Grandpa save the day." : "What should change on these pages? For example: Pip should be braver here."}
+            className={input}
+            data-testid="change-note"
+          />
+        </label>
+        <div className="flex flex-wrap gap-2">
+          {IDEAS.map((idea) => (
+            <button type="button" key={idea} onClick={() => setNote((n) => (n ? `${n}. ${idea}` : idea))} className="rounded-full bg-white px-3 py-1 text-sm ring-1 ring-[color:var(--line)] hover:ring-cobalt">
+              {idea}
+            </button>
+          ))}
+        </div>
+        <div className="flex flex-wrap items-center gap-3">
+          <button disabled={changing || !note.trim()} className="btn btn-primary btn-sm" data-testid="change-submit">
+            {changing ? (scope === "all" ? "Starting over..." : "Rewriting... this takes about a minute") : scope === "all" ? "Rewrite the whole story" : "Rewrite these pages"}
+          </button>
+          <Status state={state} />
+        </div>
+      </form>
+      {undoTag && (
+        <form onSubmit={submitWith(undo)} className="flex items-center gap-3">
+          <input type="hidden" name="bookId" value={bookId} />
+          <input type="hidden" name="undoTag" value={undoTag} />
+          <button disabled={undoing} className="btn btn-secondary btn-sm" data-testid="change-undo">
+            {undoing ? "Undoing..." : "Undo that change"}
+          </button>
+          <Status state={undone} />
+        </form>
+      )}
+      <p className="text-xs text-[color:var(--muted)]">Each rewrite uses one of your AI rewrites. Nothing is drawn until you approve the story.</p>
+    </section>
+  );
+}
+
 /** The parent reads the whole story and fixes any words before a single picture is drawn. */
 export function StoryReview({ bookId, title, dedication, pages, speed, error }: { bookId: string; title: string; dedication: string | null; pages: ReviewPage[]; speed: "now" | "overnight"; error?: string }) {
   const [choice, setChoice] = useState(speed);
@@ -83,6 +166,8 @@ export function StoryReview({ bookId, title, dedication, pages, speed, error }: 
         </p>
         {dedication && <p className="mt-2 italic text-[color:var(--muted)]">Dedication: {dedication}</p>}
       </div>
+
+      <ChangeStory bookId={bookId} pageCount={pages.length} />
 
       <ol className="space-y-3">
         {pages.map((p) => (

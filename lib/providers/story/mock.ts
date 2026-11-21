@@ -1,4 +1,4 @@
-import type { StoryContext, StoryProvider, ThemeDraftRequest } from "./types";
+import type { ArtDirection, ArtInputPage, StoryContext, StoryProvider, ThemeDraftRequest } from "./types";
 import type { ThemeConfig } from "../../schemas/theme";
 import type { CharacterBible, Outline, Scene, StoryLayout, StoryPage, StoryPagesResult, TextZone } from "../../schemas/story";
 import { READING_LEVEL_RULES } from "../../schemas/book";
@@ -471,6 +471,11 @@ export class MockStoryProvider implements StoryProvider {
         lessonShown: "",
         setups: [],
         continuity: [],
+        characters: [
+          { name: v.name, species: `a ${ctx.child.age}-year-old child`, look: ctx.appearance?.hero ?? "as on the character sheet" },
+          ...(ctx.options.includePet && ctx.child.petName ? [{ name: ctx.child.petName, species: `a ${ctx.child.petType ?? "pet"}`, look: "the same colors and size on every page" }] : []),
+          ...ctx.theme.supportingCast.slice(0, 4).map((c) => ({ name: c.name, species: c.role, look: c.look })),
+        ],
         endingEcho: "",
         pages,
       },
@@ -532,6 +537,29 @@ export class MockStoryProvider implements StoryProvider {
         },
         storySummary: `${outline.premise} (Offline template story: add an Anthropic key for a real story with a planned arc.)`,
         editorNotes: [],
+      },
+      usage: mockUsage(),
+    };
+  }
+
+  async revisePages(_outline: Outline, pages: Array<{ pageNumber: number; text: string }>, target: number[], instruction: string): Promise<WithUsage<{ pages: Array<{ pageNumber: number; text: string }> }>> {
+    const note = instruction.trim().replace(/\s+/g, " ").slice(0, 80);
+    const changed = pages.filter((p) => target.includes(p.pageNumber)).map((p) => ({ pageNumber: p.pageNumber, text: `${p.text.replace(/ \(Revised: .*\)$/, "")} (Revised: ${note})` }));
+    return { value: { pages: changed }, usage: mockUsage() };
+  }
+
+  /** Keeps the current plans, pointing each scene at the page's new words. */
+  async directArt(outline: Outline, pages: ArtInputPage[], ctx: StoryContext): Promise<WithUsage<ArtDirection>> {
+    const fresh = (await this.generatePages(outline, ctx)).value;
+    return {
+      value: {
+        pages: pages.map((p) => {
+          const base = fresh.pages.find((f) => f.pageNumber === p.pageNumber) ?? fresh.pages[0];
+          const scene = p.scene ?? base.scene;
+          return { pageNumber: p.pageNumber, scene: { ...scene, mustShow: [p.text.slice(0, 190)] }, layout: p.layout ?? base.layout, textZone: p.textZone ?? base.textZone };
+        }),
+        coverScene: fresh.coverScene,
+        storySummary: fresh.storySummary,
       },
       usage: mockUsage(),
     };

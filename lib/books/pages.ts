@@ -44,14 +44,14 @@ export async function snapshotPage(pageId: string, note?: string, tx: Prisma.Tra
   return next;
 }
 
-async function checkNote(note: string): Promise<string | null> {
+export async function checkNote(note: string): Promise<string | null> {
   const hit = checkFieldsForProtectedNames({ note });
   if (hit) return hit.match.message;
   const mod = await getModeration().check(note);
   return mod.ok ? null : (mod.message ?? "Please rephrase that note.");
 }
 
-async function underBudget(userId: string, usd: number): Promise<string | null> {
+export async function underBudget(userId: string, usd: number): Promise<string | null> {
   const cap = getConfig().DAILY_COST_CAP_USD;
   const today = await dailyUsage(userId);
   return today.costUsd + usd > cap ? `That would go over today's generation budget of $${cap.toFixed(2)}.` : null;
@@ -135,6 +135,31 @@ export async function requestNewArt(userId: string, pageId: string, mode: "redra
     await tx.page.update({ where: { id: page.id }, data: { imageStatus: "pending" } });
     if (mode === "edit") await enqueue("page.edit", { pageId: page.id, note: clean }, { userId, bookId: page.bookId, pageId: page.id }, tx);
     else await enqueue("page.illustrate", { pageId: page.id, note: clean, redraw: true }, { userId, bookId: page.bookId, pageId: page.id }, tx);
+  });
+  return { ok: true };
+}
+
+/** Draw the cover again (optionally with a note). The old cover stays until the new one is ready. */
+export async function requestNewCover(userId: string, bookId: string, note?: string): Promise<EditResult> {
+  const book = await db.book.findFirst({ where: { id: bookId, userId } });
+  if (!book) return { ok: false, message: "Book not found." };
+  if (book.status !== "ready") return { ok: false, message: "The cover can be redrawn once the book is finished." };
+  const clean = note?.trim().slice(0, 300) || undefined;
+  if (clean) {
+    const problem = await checkNote(clean);
+    if (problem) return { ok: false, message: problem };
+  }
+  const active = await db.generationJob.count({ where: { bookId, type: "book.cover", status: { in: ["queued", "running"] } } });
+  if (active) return { ok: false, message: "The cover is already being redrawn." };
+  const overLimit = await checkAllowance(userId, "redraw");
+  if (overLimit) return { ok: false, message: overLimit };
+  const price = (IMAGE_PRICES[imageProviderChoice()] ?? PLANNING_IMAGE_PRICE).perIllustration;
+  const budget = await underBudget(userId, price);
+  if (budget) return { ok: false, message: budget };
+  await db.$transaction(async (tx) => {
+    // "generating" shows progress; the cover job sets the book back to ready when it's done.
+    await tx.book.update({ where: { id: book.id }, data: { status: "generating" } });
+    await enqueue("book.cover", { note: clean, redraw: true }, { userId, bookId: book.id }, tx);
   });
   return { ok: true };
 }

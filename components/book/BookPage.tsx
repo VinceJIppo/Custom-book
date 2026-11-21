@@ -1,5 +1,5 @@
 import type { CSSProperties, ReactNode } from "react";
-import { BLEED_IN, IMAGE_TOP_FRACTION, SPOT_FRACTION, safeBox, type Box, type TrimSize } from "@/lib/print/geometry";
+import { BLEED_IN, COVER_TITLE_BAND, IMAGE_TOP_FRACTION, SPOT_FRACTION, safeBox, type Box, type TrimSize } from "@/lib/print/geometry";
 import type { BookView, PageView } from "@/lib/books/viewTypes";
 import { VIGNETTE_STYLES } from "@/lib/schemas/theme";
 
@@ -236,10 +236,19 @@ export function BookPage({ page, book, mode }: { page: PageView; book: BookView;
 export function CoverFront({ book, mode }: { book: BookView; mode: PageMode }) {
   const { w, h } = bleedSize(book.trim);
   const safe = safeBox(book.trim as unknown as TrimSize, 1);
+  const band = book.cover.fit === "below-title" ? h * COVER_TITLE_BAND : 0;
   return (
     <PageFrame trim={book.trim} mode={mode} label="Front cover" look={lookFor(book.style)}>
-      <Art url={book.cover.imageUrl} status={book.cover.imageStatus} alt="Cover illustration" style={{ left: 0, top: 0, width: inch(w), height: inch(h) }} />
-      <div className="bk-cover-title" style={{ left: inch(safe.x - 0.2), top: inch(safe.y), width: inch(safe.width + 0.4), color: book.palette[0] }}>
+      <Art url={book.cover.imageUrl} status={book.cover.imageStatus} alt="Cover illustration" style={{ left: 0, top: inch(band), width: inch(w), height: inch(h - band) }} />
+      <div
+        className="bk-cover-title"
+        style={{
+          left: inch(safe.x - 0.2),
+          top: inch(safe.y),
+          width: inch(safe.width + 0.4),
+          color: book.palette[0],
+          ...(band ? { height: inch(band - safe.y), display: "flex", flexDirection: "column", justifyContent: "center", background: "transparent" } : {}),
+        }}>
         <h1 className="bk-display" style={{ fontSize: inch(0.62) }}>
           {book.title}
         </h1>

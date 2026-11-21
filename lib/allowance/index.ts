@@ -93,7 +93,7 @@ async function countUsage(userId: string, since: Date | null): Promise<Record<Al
     db.book.count({ where: { userId, status: { not: "failed" }, createdAt: created } }),
     db.characterSheet.count({ where: { child: { userId }, status: { not: "failed" }, createdAt: created } }),
     db.generationJob.count({ where: { userId, type: "page.edit", status: { not: "failed" }, createdAt: created } }),
-    db.generationJob.findMany({ where: { userId, type: "page.illustrate", status: { not: "failed" }, createdAt: created }, select: { payload: true } }),
+    db.generationJob.findMany({ where: { userId, type: { in: ["page.illustrate", "book.cover"] }, status: { not: "failed" }, createdAt: created }, select: { payload: true } }),
     db.generationJob.count({ where: { userId, type: "page.revise", createdAt: created } }),
     db.generationJob.count({ where: { userId, type: "theme.draft", createdAt: created } }),
   ]);

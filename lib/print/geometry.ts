@@ -80,6 +80,12 @@ export function safeBox(trim: TrimSize, pageNumber: number): Box {
 
 /** Fraction of the page height given to the picture in the imageTop layout. */
 export const IMAGE_TOP_FRACTION = 0.64;
+/**
+ * Front cover: the title gets its own band across the top (this share of the
+ * page height) and the cover picture is drawn to fit the space below it, so the
+ * title can never hide a head or face.
+ */
+export const COVER_TITLE_BAND = 0.36;
 /** Spot art size in the textSpot layout, as a fraction of trim width. */
 export const SPOT_FRACTION = 0.5;
 

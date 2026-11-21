@@ -98,6 +98,9 @@ async function onJobGaveUp(job: GenerationJob, _err: unknown) {
         orderId,
         `Couldn't send the order to the printer: ${errorMessage(_err)}`,
       );
+  } else if (job.type === "book.artdirect") {
+    const { artDirectGaveUp } = await import("../books/review");
+    await artDirectGaveUp(job);
   } else if (job.type === "book.batch" || job.type === "book.batch.poll") {
     // The overnight batch couldn't be sent or checked: draw the pictures the normal way.
     const { batchGaveUp } = await import("./handlers/batch");

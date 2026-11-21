@@ -1,5 +1,6 @@
 import { z } from "zod";
-import type { StoryContext, StoryProvider, ThemeDraftRequest } from "../story/types";
+import { continuityProblems } from "../../books/continuity";
+import type { ArtDirection, ArtInputPage, StoryContext, StoryProvider, ThemeDraftRequest } from "../story/types";
 import {
   CharacterBibleSchema,
   EditorReportSchema,
@@ -62,6 +63,7 @@ const WireOutline = z.object({
   lessonShown: z.string(),
   setups: z.array(z.object({ item: z.string(), setUpOnPage: z.number().int(), paysOffOnPage: z.number().int() })),
   continuity: z.array(z.object({ fact: z.string(), fromPage: z.number().int(), toPage: z.number().int() })),
+  characters: z.array(z.object({ name: z.string(), species: z.string(), look: z.string() })),
   endingEcho: z.string(),
   pages: z.array(
     z.object({
@@ -294,35 +296,23 @@ export class AnthropicStoryProvider implements StoryProvider {
       manuscript = cleanManuscript(applyPatch(manuscript, p));
     };
     const needsWork = (r: EditorReport) => r.verdict === "revise" && r.issues.length > 0;
+    const heroName = ctx.child.nickname || ctx.child.firstName;
+    // Plain-code continuity slips (new glasses mid-adventure, a fox called a puppy) always go to the rewrite.
+    const withSlips = (r: EditorReport): EditorReport => {
+      const slips = continuityProblems(manuscript.pages, outline, heroName, ctx.appearance?.hero);
+      return slips.length ? { ...r, verdict: "revise", issues: [...slips, ...r.issues].slice(0, 12) } : r;
+    };
 
-    const first = await review();
+    const first = withSlips(await review());
     editorNotes.push(first);
     if (needsWork(first)) {
       await patch(first, "rewrite");
-      const second = await review();
+      const second = withSlips(await review());
       editorNotes.push(second);
       if (needsWork(second)) await patch(second, "polish");
     }
 
-    const art = await run(
-      this.claude.generate({
-        label: "art direction",
-        system: ART_SYSTEM_PROMPT,
-        build: (p) => artDirectionPrompt(ctx, outline, manuscript.pages, p),
-        wire: WireArt,
-        schema: ArtSchema,
-        extraCheck: (a) => {
-          const problems = numberingProblems(a.pages, n);
-          const spreads = a.pages.filter((pg) => pg.layout === "spread").length;
-          if (spreads > 2) problems.push(`Use at most 2 spreads (you used ${spreads}).`);
-          const empty = a.pages.filter((pg) => pg.scene.mustShow.length === 0).map((pg) => pg.pageNumber);
-          if (empty.length) problems.push(`List mustShow details for pages ${empty.join(", ")}.`);
-          return problems;
-        },
-        softCheck: (a) => earlyPropProblems(a.pages, manuscript.pages, a.props),
-        maxTokens: 64000,
-      }),
-    );
+    const art = await run(this.directArt(outline, manuscript.pages, ctx));
 
     const textByPage = new Map(manuscript.pages.map((p) => [p.pageNumber, p.text]));
     const pages: StoryPage[] = art.pages
@@ -342,6 +332,53 @@ export class AnthropicStoryProvider implements StoryProvider {
       },
       usage: sumUsage(this.name, usages),
     };
+  }
+
+  /** Picture plans for the words as they now stand (also used after a parent edits the story). */
+  async directArt(outline: Outline, pages: ArtInputPage[], ctx: StoryContext): Promise<WithUsage<ArtDirection>> {
+    const n = ctx.options.length;
+    const manuscriptPages = pages.map((p) => ({ pageNumber: p.pageNumber, text: p.text }));
+    const res = await this.claude.generate({
+      label: "art direction",
+      system: ART_SYSTEM_PROMPT,
+      build: (p) => artDirectionPrompt(ctx, outline, manuscriptPages, p),
+      wire: WireArt,
+      schema: ArtSchema,
+      extraCheck: (a) => {
+        const problems = numberingProblems(a.pages, n);
+        const spreads = a.pages.filter((pg) => pg.layout === "spread").length;
+        if (spreads > 2) problems.push(`Use at most 2 spreads (you used ${spreads}).`);
+        const empty = a.pages.filter((pg) => pg.scene.mustShow.length === 0).map((pg) => pg.pageNumber);
+        if (empty.length) problems.push(`List mustShow details for pages ${empty.join(", ")}.`);
+        return problems;
+      },
+      softCheck: (a) => earlyPropProblems(a.pages, manuscriptPages, a.props),
+      maxTokens: 64000,
+    });
+    return { usage: res.usage, value: { pages: res.value.pages, coverScene: res.value.coverScene, storySummary: res.value.storySummary } };
+  }
+
+  /** Rewrites the chosen pages from the parent's note; returns only pages that changed. */
+  async revisePages(outline: Outline, pages: Array<{ pageNumber: number; text: string }>, target: number[], instruction: string, ctx: StoryContext): Promise<WithUsage<{ pages: Array<{ pageNumber: number; text: string }> }>> {
+    const n = ctx.options.length;
+    const wanted = new Set(target);
+    const issues = target.map((page) => ({ page, problem: "The parent asked for a change to this page.", fix: instruction }));
+    const res = await this.claude.generate({
+      label: "rewrite pages",
+      system: STORY_SYSTEM_PROMPT,
+      build: (problems) =>
+        rewritePrompt(ctx, outline, pages, issues, [...(problems ?? []), `Change ONLY pages ${target.join(", ")}. Every other page stays exactly as it is, so make the changed pages fit the pages around them.`]),
+      wire: WirePatch,
+      schema: PatchSchema,
+      extraCheck: (x) => {
+        const bad = x.pages.filter((pg) => pg.pageNumber < 1 || pg.pageNumber > n).map((pg) => pg.pageNumber);
+        return bad.length ? [`Only pages 1 to ${n} exist (you returned ${bad.join(", ")}).`] : [];
+      },
+      softCheck: (x) => verseProblems(x.pages.filter((pg) => wanted.has(pg.pageNumber)), ctx.options.voice, ctx.options.readingLevel),
+      maxTokens: 32000,
+    });
+    const changed = res.value.pages.filter((pg) => wanted.has(pg.pageNumber)).map((pg) => ({ pageNumber: pg.pageNumber, text: cleanDashes(pg.text) }));
+    return { usage: res.usage, value: { pages: changed } };
   }
 
   async reviseText(page: { text: string; scene: Scene | null }, instruction: string, ctx: StoryContext): Promise<WithUsage<{ text: string }>> {

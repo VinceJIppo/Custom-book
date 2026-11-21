@@ -71,6 +71,20 @@ export const ContinuityFactSchema = z.object({
 });
 
 /**
+ * How one recurring character looks for the WHOLE book. Shared by the writer,
+ * editor, illustrator and picture check so a fox stays the same fox and nobody
+ * gains or loses glasses, hats or outfits between pages.
+ */
+export const CharacterGuideSchema = z.object({
+  name: note(60, 1),
+  /** Exactly what kind of being: "a five-year-old boy", "a small red fox", "a round silver robot". */
+  species: note(120, 2),
+  /** Fixed appearance: size, colors, clothes, accessories (and what they do NOT wear, e.g. "no glasses"). */
+  look: note(300, 3),
+});
+export type CharacterGuide = z.infer<typeof CharacterGuideSchema>;
+
+/**
  * The story spine: decided before any page is written so the story has a
  * cause-and-effect arc. New fields default so books made before this still parse.
  */
@@ -91,6 +105,8 @@ export const OutlineSchema = z.object({
   lessonShown: note(300).default(""),
   setups: list(SetupPayoffSchema, 8).default([]),
   continuity: list(ContinuityFactSchema, 10).default([]),
+  /** Every recurring character's species and fixed look, kept identical on every page. */
+  characters: list(CharacterGuideSchema, 10).default([]),
   endingEcho: note(300).default(""),
   pages: z.array(OutlineBeatSchema).min(4).max(30),
 });

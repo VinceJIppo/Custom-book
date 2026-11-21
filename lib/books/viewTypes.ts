@@ -30,7 +30,8 @@ export interface BookView {
   trim: { id: string; widthIn: number; heightIn: number };
   palette: string[];
   readingLevel: "2-4" | "4-6" | "6-8";
-  cover: { imageUrl: string | null; imageStatus: string };
+  /** fit "below-title": the picture sits under the title band (newer covers); "full": the title is over the picture. */
+  cover: { imageUrl: string | null; imageStatus: string; fit?: "below-title" | "full" };
   backBlurb: string;
   pages: PageView[];
   warnings: string[];

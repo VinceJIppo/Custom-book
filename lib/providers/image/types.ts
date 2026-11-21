@@ -49,6 +49,8 @@ export interface StoryContextForArt {
   /** What the previous and next pages show, for continuity. */
   previousMoment?: string;
   nextMoment?: string;
+  /** How each recurring character in this picture looks for the whole book ("Pip is a small red fox: ..."). */
+  characters?: string[];
 }
 
 export interface CharacterSheetRequest {

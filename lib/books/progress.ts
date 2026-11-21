@@ -36,13 +36,15 @@ function stateOf(jobs: Array<{ status: string }>): StepState {
 /** Plain-English progress for the live progress panel. */
 export async function getBookProgress(bookId: string, expectedStoryPages: number, opts: { withProblems?: boolean } = {}): Promise<BookProgress> {
   const [jobs, pages] = await Promise.all([
-    db.generationJob.findMany({ where: { bookId }, select: { type: true, status: true, costUsd: true, error: true, attempts: true, maxAttempts: true } }),
+    db.generationJob.findMany({ where: { bookId }, orderBy: { createdAt: "asc" }, select: { type: true, status: true, costUsd: true, error: true, attempts: true, maxAttempts: true } }),
     db.page.findMany({ where: { bookId, kind: "story" }, select: { imageStatus: true } }),
   ]);
   const of = (t: string) => jobs.filter((j) => j.type === t);
-  const outline = stateOf(of("book.outline"));
-  const text = stateOf(of("book.pages"));
-  const cover = stateOf(of("book.cover"));
+  // A rewritten story runs these again: only the latest run counts.
+  const latest = (t: string) => of(t).slice(-1);
+  const outline = stateOf(latest("book.outline"));
+  const text = stateOf(latest("book.pages"));
+  const cover = stateOf(latest("book.cover"));
   const total = pages.length;
   const done = pages.filter((p) => p.imageStatus === "ready").length;
   const failed = pages.filter((p) => p.imageStatus === "failed").length;

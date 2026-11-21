@@ -80,7 +80,7 @@ The picture must show: ${input.mustShow.length ? input.mustShow.map((m) => `"${m
 It must also stay consistent with: ${input.continuity || "(nothing special)"}
 
 1. ${withSheet ? `likenessScore (0 to 1): is ${input.childName} drawn as the same character as in the sheet? 1 = clearly the same; below 0.7 = drift a parent would notice (different hair color or style, skin tone, glasses, face or age). Outfit changes the scene calls for are fine. If the hero is missing, score 0. ${bible} likenessIssues: the drifts, as short phrases.` : "likenessScore: return 1 and no likenessIssues (no sheet to compare)."}
-2. storyScore (0 to 1): does the picture show what the words say? 1 = a reader would see everything the words describe; below 0.7 = something the words describe is missing, contradicted (for example the words say a hat is on his head but the picture shows it on his toes) or the lasting world state is not visible. missing: each thing that is missing or contradicted, as a short phrase saying what the picture should show instead.
+2. storyScore (0 to 1): does the picture show what the words say? 1 = a reader would see everything the words describe; below 0.7 = something the words describe is missing, contradicted (for example the words say a hat is on his head but the picture shows it on his toes) or the lasting world state is not visible, or a recurring character is drawn differently from how it is described above (a different kind of animal, different colors, or glasses, a hat or clothes it should not have, or missing ones it should). missing: each thing that is missing or contradicted, as a short phrase saying what the picture should show instead.
 Ignore art style and any blank space left for text.`,
         },
       ],

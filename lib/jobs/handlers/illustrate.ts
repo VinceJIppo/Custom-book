@@ -8,7 +8,8 @@ import {
   getVisionProvider,
 } from "../../providers/registry";
 import { getStorage, keys } from "../../storage";
-import { storyContextFor } from "../../books/context";
+import { outlineFor, storyContextFor } from "../../books/context";
+import { guideFor, guideLines } from "../../books/appearance";
 import {
   CharacterBibleSchema,
   SceneSchema,
@@ -17,7 +18,7 @@ import {
   type Scene,
   type TextZone,
 } from "../../schemas/story";
-import { getTrim, illustrationTargetPx } from "../../print/geometry";
+import { COVER_TITLE_BAND, getTrim, illustrationTargetPx } from "../../print/geometry";
 import {
   PermanentProviderError,
   sumUsage,
@@ -159,6 +160,8 @@ export interface ArtArgs {
   priorDraws?: number;
   /** A picture already drawn elsewhere (an overnight batch): checked and finished, not redrawn first. */
   predrawn?: WithUsage<ImageData>;
+  /** Exact print pixels for the picture (the cover's area under its title band). */
+  targetOverride?: { widthPx: number; heightPx: number };
 }
 
 /** Everything the image model needs for one new picture. Shared by single pictures and overnight batches. */
@@ -166,7 +169,9 @@ export async function prepareIllustration(args: ArtArgs) {
   const { book } = args;
   const ctx = storyContextFor(book);
   const trim = getTrim(book.trimSize);
-  const target = illustrationTargetPx(args.layout, trim);
+  const target = args.targetOverride
+    ? { ...args.targetOverride, aspect: args.targetOverride.widthPx / args.targetOverride.heightPx }
+    : illustrationTargetPx(args.layout, trim);
   const aspect = args.aspectOverride ?? target.aspect;
   const character = await characterFor(book);
   const childName = ctx.child.nickname || ctx.child.firstName;
@@ -260,7 +265,8 @@ export async function renderArt(args: ArtArgs): Promise<RenderResult> {
           childName,
           pageText: args.story?.pageText ?? "",
           mustShow: args.scene.mustShow ?? [],
-          continuity: args.scene.continuity ?? "",
+          // The picture check also holds every character to the book's guide (species, colors, glasses...).
+          continuity: [args.scene.continuity ?? "", ...(args.story?.characters ?? [])].filter(Boolean).join(" "),
         });
         usages.push(r.usage);
         return r.value;
@@ -391,7 +397,21 @@ async function storyFor(
   const summary = String(
     (book.outline as { storySummary?: unknown } | null)?.storySummary ?? "",
   );
-  if (!page) return { summary, pageText: "" };
+  let outline: ReturnType<typeof outlineFor> = null;
+  try {
+    outline = outlineFor(book);
+  } catch {
+    outline = null;
+  }
+  const sceneOf = (raw: unknown) => {
+    const parsed = SceneSchema.safeParse(raw);
+    return parsed.success ? parsed.data : null;
+  };
+  const scene = sceneOf(page ? page.scene : (book.outline as { coverScene?: unknown } | null)?.coverScene);
+  const characters = scene
+    ? guideLines(guideFor(outline, scene.characters, [scene.action, ...(scene.mustShow ?? []), page?.text ?? ""].join(" ")))
+    : [];
+  if (!page) return { summary, pageText: "", characters };
   const all = await db.page.findMany({
     where: { bookId: book.id, storyNumber: { not: null } },
     orderBy: { index: "asc" },
@@ -407,6 +427,7 @@ async function storyFor(
     pageText: page.text ?? "",
     previousMoment: i > 0 ? moment(all[i - 1]) : undefined,
     nextMoment: i >= 0 ? moment(all[i + 1]) : undefined,
+    characters,
   };
 }
 
@@ -440,15 +461,29 @@ export async function pageArtArgs(page: Page & { book: Book }, note?: string): P
   };
 }
 
+/** The cover picture fills the page below the title band. */
+export function coverTargetPx(book: Pick<Book, "trimSize">) {
+  const full = illustrationTargetPx("fullBleed", getTrim(book.trimSize));
+  return { widthPx: full.widthPx, heightPx: Math.round(full.heightPx * (1 - COVER_TITLE_BAND)) };
+}
+
 /** Picture settings for the cover. */
-export async function coverArtArgs(book: Book): Promise<ArtArgs> {
+export async function coverArtArgs(book: Book, note?: string): Promise<ArtArgs> {
+  const scene = SceneSchema.parse((book.outline as { coverScene?: unknown } | null)?.coverScene);
   return {
     book,
-    scene: SceneSchema.parse((book.outline as { coverScene?: unknown } | null)?.coverScene),
+    scene: {
+      ...scene,
+      framing: `${scene.framing}. Whole figures, every head and face fully inside the picture with open space above the tallest head`,
+      mustShow: [...(scene.mustShow ?? []).slice(0, 5), "every character's whole head and face inside the picture, nothing cut off at the top edge"],
+    },
     layout: "fullBleed",
-    textZone: "top",
+    // The title has its own band above the picture now, so no space is reserved inside it.
+    textZone: null,
     label: "Cover",
+    note,
     story: await storyFor(book, null),
+    targetOverride: coverTargetPx(book),
   };
 }
 
@@ -525,25 +560,28 @@ export async function coverHandler(job: GenerationJob): Promise<JobOutcome> {
     ? await db.book.findUnique({ where: { id: job.bookId } })
     : null;
   if (!book) throw new PermanentProviderError("Book no longer exists");
+  const { note, redraw } = job.payload as { note?: string; redraw?: boolean };
   const r = await renderArt({
-    ...(await coverArtArgs(book)),
+    ...(await coverArtArgs(book, note)),
     priorDraws: priorDraws(job),
     predrawn: await predrawnFor(job),
   });
   await dropPredrawn(job);
   const ext = extFor(r.print.mimeType);
-  const key = keys.coverImage(
-    book.userId,
-    book.childId,
-    book.id,
-    book.version,
-    ext,
-  );
+  const outline = (book.outline ?? {}) as { coverVersion?: number };
+  // A redraw gets a new file name, so browsers and the print files pick up the new cover.
+  const coverVersion = (outline.coverVersion ?? book.version) + (redraw ? 1 : 0);
+  const key = keys.coverImage(book.userId, book.childId, book.id, coverVersion, ext);
   await getStorage().put(key, r.print.data, r.print.mimeType);
+  const fresh = await db.book.findUniqueOrThrow({ where: { id: book.id }, select: { outline: true, coverImageKey: true } });
   await db.book.update({
     where: { id: book.id },
-    data: { coverImageKey: key },
+    data: {
+      coverImageKey: key,
+      outline: { ...((fresh.outline ?? {}) as object), coverFit: "below-title", coverVersion } as unknown as Prisma.InputJsonValue,
+    },
   });
+  if (fresh.coverImageKey && fresh.coverImageKey !== key) await getStorage().delete(fresh.coverImageKey).catch(() => undefined);
   await maybeFinalizeBook(book.id);
   return { usage: r.usage, result: { key, qaScore: r.qaScore } };
 }

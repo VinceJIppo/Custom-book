@@ -75,6 +75,9 @@ export function buildIllustrationPrompt(req: IllustrationRequest): string {
       : "",
     req.bible ? describeBible(req.childName, req.bible) : "",
     ...castLines(req),
+    req.story?.characters?.length
+      ? `Recurring characters, drawn exactly the same on every page of this book (never change their species, colors, size, clothes or accessories, and never add glasses, hats or anything not listed): ${req.story.characters.join(" ")}`
+      : "",
     req.story?.summary ? `The whole story, for context (draw only this page's moment): ${req.story.summary}` : "",
     req.story?.previousMoment ? `The page before shows: ${req.story.previousMoment}.` : "",
     req.story?.nextMoment ? `The page after shows: ${req.story.nextMoment}.` : "",
@@ -92,7 +95,7 @@ export function buildIllustrationPrompt(req: IllustrationRequest): string {
         ? ZONE_SPACE[req.textZone]
         : "",
     req.note ? `Parent's note for this picture: ${req.note}` : "",
-    "Keep every face and important detail well inside the frame, away from the edges (the page will be trimmed and bound).",
+    "Keep every face and important detail well inside the frame, away from the edges (the page will be trimmed and bound). Show every character's whole head, hair and raised hands, with clear space above the tallest head: the top edge must never cut through a head or face.",
     NO_TEXT_RULE,
     SAFETY_RULE,
   ];
