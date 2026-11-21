@@ -28,14 +28,16 @@ export function tokenCostUsd(
 
 /**
  * High-side token budgets per story call (input, output including the model's
- * thinking). A book is: outline (story spine), manuscript, editor review,
- * at most one rewrite plus a second review, and art direction. The estimate
- * assumes the rewrite happens.
+ * thinking). A book is: outline (story spine), manuscript, editor review, a
+ * targeted rewrite (changed pages only), a second review, a final polish, and
+ * art direction. The estimate assumes the rewrite and polish both happen, and
+ * one extra manuscript try for over-long verse lines.
  */
 export const STORY_TOKEN_BUDGET = {
   outline: { input: 2_500, output: 6_000 },
   manuscript: { base: { input: 4_000, output: 3_000 }, perPage: { input: 300, output: 700 } },
   editor: { base: { input: 4_000, output: 3_000 }, perPage: { input: 150, output: 0 } },
+  patch: { base: { input: 6_000, output: 3_000 }, perPage: { input: 350, output: 150 } },
   artDirection: { base: { input: 5_000, output: 4_000 }, perPage: { input: 300, output: 600 } },
   revise: { input: 1_000, output: 1_500 },
 };

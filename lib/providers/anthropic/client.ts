@@ -118,10 +118,16 @@ export class ClaudeJson {
     wire: z.ZodType;
     schema: z.ZodType<T>;
     extraCheck?: (v: T) => string[];
+    /**
+     * Quality problems worth one more try (for example over-long verse lines).
+     * Unlike extraCheck, these get one retry at most, and then the answer is accepted.
+     */
+    softCheck?: (v: T) => string[];
     maxTokens: number;
   }): Promise<WithUsage<T>> {
     const usages: Usage[] = [];
     let problems: string[] | undefined;
+    let softRetries = 0;
     for (let attempt = 1; attempt <= this.maxAttempts; attempt++) {
       const res = await this.call({ system: opts.system, content: opts.build(problems), format: jsonFormat(opts.wire), maxTokens: opts.maxTokens });
       usages.push(this.toUsage(res));
@@ -153,6 +159,14 @@ export class ClaudeJson {
       if (extra.length) {
         problems = extra;
         log.warn(`${opts.label}: content problems`, { attempt, problems });
+        continue;
+      }
+      const soft = opts.softCheck?.(parsed.data) ?? [];
+      // At most one extra try for quality problems: each try costs a full call.
+      if (soft.length && attempt < this.maxAttempts && softRetries < 1) {
+        softRetries++;
+        problems = soft;
+        log.warn(`${opts.label}: quality problems, trying again`, { attempt, problems: soft.slice(0, 3) });
         continue;
       }
       return { value: parsed.data, usage: sumUsage(this.name, usages) };

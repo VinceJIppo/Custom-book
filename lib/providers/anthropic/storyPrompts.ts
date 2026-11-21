@@ -1,5 +1,6 @@
 import { READING_LEVEL_RULES } from "../../schemas/book";
 import { voiceFor } from "../../schemas/voices";
+import { verseShape } from "../../schemas/storyText";
 import type { Outline } from "../../schemas/story";
 import type { StoryContext, ThemeDraftRequest } from "../story/types";
 import { ART_STYLES } from "../../schemas/theme";
@@ -36,6 +37,9 @@ Pictures follow the words
 - Every page is one clear moment an illustrator can draw.
 - When the world changes in a way you can see (everything upside down, nighttime, rain), it stays that way on every page until the story changes it back, and the words keep reminding the reader.
 
+Punctuation
+- Never use long dashes (em dashes or en dashes) in anything a reader will see. Use a comma, a full stop, an exclamation mark or "..." instead.
+
 Safety and originality
 - Age-appropriate vocabulary for the reading level. Cartoon peril only. Nothing frightening, violent, romantic, or unsafe. No weapons. Everything stays G-rated.
 - Use only the theme's original characters plus the child, pet and friend. Never mention or allude to trademarked or copyrighted characters, franchises, brands, real authors or celebrities.
@@ -51,7 +55,7 @@ Check, in order of importance:
 5. Does every action make everyday sense (the right object for the moment, a visible reason for what each character does)?
 6. Does the hero cause the solution, and do earlier attempts fail for clear reasons?
 7. Is any lesson shown through a choice rather than preached? Is a refrain used at most three times, and kept free of the lesson?
-8. Is the reading level and voice respected? Does rhyme ever force nonsense or filler words?
+8. Is the reading level and voice respected? For verse, read every line aloud: flag lines that are too long, stumble off the beat, or rhyme by force (an odd word picked only because it rhymes, twisted word order, filler like "you see" or "big, big, BIG"). Quote the line.
 9. Can each page be drawn as one moment? Are lasting visual changes (an upside-down town, night) carried by the words on every page until they end? Are there contradictions (a hat on his head on one page and on his toes the next)?
 10. Does the ending resolve the problem and echo the opening?
 
@@ -64,6 +68,7 @@ Rules for each page's scene:
 - mustShow: list every concrete thing the words say that a reader would look for in the picture, phrased exactly as the words describe it (for example "the Mayor upside down, balancing on his teapot hat", "Oliver handing the bigger half of his cheese to the Grumblesnoot"). Never contradict the words.
 - continuity: the world state that must be visible on this page from the story's lasting changes and recurring props (for example "the whole town is upside down: houses hang from the ground above, trees grow downward; Oliver wears his green backpack").
 - Characters look the same on every page; describe recurring characters the same way each time.
+- Show an object or character only from the page whose words first bring it into the story. Before that page it must not appear in the action, mustShow, continuity or characters, even if the story plan says otherwise. Where the plan and the manuscript disagree, follow the manuscript.
 - Never ask for text, letters, words, signs, or labels to appear in the picture.
 
 Page layouts:
@@ -78,7 +83,9 @@ Page layouts:
 export function readingRule(ctx: StoryContext): string {
   const level = READING_LEVEL_RULES[ctx.options.readingLevel];
   const voice = voiceFor(ctx.options);
-  return `${level.label}: ${voice.readingLevels?.[ctx.options.readingLevel] ?? level.rule}`;
+  const shape = verseShape(ctx.options.voice, ctx.options.readingLevel);
+  const limits = shape ? ` Every line has at most ${shape.maxWordsPerLine} words, with a steady beat; at most ${shape.maxLines} lines per page.` : "";
+  return `${level.label}: ${voice.readingLevels?.[ctx.options.readingLevel] ?? level.rule}${limits}`;
 }
 
 /** The voice style guide, placed after the book details so it takes priority on tone. */
@@ -186,7 +193,19 @@ export function editorPrompt(ctx: StoryContext, outline: Outline, pages: Array<{
   ].join("\n");
 }
 
-export function rewritePrompt(ctx: StoryContext, outline: Outline, pages: Array<{ pageNumber: number; text: string }>, issues: Array<{ page: number; problem: string; fix: string }>, problems?: string[]): string {
+/**
+ * Asks for only the pages that need to change. "rewrite" answers the first
+ * editor review (may touch many pages); "polish" answers the last review and
+ * changes as little as possible.
+ */
+export function rewritePrompt(
+  ctx: StoryContext,
+  outline: Outline,
+  pages: Array<{ pageNumber: number; text: string }>,
+  issues: Array<{ page: number; problem: string; fix: string }>,
+  problems?: string[],
+  mode: "rewrite" | "polish" = "rewrite",
+): string {
   return [
     "Here are the details for this book:",
     describeContext(ctx),
@@ -196,14 +215,20 @@ export function rewritePrompt(ctx: StoryContext, outline: Outline, pages: Array<
     "",
     voiceBlock(ctx),
     "",
-    "Your draft:",
+    "Your current manuscript:",
     manuscriptText(pages),
     "",
-    "The editor found these problems:",
+    mode === "polish" ? "The editor's final notes:" : "The editor found these problems:",
     issues.map((i) => `- ${i.page ? `Page ${i.page}` : "Whole book"}: ${i.problem} Fix: ${i.fix}`).join("\n"),
     "",
-    `Rewrite the manuscript to fix every problem while keeping what already works. Keep exactly ${ctx.options.length} pages and the reading level (${readingRule(ctx)}). Change the plan where the editor's fixes need it, but keep the story's cause and effect intact from start to finish.`,
-    ctx.options.dedication ? `Keep the dedication exactly: ${JSON.stringify(ctx.options.dedication)}` : "Keep or improve the dedication.",
+    mode === "polish"
+      ? "This is the final polish. Fix every note while changing as little as possible: keep every page that works exactly as it is."
+      : "Fix every problem while keeping what already works. Change the plan where the editor's fixes need it, but keep the story's cause and effect intact from start to finish.",
+    `Return ONLY the pages you change, each with its complete new text (pages you leave out stay as they are). The book keeps exactly ${ctx.options.length} pages and the reading level (${readingRule(ctx)}).`,
+    "Make sure the pages you change still fit the pages around them.",
+    ctx.options.dedication
+      ? "Return an empty dedication (the parent wrote it), and an empty backCoverBlurb unless the fixes need a new one."
+      : "Return an empty dedication and backCoverBlurb to keep the current ones, or new text if the fixes need it.",
     retryNote(problems),
   ]
     .filter(Boolean)
@@ -225,6 +250,7 @@ export function artDirectionPrompt(ctx: StoryContext, outline: Outline, pages: A
     manuscriptText(pages),
     "",
     `For each of the ${ctx.options.length} pages, give the scene (action, characters, setting, mood, framing, mustShow, continuity), the layout and the textZone, following your rules.`,
+    "Also list props: every recurring object and supporting character in the story, each by the shortest name the words use for it (for example \"Gizmo\", \"Boing-barrow\", \"Grumblesnoot\"). The app checks that none of them appears in a picture before the words introduce it.",
     "Also write storySummary: the whole story in four to six plain sentences (beginning, problem, attempts, solution, ending) for the illustrator to read before every page.",
     "And a coverScene: the hero in a joyful pose in the setting that hints at the story without spoiling it, with open sky at the top for the title.",
     retryNote(problems),

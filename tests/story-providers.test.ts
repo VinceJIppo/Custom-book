@@ -139,30 +139,78 @@ describe("AnthropicStoryProvider (no network)", () => {
     expect(res.value.pages.every((p) => p.scene.mustShow.length > 0)).toBe(true);
   });
 
-  it("rewrites once when the editor finds problems, passing the specific fixes", async () => {
+  it("rewrites only the flagged pages, reviews again, then polishes the last notes", async () => {
     const outline = await spineOutline(ctx);
     const issue = { page: 8, problem: "Why doesn't pulling the rope ring the bell?", fix: "Say earlier that the bell ignores pulling and shouting." };
     const { caller, prompts } = scripted([
       reply(manuscript("Draft")),
       reply({ verdict: "revise", overall: "The rule is never stated.", issues: [issue] }),
-      reply(manuscript("Fixed")),
-      reply({ verdict: "revise", overall: "Still one nit.", issues: [{ page: 2, problem: "nit", fix: "nit" }] }),
+      reply({ pages: [{ pageNumber: 2, text: "The bell ignores tugs and shouts." }, { pageNumber: 8, text: "Fixed page 8." }], dedication: "", backCoverBlurb: "" }),
+      reply({ verdict: "revise", overall: "One slip left.", issues: [{ page: 12, problem: "The bell rings without a giggle.", fix: "Make a giggle ring it." }] }),
+      reply({ pages: [{ pageNumber: 12, text: "A sleepy giggle, and a soft ding." }], dedication: "", backCoverBlurb: "" }),
       reply(await art()),
     ]);
     const res = await provider(caller).generatePages(outline, ctx);
-    expect(prompts).toHaveLength(5); // at most one rewrite, even if the second review still has notes
+    expect(prompts).toHaveLength(6);
     expect(prompts[2]).toContain("Why doesn't pulling the rope ring the bell?");
-    expect(prompts[4]).toContain("Fixed page 8.");
-    expect(res.value.pages[7].text).toBe("Fixed page 8.");
+    expect(prompts[2]).toMatch(/Return ONLY the pages you change/);
+    expect(prompts[4]).toMatch(/final polish/);
+    expect(prompts[4]).toContain("Fixed page 8."); // the polish sees the rewritten book
+    const text = res.value.pages.map((p) => p.text);
+    expect(text[1]).toBe("The bell ignores tugs and shouts.");
+    expect(text[7]).toBe("Fixed page 8.");
+    expect(text[11]).toBe("A sleepy giggle, and a soft ding.");
+    expect(text[3]).toBe("Draft page 4."); // untouched pages stay
+    expect(res.value.backCoverBlurb).toBe("A giggly tale about a quiet bell."); // empty means keep
     expect(res.value.editorNotes.map((n) => n.verdict)).toEqual(["revise", "revise"]);
-    // 5 calls x $0.022
-    expect(res.usage.costUsd).toBeCloseTo(0.11, 6);
+    expect(res.usage.costUsd).toBeCloseTo(0.132, 6); // 6 calls x $0.022
+  });
+
+  it("removes long dashes from the printed words", async () => {
+    const outline = await spineOutline(ctx);
+    const m = manuscript("Draft");
+    m.pages[0].text = "Zizzle bounced in\u2014polka-dot paws\u2014and sang.";
+    m.pages[1].text = "'A sock sneezed ah-ah-ah\u2014?' 'CHOO!'";
+    const { caller } = scripted([reply({ ...m, dedication: "For Teddy\u2014always." }), reply({ verdict: "pass", overall: "ok", issues: [] }), reply(await art())]);
+    const res = await provider(caller).generatePages(outline, ctx);
+    expect(res.value.pages[0].text).toBe("Zizzle bounced in, polka-dot paws, and sang.");
+    expect(res.value.pages[1].text).toBe("'A sock sneezed ah-ah-ah...?' 'CHOO!'");
+    expect(res.value.dedication).toBe("For Teddy, always.");
+    expect(JSON.stringify(res.value)).not.toMatch(/[\u2014\u2013]/);
+  });
+
+  it("sends over-long verse lines back once, then accepts the next draft", async () => {
+    const rhymeCtx = { ...ctx, options: { ...ctx.options, voice: "rhyming-mischief" as const, readingLevel: "4-6" as const } };
+    const outline = await spineOutline(rhymeCtx);
+    const long = manuscript("Draft");
+    long.pages[0].text = "Oliver woke in his moon pajamas and gasped at the wonderful sight\nhis bed on the ceiling!";
+    const stillLong = manuscript("Draft");
+    stillLong.pages[0].text = "Oliver woke in his moon pajamas and gasped at the curious sight\nhis bed on the ceiling!";
+    const { caller, prompts } = scripted([reply(long), reply(stillLong), reply({ verdict: "pass", overall: "ok", issues: [] }), reply(await art())]);
+    const res = await provider(caller).generatePages(outline, rhymeCtx);
+    expect(prompts[0]).toMatch(/at most 10 words/);
+    expect(prompts[1]).toMatch(/Page 1, line 1 has 12 words; keep every line to 10 words or fewer/);
+    expect(prompts).toHaveLength(4); // one extra try, not three
+    expect(res.value.pages[0].text).toContain("curious sight");
+  });
+
+  it("art direction may not show a prop before the words introduce it", async () => {
+    const outline = await spineOutline(ctx);
+    const m = manuscript("Draft");
+    m.pages[3].text = "Professor Quibblewick handed Teddy the Gizmo.";
+    const a = await art();
+    const early = { ...a, props: [{ name: "Gizmo" }], pages: a.pages.map((p) => (p.pageNumber === 3 ? { ...p, scene: { ...p.scene, mustShow: [...p.scene.mustShow, "Teddy holding the brass Giggle-Gizmo"] } } : p)) };
+    const fixed = { ...a, props: [{ name: "Gizmo" }] };
+    const { caller, prompts } = scripted([reply(m), reply({ verdict: "pass", overall: "ok", issues: [] }), reply(early), reply(fixed)]);
+    await provider(caller).generatePages(outline, ctx);
+    expect(prompts[3]).toMatch(/Page 3's picture shows "Gizmo", but the words only bring it in on page 4/);
   });
 
   it("trims wordy editor notes and continuity facts instead of failing the step", async () => {
     const long = "The bell rule is never stated, so a reader wonders why pulling the rope does nothing at all. ".repeat(8);
     const outline = { ...(await spineOutline(ctx)), continuity: [{ fact: long, fromPage: 1, toPage: 12 }] };
     const { caller, prompts } = scripted([reply(outline), reply(manuscript("Draft")), reply({ verdict: "pass", overall: long, issues: Array.from({ length: 15 }, (_, i) => ({ page: i, problem: long, fix: long })) }), reply(await art())]);
+    // (verdict "pass" with leftover notes: no rewrite)
     const p = provider(caller);
     const o = await p.generateOutline(ctx);
     expect(o.value.continuity[0].fact.length).toBeLessThanOrEqual(240);

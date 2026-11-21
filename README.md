@@ -77,13 +77,19 @@ A story is written like a real picture book, in stages (`lib/providers/anthropic
 2. **Manuscript:** the whole book in one go, so it reads as one story.
 3. **Editor review:** a separate pass reads it like a parent and a five-year-old would, listing
    anything confusing (unexplained rules, objects from nowhere, actions that don't fit, like
-   cheese for a drippy nose). If it finds problems, the book is **rewritten once** and reviewed again.
+   cheese for a drippy nose) and verse that is too long, off the beat or forced. If it finds
+   problems, only the flagged pages are **rewritten**, the book is reviewed again, and a **final
+   polish** fixes any notes left from the second review.
+
+   Printed words never contain long dashes, and rhyming verse has a word limit per line (8 for
+   ages 2 to 4, 10 for ages 4 to 6; `lib/schemas/storyText.ts`). Over-long lines get one redraft.
 4. **Art direction:** for the final words, each page gets a scene, a **must-show** list phrased
    exactly as the words say ("the teapot hat on the Mayor's head"), and continuity notes, plus a
    short **story summary** that goes into every illustration prompt along with the page's words and
-   what the pages before and after show.
+   what the pages before and after show. A picture may not show an object or character before the
+   page whose words introduce it.
 
-The editor's notes and the summary are saved on the book. About $0.30 to $0.60 of Claude per book.
+The editor's notes and the summary are saved on the book. About $0.50 to $0.80 of Claude per book.
 
 ### Story Lab: tune stories without making a book
 

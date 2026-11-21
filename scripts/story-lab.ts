@@ -47,6 +47,7 @@ async function main() {
   const { getStoryProvider } = await import("../lib/providers/registry");
   const { BookOptionsSchema, readingLevelForAge } = await import("../lib/schemas/book");
   const { VOICES } = await import("../lib/schemas/voices");
+  const { verseProblems } = await import("../lib/schemas/storyText");
 
   const themes = loadBuiltInThemeFiles();
   if (values.list) {
@@ -91,6 +92,12 @@ async function main() {
     const cost = outline.usage.costUsd + book.usage.costUsd;
     const o = outline.value;
     const b = book.value;
+    // Lines still over the voice's word limit after the writer's retry.
+    const verseNotes = new Map<number, string[]>();
+    for (const v of verseProblems(b.pages, options.voice, options.readingLevel)) {
+      const page = Number(/^Page (\d+)/.exec(v)?.[1]);
+      verseNotes.set(page, [...(verseNotes.get(page) ?? []), v.replace(/^Page \d+, /, "")]);
+    }
 
     const md = [
       `# ${o.title}`,
@@ -112,7 +119,12 @@ async function main() {
       "",
       "## Editor's notes",
       ...(b.editorNotes.length
-        ? b.editorNotes.flatMap((n, i) => [`**Review ${i + 1}: ${n.verdict}.** ${n.overall}`, ...n.issues.map((x) => `- Page ${x.page}: ${x.problem} *Fix:* ${x.fix}`), ""])
+        ? b.editorNotes.flatMap((n, i) => [
+            `**Review ${i + 1}: ${n.verdict}.** ${n.overall}`,
+            ...n.issues.map((x) => `- Page ${x.page}: ${x.problem} *Fix:* ${x.fix}`),
+            n.verdict === "revise" && n.issues.length ? (i === 0 ? "*These were fixed in a targeted rewrite.*" : "*These were fixed in the final polish.*") : "",
+            "",
+          ])
         : ["(no editor pass with the mock writer)", ""]),
       "## Story summary (given to every illustration)",
       b.storySummary,
@@ -121,6 +133,7 @@ async function main() {
       ...b.pages.flatMap((p) => [
         `### Page ${p.pageNumber}`,
         p.text.split("\n").map((l) => (l ? `> ${l}` : ">")).join("\n"),
+        ...(verseNotes.get(p.pageNumber)?.length ? ["", `*Line check:* ${verseNotes.get(p.pageNumber)!.join(" ")}`] : []),
         "",
         `*Picture:* ${p.scene.action} (${p.scene.setting}; ${p.scene.mood}; ${p.scene.framing}; ${p.layout}, text ${p.textZone})`,
         ...(p.scene.mustShow.length ? ["", `*Must show:* ${p.scene.mustShow.join("; ")}`] : []),

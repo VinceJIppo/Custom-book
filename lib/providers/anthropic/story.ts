@@ -16,6 +16,7 @@ import {
   type StoryPagesResult,
 } from "../../schemas/story";
 import { note } from "../../schemas/story";
+import { cleanDashes, verseProblems } from "../../schemas/storyText";
 import { ART_STYLES, ThemeConfigSchema, type ThemeConfig } from "../../schemas/theme";
 import { sumUsage, type ImageData, type Usage, type WithUsage } from "../types";
 import { ClaudeJson, imageBlock, type ClaudeOptions } from "./client";
@@ -84,6 +85,18 @@ const ManuscriptSchema = z.object({
   backCoverBlurb: z.string().min(10).max(500),
 });
 type Manuscript = z.infer<typeof ManuscriptSchema>;
+/** Only the pages a rewrite changes; empty dedication/blurb mean "keep". */
+const WirePatch = z.object({
+  pages: z.array(z.object({ pageNumber: z.number().int(), text: z.string() })),
+  dedication: z.string(),
+  backCoverBlurb: z.string(),
+});
+const PatchSchema = z.object({
+  pages: z.array(z.object({ pageNumber: z.number().int().min(1), text: z.string().min(1).max(900) })).max(30),
+  dedication: z.string().max(300),
+  backCoverBlurb: z.string().max(500),
+});
+type Patch = z.infer<typeof PatchSchema>;
 const WireEditor = z.object({
   verdict: z.enum(["pass", "revise"]),
   overall: z.string(),
@@ -100,11 +113,13 @@ const WireArt = z.object({
   ),
   storySummary: z.string(),
   coverScene: WireScene,
+  props: z.array(z.object({ name: z.string() })),
 });
 const ArtSchema = z.object({
   pages: z.array(z.object({ pageNumber: z.number().int().min(1), scene: SceneSchema, layout: StoryLayoutSchema, textZone: TextZoneSchema })).min(4).max(30),
   storySummary: note(1200, 20),
   coverScene: SceneSchema,
+  props: z.array(z.object({ name: z.string() })).default([]),
 });
 
 /** Page numbers must run 1..n exactly. */
@@ -114,8 +129,48 @@ function numberingProblems(pages: Array<{ pageNumber: number }>, n: number): str
   return bad ? [`Number the pages 1 to ${n} in order, without gaps.`] : [];
 }
 
-/** At most this many editor-led rewrites per book. */
-const MAX_REVISIONS = 1;
+function escapeRegExp(s: string) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
+ * Pictures that show a prop or character before the words introduce it. The
+ * first mention is taken from the manuscript itself, not from the plan.
+ */
+export function earlyPropProblems(
+  pages: Array<{ pageNumber: number; scene: Scene }>,
+  manuscript: Array<{ pageNumber: number; text: string }>,
+  props: Array<{ name: string }>,
+): string[] {
+  const problems: string[] = [];
+  for (const { name } of props) {
+    const clean = name.trim();
+    if (clean.length < 3) continue;
+    const re = new RegExp(`\\b${escapeRegExp(clean)}\\b`, "i");
+    const first = manuscript.filter((p) => re.test(p.text)).map((p) => p.pageNumber).sort((a, b) => a - b)[0];
+    if (!first) continue;
+    for (const p of pages) {
+      if (p.pageNumber >= first) continue;
+      const pictured = [p.scene.action, p.scene.continuity, ...p.scene.mustShow, ...p.scene.characters].join(" ");
+      if (re.test(pictured)) problems.push(`Page ${p.pageNumber}'s picture shows "${clean}", but the words only bring it in on page ${first}. Remove it from page ${p.pageNumber}'s action, mustShow, continuity and characters.`);
+    }
+  }
+  return problems.slice(0, 10);
+}
+
+/** Applies a rewrite that returns only changed pages. */
+function applyPatch(m: Manuscript, patch: Patch): Manuscript {
+  const changed = new Map(patch.pages.map((p) => [p.pageNumber, p.text]));
+  return {
+    pages: m.pages.map((p) => ({ pageNumber: p.pageNumber, text: changed.get(p.pageNumber) ?? p.text })),
+    dedication: patch.dedication.trim() || m.dedication,
+    backCoverBlurb: patch.backCoverBlurb.trim() || m.backCoverBlurb,
+  };
+}
+
+function cleanManuscript(m: Manuscript): Manuscript {
+  return { pages: m.pages.map((p) => ({ ...p, text: cleanDashes(p.text) })), dedication: cleanDashes(m.dedication), backCoverBlurb: cleanDashes(m.backCoverBlurb) };
+}
 
 const WireRevision = z.object({ text: z.string() });
 const WireBible = z.object({
@@ -150,9 +205,9 @@ export class AnthropicStoryProvider implements StoryProvider {
     this.claude = new ClaudeJson(opts);
   }
 
-  generateOutline(ctx: StoryContext): Promise<WithUsage<Outline>> {
+  async generateOutline(ctx: StoryContext): Promise<WithUsage<Outline>> {
     const n = ctx.options.length;
-    return this.claude.generate({
+    const res = await this.claude.generate({
       label: "outline",
       system: STORY_SYSTEM_PROMPT,
       build: (p) => outlinePrompt(ctx, p),
@@ -170,11 +225,13 @@ export class AnthropicStoryProvider implements StoryProvider {
       },
       maxTokens: 48000,
     });
+    return { ...res, value: { ...res.value, title: cleanDashes(res.value.title) } };
   }
 
   /**
    * Writes the book in stages, like an author and editor: the whole manuscript,
-   * an editor's review, a rewrite when the editor finds problems, and finally
+   * an editor's review, a targeted rewrite and second review when the editor
+   * finds problems, a final polish for any remaining notes, and finally
    * art direction (scenes, must-show details, continuity) for the finished words.
    */
   async generatePages(outline: Outline, ctx: StoryContext): Promise<WithUsage<StoryPagesResult>> {
@@ -186,21 +243,29 @@ export class AnthropicStoryProvider implements StoryProvider {
       return out.value;
     };
 
-    let manuscript: Manuscript = await run(
-      this.claude.generate({
-        label: "manuscript",
-        system: STORY_SYSTEM_PROMPT,
-        build: (p) => manuscriptPrompt(ctx, outline, p),
-        wire: WireManuscript,
-        schema: ManuscriptSchema,
-        extraCheck: (m) => numberingProblems(m.pages, n),
-        maxTokens: 48000,
-      }),
+    const verse = (pages: Array<{ pageNumber: number; text: string }>) => verseProblems(pages, ctx.options.voice, ctx.options.readingLevel);
+
+    let manuscript: Manuscript = cleanManuscript(
+      await run(
+        this.claude.generate({
+          label: "manuscript",
+          system: STORY_SYSTEM_PROMPT,
+          build: (p) => manuscriptPrompt(ctx, outline, p),
+          wire: WireManuscript,
+          schema: ManuscriptSchema,
+          extraCheck: (m) => numberingProblems(m.pages, n),
+          softCheck: (m) => verse(m.pages),
+          maxTokens: 48000,
+        }),
+      ),
     );
 
+    // Editor review, a targeted rewrite, a second review, and a final polish
+    // that answers the second review's notes. Rewrites return only the pages
+    // they change, which keeps them quick and cheap.
     const editorNotes: EditorReport[] = [];
-    for (let round = 0; round <= MAX_REVISIONS; round++) {
-      const report = await run(
+    const review = () =>
+      run(
         this.claude.generate({
           label: "editor",
           system: EDITOR_SYSTEM_PROMPT,
@@ -210,19 +275,33 @@ export class AnthropicStoryProvider implements StoryProvider {
           maxTokens: 24000,
         }),
       );
-      editorNotes.push(report);
-      if (report.verdict === "pass" || report.issues.length === 0 || round === MAX_REVISIONS) break;
-      manuscript = await run(
+    const patch = async (report: EditorReport, mode: "rewrite" | "polish") => {
+      const p = await run(
         this.claude.generate({
-          label: "rewrite",
+          label: mode,
           system: STORY_SYSTEM_PROMPT,
-          build: (p) => rewritePrompt(ctx, outline, manuscript.pages, report.issues, p),
-          wire: WireManuscript,
-          schema: ManuscriptSchema,
-          extraCheck: (m) => numberingProblems(m.pages, n),
-          maxTokens: 48000,
+          build: (problems) => rewritePrompt(ctx, outline, manuscript.pages, report.issues, problems, mode),
+          wire: WirePatch,
+          schema: PatchSchema,
+          extraCheck: (x) => {
+            const bad = x.pages.filter((pg) => pg.pageNumber < 1 || pg.pageNumber > n).map((pg) => pg.pageNumber);
+            return bad.length ? [`Only pages 1 to ${n} exist (you returned ${bad.join(", ")}).`] : [];
+          },
+          softCheck: (x) => verse(applyPatch(manuscript, x).pages),
+          maxTokens: 32000,
         }),
       );
+      manuscript = cleanManuscript(applyPatch(manuscript, p));
+    };
+    const needsWork = (r: EditorReport) => r.verdict === "revise" && r.issues.length > 0;
+
+    const first = await review();
+    editorNotes.push(first);
+    if (needsWork(first)) {
+      await patch(first, "rewrite");
+      const second = await review();
+      editorNotes.push(second);
+      if (needsWork(second)) await patch(second, "polish");
     }
 
     const art = await run(
@@ -240,6 +319,7 @@ export class AnthropicStoryProvider implements StoryProvider {
           if (empty.length) problems.push(`List mustShow details for pages ${empty.join(", ")}.`);
           return problems;
         },
+        softCheck: (a) => earlyPropProblems(a.pages, manuscript.pages, a.props),
         maxTokens: 64000,
       }),
     );
@@ -264,8 +344,8 @@ export class AnthropicStoryProvider implements StoryProvider {
     };
   }
 
-  reviseText(page: { text: string; scene: Scene | null }, instruction: string, ctx: StoryContext): Promise<WithUsage<{ text: string }>> {
-    return this.claude.generate({
+  async reviseText(page: { text: string; scene: Scene | null }, instruction: string, ctx: StoryContext): Promise<WithUsage<{ text: string }>> {
+    const res = await this.claude.generate({
       label: "revise",
       system: STORY_SYSTEM_PROMPT,
       build: () => revisePrompt(page.text, page.scene?.action ?? null, instruction, ctx),
@@ -273,6 +353,7 @@ export class AnthropicStoryProvider implements StoryProvider {
       schema: z.object({ text: z.string().min(1).max(900) }),
       maxTokens: 8000,
     });
+    return { ...res, value: { text: cleanDashes(res.value.text) } };
   }
 
   describeCharacter(sheet: ImageData): Promise<WithUsage<CharacterBible>> {

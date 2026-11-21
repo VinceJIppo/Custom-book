@@ -31,11 +31,12 @@ export function estimateBookCost(args: {
       tokenCostUsd(args.storyModel, { inputTokens: c.base.input + c.perPage.input * storyPages, outputTokens: c.base.output + c.perPage.output * storyPages });
     storyUsd =
       tokenCostUsd(args.storyModel, { inputTokens: b.outline.input, outputTokens: b.outline.output }) +
-      2 * call(b.manuscript) + // first draft and one rewrite
+      1.5 * call(b.manuscript) + // first draft, sometimes a second try for long verse lines
       2 * call(b.editor) +
+      2 * call(b.patch) + // targeted rewrite and final polish (changed pages only)
       call(b.artDirection);
   }
-  lines.push({ label: args.storyProvider === "mock" ? "Story text (mock, free)" : `Story: plan, write, edit, rewrite, art direction (${args.storyModel}, up to 6 calls)`, usd: round(storyUsd) });
+  lines.push({ label: args.storyProvider === "mock" ? "Story text (mock, free)" : `Story: plan, write, edit, rewrite, polish, art direction (${args.storyModel}, up to 8 calls)`, usd: round(storyUsd) });
 
   const img = IMAGE_PRICES[args.imageProvider] ?? PLANNING_IMAGE_PRICE;
   lines.push({
