@@ -9,7 +9,7 @@ import type { ReadingLevel } from "./book";
  * Voices describe qualities, never authors: naming authors pulls in their
  * lines, characters and coined words, which a printed book must not contain.
  */
-export const VOICE_IDS = ["rhyming-mischief", "classic", "bedtime", "adventure"] as const;
+export const VOICE_IDS = ["rhyming-mischief", "classic", "quiet-wisdom", "bedtime", "adventure"] as const;
 export const VoiceIdSchema = z.enum(VOICE_IDS);
 export type VoiceId = z.infer<typeof VoiceIdSchema>;
 
@@ -77,6 +77,36 @@ ${NEVER_COPY}`,
     sample: "Teddy looked up at the night sky. One little star was missing.",
     guide: `Write in a warm, classic picture-book voice: clear, gentle prose with a steady story rhythm. Simple, vivid images; a little repetition for young readers; a calm, satisfying ending. ${NEVER_COPY}`,
     readingLevels: null,
+  },
+  "quiet-wisdom": {
+    id: "quiet-wisdom",
+    label: "Quiet wisdom",
+    description: "Gentle, simple and thoughtful: small questions between friends, honest answers, a soft smile and plenty of quiet.",
+    sample: "\"What does brave feel like?\" asked Oliver.\n\nMama thought for a while. \"Like wobbly knees,\" she said, \"that keep walking anyway.\"",
+    guide: `Write in a quiet, gentle voice with a simple, unhurried wisdom.
+
+Words and rhythm
+- Plain, everyday words and short sentences. Leave room: say less than you could, and let the pictures and the pauses do the rest.
+- One small idea per page. The pace is slow, like a walk on a calm afternoon.
+- Read it aloud: it should sound soft and warm, never sing-song. No rhyme unless it happens naturally.
+
+Wisdom
+- The big ideas come from small, honest conversations: a child (or a small friend) asks a simple question, and someone thinks about it before answering. Answers are true, kind and a little surprising, never a lecture.
+- Name feelings simply and gently ("Sad can feel a little heavy"), and show that they change ("after a while, you feel lighter again").
+- Never state a moral. Let a quiet moment, a choice or a last line carry it.
+
+Warmth and humor
+- The humor is soft: friends taking words literally, small muddles, kindly misunderstandings, a smile rather than a laugh.
+- Friends help each other in small, practical ways: sitting together, sharing, waiting, listening.
+- Nature mirrors the feelings: weather, seasons, a branch, a puddle, a breeze, the light at the end of the day.
+- Endings are calm and cozy, often returning to the opening question with a new, gentle answer.
+
+${NEVER_COPY}`,
+    readingLevels: {
+      "2-4": "One or two very short, gentle sentences per page.",
+      "4-6": "Two to four short sentences per page, often a small question and a thoughtful answer.",
+      "6-8": "A short, calm paragraph per page, with a quiet exchange of dialogue.",
+    },
   },
   bedtime: {
     id: "bedtime",

@@ -2,7 +2,7 @@
  * Provider-neutral prompt text for illustrations. Every image adapter builds
  * its request from these strings so behavior stays consistent across providers.
  */
-import type { ArtStyle } from "../../schemas/theme";
+import { VIGNETTE_STYLES, type ArtStyle } from "../../schemas/theme";
 import type { CharacterBible, TextZone } from "../../schemas/story";
 import type { IllustrationRequest } from "./types";
 
@@ -17,6 +17,8 @@ export const STYLE_DESCRIPTIONS: Record<ArtStyle, string> = {
     "layered paper cutout collage illustration: cut construction paper shapes, subtle drop shadows between layers, visible paper grain",
   crayon:
     "hand-drawn crayon and colored pencil illustration as a talented child might draw: waxy strokes, textured fills, cheerful and loose",
+  "gentle-ink-wash":
+    "gentle classic picture-book illustration: fine, slightly sketchy pencil-and-ink outlines drawn with few lines, soft muted watercolor washes in honey, sage green, dusty rose and soft grey, delicate leafy branches and simple tufts of grass, tender understated expressions, quiet and calm; a small vignette scene on plain white paper whose edges fade softly into the white with no border, frame or background fill",
   "whimsical-ink":
     "whimsical, topsy-turvy picture-book illustration: wobbly hand-inked black outlines, bold flat colors from a small bright palette with plenty of white, curvy leaning buildings and corkscrew towers, tufty lollipop trees, curly spirals and dotted patterns, rounded rubbery characters with expressive faces, playful impossible perspective",
 };
@@ -68,7 +70,11 @@ export function buildIllustrationPrompt(req: IllustrationRequest): string {
     `Setting: ${req.scene.setting}.`,
     `Mood: ${req.scene.mood}. Camera: ${req.scene.framing}.`,
     req.palette.length ? `Color palette leaning on ${req.palette.join(", ")}.` : "",
-    req.textZone ? ZONE_SPACE[req.textZone] : "",
+    VIGNETTE_STYLES.has(req.style)
+      ? "Draw the scene as a small, airy vignette in the middle of a plain white page: generous empty white space all around, edges fading softly into the white paper, no background color filling the frame."
+      : req.textZone
+        ? ZONE_SPACE[req.textZone]
+        : "",
     req.note ? `Parent's note for this picture: ${req.note}` : "",
     "Keep every face and important detail well inside the frame, away from the edges (the page will be trimmed and bound).",
     NO_TEXT_RULE,

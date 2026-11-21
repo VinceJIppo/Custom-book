@@ -1,0 +1,38 @@
+{
+  "id": "quiet-meadow",
+  "name": "Quiet Meadow",
+  "genre": "gentle",
+  "ageRange": [2, 7],
+  "pitch": "The child spends a soft, slow day in Hazelbrook Meadow with three woodland friends, wondering about one small, big question together until the answer turns up in a quiet, unexpected way.",
+  "setting": "Hazelbrook Meadow, a gentle valley of tall whispering grass, an old oak with a little round door between its roots, a slow stream with flat stepping stones, a hill where the wind is always kind, and a bench made from a fallen log",
+  "supportingCast": [
+    { "name": "Bramble", "role": "small, shy friend who worries about things", "look": "a little round hedgehog with soft brown spines, a pale face, tiny paws, and a too-long knitted scarf the color of moss" },
+    { "name": "Old Willa", "role": "wise, unhurried friend who thinks before she speaks", "look": "a tall grey goose with a gentle face, half-moon spectacles on a ribbon, and a small cloth bag over one wing" },
+    { "name": "Puddle", "role": "cheerful, curious friend full of questions", "look": "a young otter with sleek honey-brown fur, round ears, bright eyes, and a sprig of clover tucked behind one ear" }
+  ],
+  "storyBeats": [
+    "a quiet morning",
+    "a small question",
+    "a walk together",
+    "a little worry",
+    "thinking it over",
+    "something noticed in nature",
+    "a friend helps in a small way",
+    "the answer turns up",
+    "a cozy, calm evening"
+  ],
+  "powerIdeas": "The child's kindness, patience or way of noticing small things is what helps; one favorite thing can appear as a gentle, meaningful detail.",
+  "artDirection": {
+    "defaultStyle": "gentle-ink-wash",
+    "palette": ["#B8925A", "#9AAA7E", "#C99A92", "#8C8478"],
+    "mood": "quiet, tender, warm and unhurried, with soft light and plenty of white space"
+  },
+  "contentRules": [
+    "gentle and calm throughout; no villains, chases or peril",
+    "feelings (sad, worried, cross, shy) are welcome and treated kindly",
+    "friends help in small, practical ways",
+    "no weapons",
+    "only original characters"
+  ],
+  "licensed": false
+}

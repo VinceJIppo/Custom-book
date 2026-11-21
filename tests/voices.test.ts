@@ -29,7 +29,7 @@ describe("voice definitions", () => {
   it("describe qualities, never real authors, and forbid copying", () => {
     for (const id of VOICE_IDS) {
       const text = JSON.stringify(VOICES[id]);
-      expect(text).not.toMatch(/seuss|geisel|dahl|roald|grinch|oompa|wonka|cat in the hat/i);
+      expect(text).not.toMatch(/seuss|geisel|dahl|roald|grinch|oompa|wonka|cat in the hat|pooh|milne|shepard|eeyore|tigger|hundred acre/i);
       expect(VOICES[id].guide).toMatch(/Never quote or closely imitate any published book/);
       expect(VOICES[id].sample.length).toBeGreaterThan(10);
     }

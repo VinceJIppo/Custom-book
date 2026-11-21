@@ -26,6 +26,9 @@ const FONT_CSS = [
   ["andika", "latin-700.css"],
   ["fredoka", "latin-500.css"],
   ["fredoka", "latin-600.css"],
+  ["eb-garamond", "latin-400.css"],
+  ["eb-garamond", "latin-400-italic.css"],
+  ["eb-garamond", "latin-500.css"],
 ] as const;
 
 function fontFaces(): string {

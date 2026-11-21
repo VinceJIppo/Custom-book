@@ -221,3 +221,26 @@
   animation: none;
 }
 
+
+/* The quiet "vignette" look (Gentle ink & wash): classic serif type on a white page. */
+.bk-page[data-look="vignette"],
+.bk-cover-spread[data-look="vignette"] {
+  font-family: "EB Garamond", Georgia, "Times New Roman", serif;
+  color: #3b342d;
+  line-height: 1.4;
+}
+.bk-page[data-look="vignette"] .bk-display,
+.bk-cover-spread[data-look="vignette"] .bk-display {
+  font-family: "EB Garamond", Georgia, serif;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+.bk-text-vignette {
+  position: absolute;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  text-align: center;
+  white-space: pre-line;
+  overflow: hidden;
+}

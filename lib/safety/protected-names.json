@@ -319,7 +319,18 @@
     },
     {
       "name": "Winnie the Pooh",
-      "genre": "fantasy"
+      "aliases": [
+        "Winnie-the-Pooh",
+        "Pooh Bear",
+        "Eeyore",
+        "Tigger",
+        "Hundred Acre Wood",
+        "A. A. Milne",
+        "A.A. Milne",
+        "E. H. Shepard",
+        "E.H. Shepard"
+      ],
+      "genre": "gentle"
     },
     {
       "name": "How to Train Your Dragon",

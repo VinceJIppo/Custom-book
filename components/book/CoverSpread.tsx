@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react";
+import { lookFor } from "./BookPage";
 import type { Box } from "@/lib/print/geometry";
 import type { CoverLayout } from "@/lib/print/cover";
 import type { BookView } from "@/lib/books/viewTypes";
@@ -20,7 +21,7 @@ export function CoverSpread({ book, layout, mode }: { book: BookView; layout: Co
   const spineFill: Box = { x: layout.spine.x, y: 0, width: layout.spineIn, height: layout.heightIn };
 
   return (
-    <div className="bk-cover-spread" data-mode={mode} style={vars} aria-label="Book cover">
+    <div className="bk-cover-spread" data-mode={mode} data-look={lookFor(book.style)} style={vars} aria-label="Book cover">
       <div className="bk-cover-inner">
         <div style={{ ...box(backFill), background: `linear-gradient(200deg, ${c1}, ${c2 ?? c1})` }} />
         <div style={{ ...box(spineFill), background: c1 }} />

@@ -1,6 +1,12 @@
 import type { CSSProperties, ReactNode } from "react";
 import { BLEED_IN, IMAGE_TOP_FRACTION, SPOT_FRACTION, safeBox, type Box, type TrimSize } from "@/lib/print/geometry";
 import type { BookView, PageView } from "@/lib/books/viewTypes";
+import { VIGNETTE_STYLES } from "@/lib/schemas/theme";
+
+/** "vignette": the quiet look (serif text, small pictures fading into a white page). */
+export function lookFor(style: string) {
+  return VIGNETTE_STYLES.has(style) ? "vignette" : "classic";
+}
 
 /**
  * One physical book page. All positions are in inches from the top-left of the
@@ -17,10 +23,10 @@ const boxStyle = (b: Box): CSSProperties => ({ left: inch(b.x), top: inch(b.y), 
 
 const FONT_SIZE_IN: Record<BookView["readingLevel"], number> = { "2-4": 0.34, "4-6": 0.27, "6-8": 0.22 };
 
-export function PageFrame({ trim, mode, children, label }: { trim: BookView["trim"]; mode: PageMode; children: ReactNode; label?: string }) {
+export function PageFrame({ trim, mode, children, label, look = "classic" }: { trim: BookView["trim"]; mode: PageMode; children: ReactNode; label?: string; look?: string }) {
   const vars = { "--tw": trim.widthIn, "--th": trim.heightIn, "--b": BLEED_IN } as CSSProperties;
   return (
-    <div className="bk-page" data-mode={mode} style={vars} aria-label={label}>
+    <div className="bk-page" data-mode={mode} data-look={look} style={vars} aria-label={label}>
       <div className="bk-bleed">
         <div className="bk-content">{children}</div>
       </div>
@@ -75,6 +81,22 @@ function Story({ page, book }: { page: PageView; book: BookView }) {
       <>
         <Art url={page.imageUrl} status={page.imageStatus} alt={alt} style={{ left: inch(offset), top: 0, width: inch(spreadW), height: inch(h) }} />
         {showText && <TextBox text={page.text} zone={page.textZone} safe={safe} book={book} />}
+      </>
+    );
+  }
+
+  if (lookFor(book.style) === "vignette") {
+    // Words at the top, a small picture floating on the white page below (like a classic gentle picture book).
+    const textH = safe.height * 0.3;
+    const textBox: Box = { x: safe.x, y: safe.y, width: safe.width, height: textH };
+    const artTop = safe.y + textH + 0.15;
+    const artBox: Box = { x: safe.x, y: artTop, width: safe.width, height: safe.y + safe.height - artTop };
+    return (
+      <>
+        <div className="bk-text bk-text-vignette" style={{ ...boxStyle(textBox), fontSize: inch(FONT_SIZE_IN[book.readingLevel] * 1.05) }}>
+          {page.text}
+        </div>
+        <Art url={page.imageUrl} status={page.imageStatus} alt={alt} style={{ ...boxStyle(artBox), objectFit: "contain" }} />
       </>
     );
   }
@@ -203,7 +225,7 @@ export function tint(hex: string, amount: number) {
 
 export function BookPage({ page, book, mode }: { page: PageView; book: BookView; mode: PageMode }) {
   return (
-    <PageFrame trim={book.trim} mode={mode} label={`Page ${page.number}`}>
+    <PageFrame trim={book.trim} mode={mode} label={`Page ${page.number}`} look={lookFor(book.style)}>
       {page.kind === "story" ? <Story page={page} book={book} /> : <FrontMatter page={page} book={book} />}
       {mode === "screen" && page.number > 0 && <span className="bk-folio">{page.number}</span>}
     </PageFrame>
@@ -215,7 +237,7 @@ export function CoverFront({ book, mode }: { book: BookView; mode: PageMode }) {
   const { w, h } = bleedSize(book.trim);
   const safe = safeBox(book.trim as unknown as TrimSize, 1);
   return (
-    <PageFrame trim={book.trim} mode={mode} label="Front cover">
+    <PageFrame trim={book.trim} mode={mode} label="Front cover" look={lookFor(book.style)}>
       <Art url={book.cover.imageUrl} status={book.cover.imageStatus} alt="Cover illustration" style={{ left: 0, top: 0, width: inch(w), height: inch(h) }} />
       <div className="bk-cover-title" style={{ left: inch(safe.x - 0.2), top: inch(safe.y), width: inch(safe.width + 0.4), color: book.palette[0] }}>
         <h1 className="bk-display" style={{ fontSize: inch(0.62) }}>

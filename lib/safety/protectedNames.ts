@@ -20,6 +20,7 @@ const GENRE_THEMES: Record<string, { label: string; themes: string[] }> = {
   fantasy: { label: "fantasy", themes: ["dragon-knight", "space-explorer"] },
   vehicles: { label: "building and vehicle", themes: ["construction-crew"] },
   whimsical: { label: "whimsical, rhyming", themes: ["topsy-turvy-town"] },
+  gentle: { label: "gentle, thoughtful", themes: ["quiet-meadow"] },
 };
 
 export interface ProtectedMatch {
