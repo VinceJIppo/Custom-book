@@ -9,7 +9,7 @@ import { createAndStartBook, retryFailedJobs, type CreateBookResult } from "@/li
 import { acceptFlagged, changeLayout, movePage, requestNewArt, restoreVersion, reviseTextWithAI, updatePageText } from "@/lib/books/pages";
 import { deleteCustomTheme, draftCustomTheme, duplicateTheme, saveCustomTheme } from "@/lib/customThemes";
 import { startExport, startValidation } from "@/lib/books/export";
-import { addPhoto, approveSheetOption, deletePhoto, saveBible, setDeleteOriginals, startCharacterSheet } from "@/lib/characters/service";
+import { addPhoto, approveSheetOption, deleteCharacterSheet, deletePhoto, saveBible, setDeleteOriginals, startCharacterSheet } from "@/lib/characters/service";
 
 export async function confirmAdultAction(formData: FormData) {
   if (formData.get("adult") !== "on") redirect("/welcome?error=1");
@@ -309,4 +309,12 @@ export async function validateExportAction(fd: FormData) {
   const bookId = String(fd.get("bookId") ?? "");
   const res = await startValidation(user.id, String(fd.get("exportId") ?? ""));
   redirect(`/books/${bookId}/print${res.ok ? "" : `?error=${encodeURIComponent(res.message)}`}`);
+}
+
+export async function deleteCharacterAction(fd: FormData) {
+  const user = await getCurrentUser();
+  const childId = String(fd.get("childId") ?? "");
+  const res = await deleteCharacterSheet(user.id, String(fd.get("sheetId") ?? ""));
+  revalidatePath(`/children/${childId}/character`);
+  redirect(`/children/${childId}/character?${res.ok ? "characterDeleted=1" : `deleteError=${encodeURIComponent(res.message)}`}`);
 }

@@ -20,6 +20,26 @@ const IDEAS = [
   "Moving to a new house, and finding that home is the people you love.",
 ];
 
+/** Example parts, different for each person in the list (A = them, H = the child the book is for). */
+const GROWNUP_PARTS = [
+  "{A} is secretly a superhero, and {H} doesn't know it until the very end.",
+  "{A} takes {H} along to see what a day at work is really like.",
+  "{A} tells {H} a bedtime story about when {A} was little.",
+  "{A} and {H} build something together, and it goes wonderfully wrong before it goes right.",
+  "{A} is the one who always knows how to make {H} feel brave.",
+];
+const CHILD_PARTS = [
+  "{A} is {H}'s sidekick and always has a silly plan.",
+  "{A} is the new baby {H} learns to help look after.",
+  "{A} and {H} argue at first, then become a great team.",
+  "{A} is a little scared, and {H} shows {A} how to be brave.",
+  "{A} finds the clue that saves the day.",
+];
+function examplePart(p: CastOption, index: number, hero: string) {
+  const list = p.kind === "grownup" ? GROWNUP_PARTS : CHILD_PARTS;
+  return list[index % list.length].replaceAll("{A}", p.name).replaceAll("{H}", hero);
+}
+
 const input = "mt-1 w-full rounded-xl border border-[color:var(--line)] bg-white px-3 py-2.5 outline-none focus:border-cobalt focus:ring-2 focus:ring-sky";
 
 /** Pick other real people for the book, their part, who the story centers on, and what it's about. */
@@ -67,7 +87,7 @@ export function CastPicker({ heroId, heroName, people, style, needsCharacter }: 
                 {on && (
                   <label className="mt-2 block text-sm">
                     Their part in this story <span className="text-[color:var(--muted)]">(optional)</span>
-                    <textarea name={`part_${p.id}`} maxLength={300} rows={2} className={input} placeholder={`${p.name} is secretly a superhero, and ${heroName} doesn't know it.`} />
+                    <textarea name={`part_${p.id}`} maxLength={300} rows={2} className={input} placeholder={examplePart(p, sorted.indexOf(p), heroName)} />
                   </label>
                 )}
                 {on && missingArt && (

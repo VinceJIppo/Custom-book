@@ -50,6 +50,15 @@ test("photo -> character options -> approve -> book -> edit one page", async ({ 
   await page.getByTestId("art-note").fill("add a friendly owl");
   await page.getByTestId("art-edit").click();
   await expect(page.getByTestId("history").locator("li")).toHaveCount(2, { timeout: 30_000 });
+
+  // Delete the character (after the confirm prompt); its pictures are erased.
+  await page.goto("/");
+  await page.getByRole("link", { name, exact: true }).first().click();
+  await page.getByRole("link", { name: "Photos & character" }).click();
+  page.once("dialog", (d) => d.accept());
+  await page.getByTestId("approved-sheet").getByTestId("delete-character").click();
+  await expect(page.getByText("Character deleted.")).toBeVisible();
+  await expect(page.getByTestId("approved-sheet")).toHaveCount(0);
 });
 
 test("custom theme: protected names are refused, a description becomes an editable theme", async ({ page }, info) => {

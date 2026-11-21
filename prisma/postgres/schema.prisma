@@ -122,7 +122,7 @@ model CharacterSheet {
   outfit        String?
   /// Which generation round this is for the child and style (capped by CHARACTER_SHEET_MAX_ROUNDS)
   round         Int          @default(1)
-  status        String       @default("generating") // generating | draft | approved | rejected | failed
+  status        String       @default("generating") // generating | draft | approved | rejected | failed | deleted
   /// string[] storage keys, one per option
   imageKeys     Json
   selectedIndex Int?

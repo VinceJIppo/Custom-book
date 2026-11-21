@@ -1,4 +1,4 @@
-import type { Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { checkAllowance } from "../allowance";
 import { db } from "../db";
 import { getConfig } from "../config";
@@ -154,6 +154,33 @@ export async function approveSheetOption(userId: string, sheetId: string, index:
   let deletedPhotos = 0;
   if (sheet.child.deleteOriginalsAfterApproval) deletedPhotos = await deleteAllPhotos(sheet.childId);
   return { ok: true as const, deletedPhotos };
+}
+
+/**
+ * Deletes a character (an approved one, or a set of options not picked yet).
+ * Its pictures are erased from storage right away. The record stays, marked
+ * "deleted", so it still counts toward the character limits (deleting isn't a
+ * way to get more tries). Books already made keep their pictures.
+ */
+export async function deleteCharacterSheet(userId: string, sheetId: string): Promise<{ ok: true } | { ok: false; message: string }> {
+  const sheet = await db.characterSheet.findFirst({ where: { id: sheetId, child: { userId } }, include: { child: true } });
+  if (!sheet || sheet.status === "deleted") return { ok: false, message: "That character was not found." };
+  if (sheet.status === "generating") return { ok: false, message: "This character is still being drawn. Delete it once it's done." };
+  const storage = getStorage();
+  for (const key of sheet.imageKeys as string[]) await storage.delete(key).catch(() => undefined);
+  await db.$transaction(async (tx) => {
+    await tx.characterSheet.update({
+      where: { id: sheet.id },
+      data: { status: "deleted", imageKeys: [] as unknown as Prisma.InputJsonValue, selectedIndex: null, bible: Prisma.DbNull, bibleStatus: "none" },
+    });
+    await tx.generationJob.updateMany({ where: { type: "character.bible", status: "queued", childId: sheet.childId }, data: { status: "cancelled" } });
+    if (sheet.child.activeCharacterSheetId === sheet.id) {
+      // Fall back to the newest remaining approved character in another style, if any.
+      const next = await tx.characterSheet.findFirst({ where: { childId: sheet.childId, status: "approved", id: { not: sheet.id } }, orderBy: { approvedAt: "desc" } });
+      await tx.childProfile.update({ where: { id: sheet.childId }, data: { activeCharacterSheetId: next?.id ?? null } });
+    }
+  });
+  return { ok: true };
 }
 
 export async function saveBible(userId: string, sheetId: string, raw: unknown) {

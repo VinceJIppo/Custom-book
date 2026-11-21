@@ -11,6 +11,7 @@ import { activeProviderNames } from "@/lib/providers/registry";
 import { approveSheetAction, deletePhotoAction, setDeleteOriginalsAction } from "@/app/actions";
 import { BibleForm, PhotoUpload, StartSheetForm } from "@/components/CharacterForms";
 import { AutoRefresh } from "@/components/AutoRefresh";
+import { DeleteCharacterButton } from "@/components/DeleteCharacterButton";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +20,7 @@ function Img({ src, alt, className }: { src: string; alt: string; className?: st
   return <img src={src} alt={alt} className={className} />;
 }
 
-export default async function CharacterPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ approved?: string; deleted?: string }> }) {
+export default async function CharacterPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ approved?: string; deleted?: string; characterDeleted?: string; deleteError?: string }> }) {
   const user = await requireOnboardedUser();
   const { id } = await params;
   const sp = await searchParams;
@@ -36,7 +37,7 @@ export default async function CharacterPage({ params, searchParams }: { params: 
   const photos = await Promise.all(child.photos.map(async (p) => ({ ...p, url: await storage.signedUrl(p.storageKey) })));
   const sheets = await Promise.all(
     child.characterSheets
-      .filter((s) => s.status !== "rejected")
+      .filter((s) => s.status !== "rejected" && s.status !== "deleted")
       .map(async (s) => {
         const keys = s.imageKeys as string[];
         const urls = await Promise.all(keys.map((k) => storage.signedUrl(k)));
@@ -48,6 +49,7 @@ export default async function CharacterPage({ params, searchParams }: { params: 
   const drafts = sheets.filter((s) => s.status === "draft" || s.status === "generating" || s.status === "failed").slice(0, 3);
   const busy = sheets.some((s) => s.status === "generating" || (s.status === "approved" && s.bibleStatus === "pending"));
   const rounds: Record<string, number> = {};
+  // Deleted characters still count (deleting isn't a way to get more tries).
   for (const s of child.characterSheets) if (s.status !== "failed") rounds[s.style] = (rounds[s.style] ?? 0) + 1;
 
   return (
@@ -64,6 +66,10 @@ export default async function CharacterPage({ params, searchParams }: { params: 
         </p>
       </div>
 
+      {sp.characterDeleted && (
+        <p className="rounded-xl bg-emerald-50 px-4 py-3 text-emerald-900 ring-1 ring-emerald-200">Character deleted. Its pictures have been erased.</p>
+      )}
+      {sp.deleteError && <p className="rounded-xl bg-amber-50 px-4 py-3 text-amber-900 ring-1 ring-amber-200">{sp.deleteError}</p>}
       {sp.approved && (
         <p className="rounded-xl bg-emerald-50 px-4 py-3 text-emerald-900 ring-1 ring-emerald-200">
           Character approved!{Number(sp.deleted) > 0 && ` As you asked, the ${sp.deleted} original photo(s) were deleted.`}
@@ -129,10 +135,15 @@ export default async function CharacterPage({ params, searchParams }: { params: 
         <div className="mt-6 space-y-6">
           {drafts.map((s) => (
             <div key={s.id} data-testid={`sheet-${s.status}`}>
-              <p className="font-semibold">
-                {ART_STYLE_LABELS[s.style as ArtStyle]} · set {s.round}
-                {s.status === "draft" && <span className="font-normal text-[color:var(--muted)]"> · pick your favorite (cost ${s.costUsd.toFixed(2)})</span>}
-              </p>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="font-semibold">
+                  {ART_STYLE_LABELS[s.style as ArtStyle]} · set {s.round}
+                  {s.status === "draft" && <span className="font-normal text-[color:var(--muted)]"> · pick your favorite (cost ${s.costUsd.toFixed(2)})</span>}
+                </p>
+                {s.status === "draft" && (
+                  <DeleteCharacterButton childId={child.id} sheetId={s.id} label="Discard these options" confirmText="Discard all three options? Their pictures will be erased. This still counts as one of your tries." />
+                )}
+              </div>
               {s.status === "generating" && <p className="mt-2 animate-pulse text-[color:var(--muted)]">Drawing 3 options. This takes about a minute...</p>}
               {s.status === "failed" && <p className="mt-2 text-red-700">This set didn&apos;t work: {s.error ?? "unknown error"}. It doesn&apos;t count toward the limit; try again.</p>}
               {s.status === "draft" && (
@@ -164,6 +175,14 @@ export default async function CharacterPage({ params, searchParams }: { params: 
               <div>
                 {s.selectedIndex != null && s.urls[s.selectedIndex] && <Img src={s.urls[s.selectedIndex]} alt="Approved character" className="w-full rounded-lg ring-1 ring-black/10" />}
                 <p className="mt-2 font-semibold">{ART_STYLE_LABELS[s.style as ArtStyle]}</p>
+                <div className="mt-2">
+                  <DeleteCharacterButton
+                    childId={child.id}
+                    sheetId={s.id}
+                    label="Delete character"
+                    confirmText={`Delete ${name}'s ${ART_STYLE_LABELS[s.style as ArtStyle]} character? Its pictures will be erased. Books already made keep their pictures, but new pictures in those books won't match it. This can't be undone.`}
+                  />
+                </div>
               </div>
               <div>
                 <p className="font-semibold">Character details</p>
