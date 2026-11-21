@@ -5,12 +5,24 @@ import type { Storage } from "./types";
 
 let instance: Storage | null = null;
 
+function need(name: string, v: string | undefined) {
+  if (!v) throw new Error(`STORAGE_DRIVER=s3 needs ${name} in the environment.`);
+  return v;
+}
+
 export function getStorage(): Storage {
   if (instance) return instance;
   const c = getConfig();
   instance =
     c.STORAGE_DRIVER === "s3"
-      ? new S3Storage()
+      ? new S3Storage({
+          endpoint: c.S3_ENDPOINT,
+          region: c.S3_REGION,
+          bucket: need("S3_BUCKET", c.S3_BUCKET),
+          accessKeyId: need("S3_ACCESS_KEY_ID", c.S3_ACCESS_KEY_ID),
+          secretAccessKey: need("S3_SECRET_ACCESS_KEY", c.S3_SECRET_ACCESS_KEY),
+          defaultTtlSeconds: c.SIGNED_URL_TTL_SECONDS,
+        })
       : new LocalStorage(c.STORAGE_LOCAL_DIR, c.storageSigningSecret, c.storageEncryptionKey, "", c.SIGNED_URL_TTL_SECONDS, c.PUBLIC_BASE_URL ?? c.APP_URL);
   return instance;
 }
