@@ -33,7 +33,12 @@ const EnvSchema = z.object({
   STORAGE_LOCAL_DIR: z.string().default(".data/storage"),
   STORAGE_SIGNING_SECRET: z.string().optional(),
   STORAGE_ENCRYPTION_KEY: z.string().optional(),
-  SIGNED_URL_TTL_SECONDS: z.coerce.number().int().min(30).max(3600).default(300),
+  SIGNED_URL_TTL_SECONDS: z.coerce
+    .number()
+    .int()
+    .min(30)
+    .max(3600)
+    .default(300),
   S3_ENDPOINT: z.string().optional(),
   S3_REGION: z.string().optional(),
   S3_BUCKET: z.string().optional(),
@@ -43,7 +48,9 @@ const EnvSchema = z.object({
   STORY_PROVIDER: z.enum(["auto", "mock", "anthropic"]).default("auto"),
   ANTHROPIC_API_KEY: z.string().optional(),
   STORY_MODEL: z.string().default("claude-sonnet-5-5"),
-  STORY_EFFORT: z.enum(["low", "medium", "high", "xhigh", "max"]).default("high"),
+  STORY_EFFORT: z
+    .enum(["low", "medium", "high", "xhigh", "max"])
+    .default("high"),
   STORY_FALLBACKS: bool.default(true),
 
   IMAGE_PROVIDER: z.enum(["auto", "mock", "gemini", "openai"]).default("auto"),
@@ -53,12 +60,16 @@ const EnvSchema = z.object({
   GEMINI_PAGE_SIZE: z.enum(["auto", "1K", "2K", "4K"]).default("auto"),
   OPENAI_API_KEY: z.string().optional(),
   OPENAI_IMAGE_MODEL: z.string().default("gpt-image-2.6-sunburst"),
-  OPENAI_IMAGE_QUALITY: z.enum(["low", "medium", "high", "xhigh", "max", "auto"]).default("high"),
+  OPENAI_IMAGE_QUALITY: z
+    .enum(["low", "medium", "high", "xhigh", "max", "auto"])
+    .default("high"),
   UPSCALER: z.enum(["auto", "mock", "sharp"]).default("auto"),
 
   VISION_PROVIDER: z.enum(["auto", "mock", "anthropic"]).default("auto"),
   VISION_MODEL: z.string().default("claude-sonnet-5-5"),
-  VISION_EFFORT: z.enum(["low", "medium", "high", "xhigh", "max"]).default("medium"),
+  VISION_EFFORT: z
+    .enum(["low", "medium", "high", "xhigh", "max"])
+    .default("medium"),
   /** Compare each page with the character sheet and retry once on drift. */
   CONSISTENCY_QA: bool.default(true),
   MODERATION_PROVIDER: z.enum(["auto", "mock", "anthropic"]).default("auto"),
@@ -72,7 +83,12 @@ const EnvSchema = z.object({
    */
   PUBLIC_BASE_URL: z.string().url().optional(),
   /** Lifetime of signed links handed to a print provider (PDFs only, never photos). */
-  PRINT_FILE_URL_TTL_SECONDS: z.coerce.number().int().min(300).max(7 * 86400).default(6 * 3600),
+  PRINT_FILE_URL_TTL_SECONDS: z.coerce
+    .number()
+    .int()
+    .min(300)
+    .max(7 * 86400)
+    .default(6 * 3600),
 
   /** Mock printer: seconds between status steps (created, printing, shipped, delivered). */
   MOCK_PRINT_STEP_SECONDS: z.coerce.number().int().min(1).default(60),
@@ -109,6 +125,8 @@ const EnvSchema = z.object({
   DAILY_BOOK_CAP: z.coerce.number().int().min(0).default(10),
   WORKER_CONCURRENCY: z.coerce.number().int().min(1).max(16).default(3),
   JOB_LEASE_SECONDS: z.coerce.number().int().min(10).default(300),
+  /** Most pictures one picture job may draw across all its tries (each one is billed). */
+  MAX_DRAWS_PER_PICTURE: z.coerce.number().int().min(1).max(20).default(4),
 });
 
 export type AppConfig = z.infer<typeof EnvSchema> & {
@@ -124,10 +142,16 @@ const DEV_ENCRYPTION_KEY = "dev-only-encryption-key-change-me-in-env-local";
 export function getConfig(): AppConfig {
   if (cached) return cached;
   // A blank value (e.g. "KEY=" copied from .env.example) means "not set".
-  const env0 = Object.fromEntries(Object.entries(process.env).filter(([, v]) => v !== undefined && v.trim() !== ""));
+  const env0 = Object.fromEntries(
+    Object.entries(process.env).filter(
+      ([, v]) => v !== undefined && v.trim() !== "",
+    ),
+  );
   const parsed = EnvSchema.safeParse(env0);
   if (!parsed.success) {
-    const issues = parsed.error.issues.map((i) => `  ${i.path.join(".")}: ${i.message}`).join("\n");
+    const issues = parsed.error.issues
+      .map((i) => `  ${i.path.join(".")}: ${i.message}`)
+      .join("\n");
     throw new Error(`Invalid environment configuration:\n${issues}`);
   }
   const env = parsed.data;
@@ -135,10 +159,28 @@ export function getConfig(): AppConfig {
   // The production check runs when the app starts, not while `next build` prerenders pages.
   if (isProd && process.env.NEXT_PHASE !== "phase-production-build") {
     const problems: string[] = [];
-    if (env.STORAGE_DRIVER === "local" && (!env.STORAGE_SIGNING_SECRET || !env.STORAGE_ENCRYPTION_KEY)) problems.push("STORAGE_SIGNING_SECRET and STORAGE_ENCRYPTION_KEY are required with local storage.");
-    if (env.STORAGE_DRIVER === "s3" && (!env.S3_BUCKET || !env.S3_ACCESS_KEY_ID || !env.S3_SECRET_ACCESS_KEY)) problems.push("STORAGE_DRIVER=s3 needs S3_BUCKET, S3_ACCESS_KEY_ID and S3_SECRET_ACCESS_KEY (and S3_ENDPOINT for R2).");
-    if (env.APP_URL.startsWith("http://localhost")) problems.push("APP_URL must be the site's public https address (it goes into sign-in links and checkout).");
-    if (problems.length) throw new Error(`Production configuration is incomplete:\n  ${problems.join("\n  ")}`);
+    if (
+      env.STORAGE_DRIVER === "local" &&
+      (!env.STORAGE_SIGNING_SECRET || !env.STORAGE_ENCRYPTION_KEY)
+    )
+      problems.push(
+        "STORAGE_SIGNING_SECRET and STORAGE_ENCRYPTION_KEY are required with local storage.",
+      );
+    if (
+      env.STORAGE_DRIVER === "s3" &&
+      (!env.S3_BUCKET || !env.S3_ACCESS_KEY_ID || !env.S3_SECRET_ACCESS_KEY)
+    )
+      problems.push(
+        "STORAGE_DRIVER=s3 needs S3_BUCKET, S3_ACCESS_KEY_ID and S3_SECRET_ACCESS_KEY (and S3_ENDPOINT for R2).",
+      );
+    if (env.APP_URL.startsWith("http://localhost"))
+      problems.push(
+        "APP_URL must be the site's public https address (it goes into sign-in links and checkout).",
+      );
+    if (problems.length)
+      throw new Error(
+        `Production configuration is incomplete:\n  ${problems.join("\n  ")}`,
+      );
   }
   cached = {
     ...env,

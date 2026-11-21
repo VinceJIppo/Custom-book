@@ -2,7 +2,7 @@ import type { Prisma } from "@prisma/client";
 import { checkAllowance } from "../allowance";
 import { db } from "../db";
 import { getConfig } from "../config";
-import { enqueue } from "../jobs/queue";
+import { enqueue, retryJob } from "../jobs/queue";
 import { BookOptionsSchema, type BookOptions } from "../schemas/book";
 import { DEFAULT_VOICE } from "../schemas/voices";
 import { getThemeForUser } from "../themes";
@@ -145,13 +145,12 @@ export async function getBookForUser(userId: string, bookId: string) {
 export async function retryFailedJobs(userId: string, bookId: string) {
   const book = await db.book.findFirst({ where: { id: bookId, userId } });
   if (!book) return 0;
-  const failed = await db.generationJob.count({ where: { bookId, status: "failed" } });
+  const failedJobs = await db.generationJob.findMany({ where: { bookId, status: "failed" }, select: { id: true } });
+  const failed = failedJobs.length;
   if (!failed) return 0;
+  // Each job gets a fresh picture budget; earlier draws stay on record.
+  for (const j of failedJobs) await retryJob(j.id, userId);
   await db.$transaction([
-    db.generationJob.updateMany({
-      where: { bookId, status: "failed" },
-      data: { status: "queued", attempts: 0, error: null, runAfter: new Date(), finishedAt: null },
-    }),
     db.page.updateMany({ where: { bookId, imageStatus: "failed" }, data: { imageStatus: "pending" } }),
     db.book.update({ where: { id: bookId }, data: { status: "generating" } }),
   ]);
