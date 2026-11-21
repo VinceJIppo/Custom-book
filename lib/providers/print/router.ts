@@ -31,6 +31,13 @@ export class PrintRouter {
     return candidates[0];
   }
 
+  /** The provider that fulfils an existing order (by its stored provider name). */
+  provider(name: string): PrintProvider {
+    const p = this.providers.find((x) => x.name === name);
+    if (!p) throw new Error(`Print provider "${name}" is not configured; this order was placed with it.`);
+    return p;
+  }
+
   /** Default product for a trim size, used for page-count rules in previews. */
   async defaultProduct(trimSize: string, binding: "hardcover" | "softcover" = "hardcover"): Promise<ProductSpec> {
     for (const provider of this.providers) {

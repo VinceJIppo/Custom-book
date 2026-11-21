@@ -93,8 +93,8 @@ export function childSnapshot(child: NonNullable<Awaited<ReturnType<typeof getCh
  * "Delete this child and everything about them": stops their jobs, removes
  * every stored file under the child's prefix, then removes the DB rows
  * (photos, character sheets, books, pages and jobs cascade).
- * Books that already have a paid print order are blocked by the DB
- * (Order -> Book is Restrict); Phase 4 adds a flow for that case.
+ * Paid print orders are kept as records: their link to the book is cleared
+ * and their frozen PDFs (stored under the book's prefix) are deleted with it.
  */
 export async function deleteChildEverything(userId: string, childId: string) {
   const child = await db.childProfile.findFirst({ where: { id: childId, userId }, select: { id: true } });
@@ -106,7 +106,8 @@ export async function deleteChildEverything(userId: string, childId: string) {
   });
   const files = await getStorage().deletePrefix(keys.childPrefix(userId, childId));
   await db.$transaction([
-    db.order.deleteMany({ where: { bookId: { in: bookIds }, status: "draft" } }),
+    // Unpaid orders go; paid ones stay as records (their book link and frozen PDFs are removed).
+    db.order.deleteMany({ where: { bookId: { in: bookIds }, status: { in: ["awaiting_payment", "expired", "payment_failed"] } } }),
     db.childProfile.delete({ where: { id: childId } }),
   ]);
   log.info("Deleted child and all data", { files, books: bookIds.length });

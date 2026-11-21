@@ -44,6 +44,10 @@ async function onJobGaveUp(job: GenerationJob, _err: unknown) {
   } else if (job.type === "character.bible") {
     const sheetId = (job.payload as { sheetId?: string }).sheetId;
     if (sheetId) await db.characterSheet.updateMany({ where: { id: sheetId, bibleStatus: "pending" }, data: { bibleStatus: "failed" } });
+  } else if (job.type === "order.submit") {
+    const orderId = (job.payload as { orderId?: string }).orderId;
+    const { submitGaveUp } = await import("../orders/service");
+    if (orderId) await submitGaveUp(orderId, `Couldn't send the order to the printer: ${errorMessage(_err)}`);
   } else if (job.type === "book.cover" && job.bookId) {
     const { maybeFinalizeBook } = await import("./handlers/finalize");
     await maybeFinalizeBook(job.bookId);

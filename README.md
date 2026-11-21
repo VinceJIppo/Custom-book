@@ -50,6 +50,58 @@ See [PROVIDERS.md](PROVIDERS.md) for exactly what is sent where and what it cost
 6. **Print files:** choose hardcover or softcover. We render the interior and wraparound cover PDFs,
    run preflight (sizes, bleed, safe area, text fit, image resolution, fonts, transparency, page
    count, cover size, spine), and offer downloads. Then "Validate with Lulu" sends the files to Lulu.
+7. **Order a printed copy:** pick the print files, enter any address (gift orders welcome) and see
+   one total per shipping speed with delivery dates. Pay at checkout (Stripe in test mode, or an
+   offline test checkout with no keys). After payment the app freezes a copy of the exact PDFs and
+   creates the print job. Status updates (with the printer, printing, shipped with tracking,
+   delivered, or rejected with the reason and a fix path) arrive by webhook, with polling as a
+   fallback. **Orders** lists your orders; **/admin/orders** lists everyone's with the printer status.
+
+## Ordering (Phase 4)
+
+How a test order flows:
+
+```
+Order form -> shipping options (printer price + your margin + card fee = one total per speed)
+  -> checkout (Stripe test mode, or the offline test checkout) -> payment confirmed
+  -> order "paid": exact PDFs frozen, print job queued (exactly once, even if the webhook and
+     the return page both confirm the payment)
+  -> worker creates the Lulu print job -> status by webhook (or polling every ORDER_POLL_MINUTES)
+```
+
+- **Prices** are always recalculated on the server from Lulu's cost API at checkout. The customer
+  sees one total; the breakdown (printing, shipping, fulfillment, tax, your margin, card fee) is
+  stored on the order and shown to admins. Set `ORDER_MARGIN_PERCENT` / `ORDER_MARGIN_FLAT_USD`
+  for a margin; `ORDER_COVER_CARD_FEES=true` (default) adds Stripe's fee so it isn't your loss.
+- **Addresses** are checked against the printer's rules (name 35 characters, street and city 30,
+  a phone number, state codes where required) and Lulu's corrections are offered.
+- **Rejected orders** show Lulu's reason and a fix path: make new print files, then "Send to the
+  printer again" (no new charge). Admins can also check status, resend and refund.
+- **Safety switch:** live Stripe keys (`sk_live_`) and Lulu production are refused unless
+  `ALLOW_LIVE_ORDERS=true`.
+- **Lulu sandbox payment:** a new Lulu print job waits as UNPAID until it's paid in the Lulu
+  developer portal, unless a card is on file there (then it moves on by itself). The order page
+  says so.
+
+### Trying it with no keys
+
+The mock printer and test checkout run everything offline: order a book, press **Pay (test)**,
+and watch the status move from "With the printer" to "Printing", "Shipped" and "Delivered", one
+step per `MOCK_PRINT_STEP_SECONDS` (60 by default; use **Check status now**). Ship to a recipient
+named **Reject Test** to try the rejection and fix path.
+
+### Trying it with Stripe test mode and the Lulu sandbox
+
+1. Stripe: in the Stripe dashboard switch on **Test mode**, copy the secret key (`sk_test_...`) into
+   `STRIPE_SECRET_KEY`. For webhooks on your own computer install the Stripe CLI and run
+   `stripe listen --forward-to localhost:3000/api/webhooks/payment`; put the `whsec_...` it prints
+   in `STRIPE_WEBHOOK_SECRET`. (Without webhooks the order is still confirmed when you return
+   from checkout.) Pay with the test card `4242 4242 4242 4242`, any future date, any CVC.
+2. Lulu: sandbox keys in `.env.local` and a tunnel in `PUBLIC_BASE_URL` (see below), so Lulu can
+   download the PDFs. Then `npm run lulu:check -- --webhook` subscribes Lulu's status webhook to
+   `/api/webhooks/print/lulu` on that address. `npm run lulu:check -- --quote 10001 NY` shows real
+   prices for every shipping speed.
+3. Restart `npm run dev`, make print files, and order.
 
 ### Validating with Lulu from your own computer
 
@@ -62,8 +114,10 @@ Lulu downloads the PDFs from a public link, and `localhost` isn't public. Use a 
    **Validate with Lulu**. Through that address the app serves only signed PDF links; every other
    page answers 404, so your book and photos stay private. Stop the tunnel (Ctrl+C) when done.
 
-`npm run lulu:check` tests your keys (it prints cover sizes for each product), and
-`npm run lulu:check -- <exportId>` validates one set of files from the command line.
+`npm run lulu:check` tests your keys (it prints cover sizes for each product),
+`npm run lulu:check -- <exportId>` validates one set of files from the command line,
+`npm run lulu:check -- --quote 10001 NY` prints real prices, and `npm run lulu:check -- --webhook`
+subscribes status webhooks for orders. The tunnel address also accepts the signed webhooks.
 
 ## How stories are written
 
@@ -133,7 +187,7 @@ stay "Classic storybook".
 | `npm run db:studio` | Browse the dev database |
 | `npm run compare -- --a gemini --b openai --character sheet.png` | Same 4 scenes from 2 image providers, side by side |
 | `npm run render:pdfs -- <bookId> [productId]` | Render a book's print PDFs and preflight from the command line (to `exports/`) |
-| `npm run lulu:check [-- <exportId>]` | Check Lulu keys and cover sizes; optionally validate an export with Lulu |
+| `npm run lulu:check [-- <exportId> \| --quote ZIP STATE \| --webhook URL]` | Check Lulu keys and cover sizes; validate an export; show real prices; subscribe order webhooks |
 | `npm run story:lab -- --theme <id> --name <name> --age <n>` | Write a story only (no images, no database) to `story-lab/` for review |
 
 ## How it fits together
@@ -176,6 +230,9 @@ Browser ── Next.js App Router (server actions, API routes)
 - "Delete this child and everything about them" removes their files and all DB rows.
 - Logs strip image data and base64 (`lib/log.ts`).
 - Daily cost and book caps; a cost estimate is shown before every book.
+- Orders: only the final PDFs go to the printer (frozen copies, via signed links). Webhooks are
+  signature-checked (Stripe signing secret; Lulu HMAC with your API secret). Deleting a child
+  deletes their order PDFs; paid orders stay as records without the book link.
 
 ## Project layout
 
@@ -187,6 +244,8 @@ lib/jobs/             queue, runner, handlers
 lib/schemas/          Zod schemas (theme, child, book, story)
 lib/print/            geometry, padding, products (Lulu SKUs), cover layout, PDF renderer, PDF inspector, preflight
 lib/books/            services, pagination, view model, progress
+lib/orders/           order flow (quotes, checkout, print jobs, status), address rules, pricing
+lib/providers/payment, lib/providers/stripe   payment interface, offline test checkout, Stripe Checkout
 lib/storage/          local encrypted driver, S3 stub
 lib/characters/       photos, character sheets, Character Bible
 lib/images/           photo intake (HEIC, rotation, metadata stripping), references

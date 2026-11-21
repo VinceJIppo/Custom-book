@@ -15,6 +15,7 @@ import { getTrim } from "../../print/geometry";
 import { inspectPdf } from "../../print/pdfInspect";
 import { runPreflight } from "../../print/preflight";
 import type { JobOutcome } from "../types";
+import { isPrivateUrl, publicUrlHelp } from "../../print/publicUrl";
 
 /** The job: render, inspect, preflight, store. */
 export async function exportHandler(job: GenerationJob): Promise<JobOutcome> {
@@ -82,10 +83,6 @@ export async function exportHandler(job: GenerationJob): Promise<JobOutcome> {
   return { result: { pageCount, preflightOk: report.ok, errors: report.errors, warnings: report.warnings } };
 }
 
-function isPrivateUrl(url: string) {
-  const host = new URL(url).hostname;
-  return host === "localhost" || host === "0.0.0.0" || host.endsWith(".local") || /^127\./.test(host) || /^10\./.test(host) || /^192\.168\./.test(host) || host === "::1";
-}
 
 /** The job: hand public signed URLs to the print provider and wait for its verdict. */
 export async function validateHandler(job: GenerationJob): Promise<JobOutcome> {
@@ -99,9 +96,7 @@ export async function validateHandler(job: GenerationJob): Promise<JobOutcome> {
   const interiorUrl = await storage.signedUrl(exp.interiorKey, ttl, { absolute: true });
   const coverUrl = await storage.signedUrl(exp.coverKey, ttl, { absolute: true });
   if (provider.name !== "mock" && isPrivateUrl(interiorUrl)) {
-    throw new PermanentProviderError(
-      `${provider.name} downloads the PDFs itself and can't reach ${new URL(interiorUrl).host}. Set PUBLIC_BASE_URL in .env.local to a public address for this app (for example a tunnel URL; see the README), restart, and try again.`,
-    );
+    throw new PermanentProviderError(publicUrlHelp(provider.name, interiorUrl));
   }
   const lease = cfg.JOB_LEASE_SECONDS * 1000;
   const result = await provider.validateFiles({

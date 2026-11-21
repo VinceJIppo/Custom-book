@@ -12,7 +12,8 @@ imports outside each vendor's folder (`lib/providers/anthropic`, `gemini`, `open
 | Upscaler | Mock, Sharp (local) | Exact print pixels at 300 ppi |
 | VisionProvider | Mock, Anthropic (Claude) | One-face photo check; page check (likeness to the character, and words versus picture) |
 | ModerationProvider | Mock (word list), Anthropic | Parent free text: favorites, notes, themes, instructions |
-| PrintProvider + PrintRouter | Mock, **Lulu** | Products, cover size, file validation (ordering in Phase 4) |
+| PrintProvider + PrintRouter | Mock, **Lulu** | Products, cover size, file validation, shipping options, quotes, print jobs, status, webhooks |
+| PaymentProvider | Mock (offline test checkout), **Stripe** | Checkout, payment confirmation, webhooks, refunds |
 
 Docs for every adapter below were read on **2026-11-20**. Prices in
 `lib/cost/prices.ts` are high-side; actual cost is recorded from each response on
@@ -122,7 +123,7 @@ and the Book Creation Guide on 2026-11-20.
 
   Lulu has no full-color 8 x 10 product, so the portrait size is 8.5 x 11 (US Letter).
   Lulu lists base prices of $10.98 (hardcover) and $2.16 (softcover), plus $0.2148 per page for these
-  products; Phase 4 uses its live cost API.
+  products; orders use its live cost API instead.
 - **Cover size:** `POST /cover-dimensions/` with the POD package ID and page count. The spine width
   comes from Lulu's published table (hardcover: 0.25 in for 24 to 84 pages) or formula (paperback:
   pages / 444 + 0.06 in). No spine text at 80 pages or fewer.
@@ -133,7 +134,43 @@ and the Book Creation Guide on 2026-11-20.
   are polled (`VALIDATED`/`NORMALIZED` = pass, `ERROR` = fail with reasons). Limits: 3 interior and
   6 cover validations per minute (the adapter backs off on HTTP 429).
 - **Data sent:** only the final PDFs (via signed links that expire after `PRINT_FILE_URL_TTL_SECONDS`,
-  6 hours by default). Never photos.
+  6 hours by default; 3 days for orders, since Lulu may download them later). Never photos.
+  For orders also the recipient's name, address and phone (required by the carrier).
+- **Ordering** (checked against the same spec on 2026-11-21):
+  - `POST /shipping-options/` lists shipping levels (MAIL, PRIORITY_MAIL, GROUND, EXPEDITED, EXPRESS,
+    and business/home ground variants) with costs and delivery dates for an address.
+  - `POST /print-job-cost-calculations/` prices one level: print, shipping, fulfillment, fees and
+    tax, plus address warnings and a suggested address.
+  - `POST /print-jobs/` creates the job: `line_items[].printable_normalization` with the cover and
+    interior `source_url` and `pod_package_id`, `shipping_level`, `shipping_address` (phone required),
+    `contact_email`, and our order id as `external_id`. A retried submission first searches
+    `GET /print-jobs/?search=<order id>` so a job is never created twice.
+  - Statuses: CREATED, UNPAID, PAYMENT_IN_PROGRESS, PRODUCTION_DELAYED, PRODUCTION_READY (shown as
+    "with the printer"), IN_PRODUCTION, SHIPPED (tracking id, URLs and carrier), DELIVERED (only
+    some carriers), REJECTED / ERROR (with the reason), CANCELED.
+  - A new job stays **UNPAID** until it's paid in the Lulu developer portal, unless a card is on file.
+  - Webhooks: `POST /webhooks/` with topic `PRINT_JOB_STATUS_CHANGED`; each delivery is signed with
+    HMAC-SHA256 of the raw body using the API secret, in the `Lulu-HMAC-SHA256` header. Lulu retries
+    5 times, then deactivates the webhook (reactivate in the portal). The app also polls open orders.
+
+## Stripe: payments
+
+Adapter: `lib/providers/stripe/payment.ts` (stripe-node 23.2.0), checked against Stripe's docs on
+2026-11-21 (API version 2026-11-18).
+
+- **Checkout:** a hosted Checkout Session in `payment` mode with one line item at the order total
+  (inline `price_data`), `client_reference_id` and metadata set to our order id, a success URL with
+  `{CHECKOUT_SESSION_ID}`, and a one-hour expiry (printer prices can change).
+- **Fulfillment:** on `checkout.session.completed` and `checkout.session.async_payment_succeeded`
+  the app retrieves the session and acts only when `payment_status` is `paid`. The return page does
+  the same, so a late webhook doesn't delay the order; both may run, and the order is still sent
+  once. `checkout.session.expired` and `async_payment_failed` are recorded.
+- **Webhooks:** verified with `webhooks.constructEvent` on the raw request body and the endpoint's
+  `whsec_` secret. Endpoint: `/api/webhooks/payment`.
+- **Refunds:** admins can refund orders that won't be printed (`refunds.create` by payment intent).
+- **Test mode only** until `ALLOW_LIVE_ORDERS=true`. Test card: 4242 4242 4242 4242.
+- **Data sent:** the order total, the book title and page count, and the parent's email when it's
+  a real address. No child data.
 
 ## Upscaler
 
@@ -171,4 +208,5 @@ image. A run costs roughly $0.50 (Gemini) plus $1.20 (OpenAI).
   Drafts custom themes by matching keywords.
 - **Image:** SVG placeholders labeled with page, style and scene, showing the reserved text area.
 - **Vision:** passes every photo and page. **Moderation:** small word list.
-- **Upscaler:** pass-through. **Print:** typical picture-book rules (min 24 pages, multiple of 2).
+- **Upscaler:** pass-through. **Print:** the same product rules as Lulu; orders move through the statuses one step per `MOCK_PRINT_STEP_SECONDS`, and a recipient named "Reject Test" is rejected.
+- **Payment:** an in-app test checkout page with Pay and Cancel buttons (no card, nothing charged).

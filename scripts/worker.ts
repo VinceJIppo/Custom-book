@@ -14,6 +14,7 @@ async function main() {
   const { runJob } = await import("../lib/jobs/runner");
   const { activeProviderNames } = await import("../lib/providers/registry");
   const { log } = await import("../lib/log");
+  const { scheduleOrderChecks } = await import("../lib/orders/service");
 
   const config = getConfig();
   await tuneSqlite();
@@ -28,6 +29,12 @@ async function main() {
   };
   process.on("SIGINT", stop);
   process.on("SIGTERM", stop);
+
+  // Polling fallback for print orders (webhooks usually arrive first).
+  const pollTimer = setInterval(() => {
+    if (!stopping) scheduleOrderChecks().catch((err) => log.error("Order status scheduling failed", { err }));
+  }, 5 * 60_000);
+  scheduleOrderChecks().catch((err) => log.error("Order status scheduling failed", { err }));
 
   let lastReclaim = 0;
   const slot = async () => {
@@ -50,6 +57,7 @@ async function main() {
     }
   };
   await Promise.all(Array.from({ length: config.WORKER_CONCURRENCY }, slot));
+  clearInterval(pollTimer);
   process.exit(0);
 }
 

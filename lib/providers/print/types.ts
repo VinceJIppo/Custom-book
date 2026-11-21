@@ -37,15 +37,41 @@ export interface ShippingAddress {
   email?: string;
 }
 
-export type ShippingLevel = "MAIL" | "GROUND" | "EXPEDITED" | "EXPRESS";
+/** Shipping speeds, slowest first (Lulu's levels; other providers map onto these). */
+export const SHIPPING_LEVELS = ["MAIL", "PRIORITY_MAIL", "GROUND_HD", "GROUND_BUS", "GROUND", "EXPEDITED", "EXPRESS"] as const;
+export type ShippingLevel = (typeof SHIPPING_LEVELS)[number];
+
+export interface ShippingOption {
+  level: ShippingLevel;
+  /** Shipping cost before tax, as the provider lists it. */
+  costExclTax: number;
+  currency: string;
+  /** Estimated delivery dates (YYYY-MM-DD) when the provider gives them. */
+  arrivalMin?: string;
+  arrivalMax?: string;
+  traceable?: boolean;
+}
+
+export interface AddressWarning {
+  message: string;
+}
 
 export interface PrintQuote {
   currency: string;
+  shippingLevel: ShippingLevel;
+  /** All amounts include tax unless named otherwise. */
   printCost: number;
   shippingCost: number;
+  fulfillmentCost: number;
+  /** Other provider fees. */
+  fees: number;
+  /** Tax included in the amounts above. */
   tax: number;
+  /** What the provider charges us in total. */
   total: number;
-  shippingLevel: ShippingLevel;
+  /** Address corrections or warnings from the provider, for the parent to check. */
+  addressWarnings?: AddressWarning[];
+  suggestedAddress?: Partial<ShippingAddress>;
 }
 
 export interface FileCheck {
@@ -77,9 +103,15 @@ export type PrintOrderStatus = "created" | "in_production" | "shipped" | "delive
 export interface PrintOrderState {
   providerOrderId: string;
   status: PrintOrderStatus;
+  /** The provider's own status name, e.g. Lulu UNPAID. */
+  providerStatus?: string;
+  /** Plain-English detail (why it was rejected, what it's waiting for). */
   reason?: string;
   trackingNumber?: string;
   trackingUrl?: string;
+  carrier?: string;
+  /** Estimated delivery (YYYY-MM-DD). */
+  estimatedArrival?: string;
 }
 
 export interface CreateOrderInput {
@@ -99,8 +131,23 @@ export interface PrintProvider {
   getProducts(): Promise<ProductSpec[]>;
   getCoverDimensions(product: ProductSpec, pageCount: number): Promise<CoverDimensions>;
   validateFiles(input: ValidateFilesInput): Promise<FileValidation>;
+  /** Shipping speeds available to this address, with delivery estimates. */
+  shippingOptions(product: ProductSpec, pageCount: number, address: ShippingAddress): Promise<ShippingOption[]>;
   quote(product: ProductSpec, pageCount: number, address: ShippingAddress, level: ShippingLevel): Promise<PrintQuote>;
   createOrder(input: CreateOrderInput): Promise<PrintOrderState>;
   getOrderStatus(providerOrderId: string): Promise<PrintOrderState>;
-  handleWebhook(payload: unknown, headers: Record<string, string>): Promise<PrintOrderState | null>;
+  /** Finds a print job we created earlier by our order id (so a retry never prints twice). */
+  findOrderByExternalId(externalId: string): Promise<PrintOrderState | null>;
+  /**
+   * Verifies and reads a webhook. rawBody is the exact request body (needed for
+   * signatures). Returns null for events that don't change an order; throws
+   * WebhookSignatureError when the signature is wrong.
+   */
+  handleWebhook(rawBody: string, headers: Record<string, string>): Promise<PrintOrderState | null>;
+}
+
+export class WebhookSignatureError extends Error {
+  constructor(message = "Webhook signature did not match") {
+    super(message);
+  }
 }

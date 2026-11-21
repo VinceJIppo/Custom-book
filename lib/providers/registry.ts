@@ -19,6 +19,9 @@ import { AnthropicVisionProvider } from "./anthropic/vision";
 import { AnthropicModerationProvider } from "./anthropic/moderation";
 import { GeminiImageProvider } from "./gemini/image";
 import { OpenAIImageProvider } from "./openai/image";
+import type { PaymentProvider } from "./payment/types";
+import { MockPaymentProvider } from "./payment/mock";
+import { StripePaymentProvider } from "./stripe/payment";
 
 /**
  * The one place that picks provider implementations. "auto" uses a real
@@ -32,6 +35,7 @@ interface Providers {
   moderation?: ModerationProvider;
   vision?: VisionProvider;
   printRouter?: PrintRouter;
+  payment?: PaymentProvider;
 }
 let cache: Providers = {};
 
@@ -122,8 +126,26 @@ export function getPrintRouter(): PrintRouter {
           clientKey: requireKey("PRINT_PROVIDER", c.LULU_CLIENT_KEY, "lulu"),
           clientSecret: requireKey("PRINT_PROVIDER", c.LULU_CLIENT_SECRET, "lulu"),
         })
-      : new MockPrintProvider();
+      : new MockPrintProvider(c.MOCK_PRINT_STEP_SECONDS);
+  if (provider.name === "lulu" && !c.LULU_API_BASE.includes("sandbox") && !c.ALLOW_LIVE_ORDERS) {
+    throw new Error("LULU_API_BASE points at Lulu production, which prints and charges for real. Use https://api.sandbox.lulu.com, or set ALLOW_LIVE_ORDERS=true when you're ready.");
+  }
   return (cache.printRouter = new PrintRouter([provider]));
+}
+
+export function paymentProviderChoice(): "mock" | "stripe" {
+  const c = getConfig();
+  if (c.PAYMENT_PROVIDER !== "auto") return c.PAYMENT_PROVIDER;
+  return c.STRIPE_SECRET_KEY ? "stripe" : "mock";
+}
+
+export function getPaymentProvider(): PaymentProvider {
+  if (cache.payment) return cache.payment;
+  const c = getConfig();
+  return (cache.payment =
+    paymentProviderChoice() === "stripe"
+      ? new StripePaymentProvider({ secretKey: requireKey("PAYMENT_PROVIDER", c.STRIPE_SECRET_KEY, "stripe"), webhookSecret: c.STRIPE_WEBHOOK_SECRET, allowLive: c.ALLOW_LIVE_ORDERS })
+      : new MockPaymentProvider());
 }
 
 /** For tests: reset, or swap in specific implementations. */
@@ -144,5 +166,6 @@ export function activeProviderNames() {
     vision: getVisionProvider().name,
     moderation: getModeration().name,
     print: printProviderChoice(),
+    payment: paymentProviderChoice(),
   };
 }

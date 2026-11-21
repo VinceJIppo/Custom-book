@@ -2,7 +2,8 @@ import { NextResponse, type NextRequest } from "next/server";
 
 /**
  * When PUBLIC_BASE_URL is set (e.g. a tunnel so Lulu can download print
- * files), requests arriving on that public host may ONLY fetch signed PDFs.
+ * files), requests arriving on that public host may ONLY fetch signed PDFs or
+ * POST signed webhooks (each webhook verifies its own signature).
  * Everything else (the app, photos, page images) answers 404 there, because
  * single-user mode has no sign-in. Requests on APP_URL (your own machine) are
  * untouched.
@@ -23,5 +24,6 @@ export function proxy(request: NextRequest) {
   if (host !== publicHost) return NextResponse.next();
   const { pathname } = request.nextUrl;
   if (request.method === "GET" && pathname.startsWith("/api/files/") && pathname.endsWith(".pdf")) return NextResponse.next();
+  if (request.method === "POST" && (pathname === "/api/webhooks/payment" || /^\/api\/webhooks\/print\/[a-z0-9-]+$/.test(pathname))) return NextResponse.next();
   return new NextResponse("Not found", { status: 404 });
 }

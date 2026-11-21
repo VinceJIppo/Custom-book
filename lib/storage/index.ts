@@ -27,6 +27,9 @@ export const keys = {
     `users/${userId}/children/${childId}/books/${bookId}/pages/${pageId}-v${version}-work.${ext}`,
   exportFile: (userId: string, childId: string, bookId: string, exportId: string, name: "interior" | "cover") =>
     `users/${userId}/children/${childId}/books/${bookId}/exports/${exportId}-${name}.pdf`,
+  /** Frozen copy of the exact PDFs sent to the printer for an order (n = send attempt). */
+  orderFile: (userId: string, childId: string, bookId: string, orderId: string, name: "interior" | "cover", n: number) =>
+    `users/${userId}/children/${childId}/books/${bookId}/orders/${orderId}-${n}-${name}.pdf`,
   coverImage: (userId: string, childId: string, bookId: string, version: number, ext: string) =>
     `users/${userId}/children/${childId}/books/${bookId}/cover-v${version}.${ext}`,
 };

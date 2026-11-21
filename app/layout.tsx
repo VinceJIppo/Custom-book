@@ -42,6 +42,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <Link href="/themes" className="hover:text-coral">
                 Themes
               </Link>
+              <Link href="/orders" className="hover:text-coral">
+                Orders
+              </Link>
               <Link href="/children/new" className="hover:text-coral">
                 Add a child
               </Link>

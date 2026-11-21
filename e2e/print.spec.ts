@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-test("make print files, read the preflight, download PDFs, run the printer check", async ({ page }, info) => {
+test("make print files, check them, then order a printed copy and follow its status", async ({ page }, info) => {
   test.skip(info.project.name !== "desktop", "one run is enough for this flow");
   test.setTimeout(240_000);
   await page.goto("/");
@@ -33,4 +33,34 @@ test("make print files, read the preflight, download PDFs, run the printer check
 
   await exportCard.getByTestId("validate").click();
   await expect(page.getByTestId("validation-passed").first()).toBeVisible({ timeout: 60_000 });
+
+  // Phase 4: order it (mock printer, offline test checkout).
+  await page.getByTestId("order-from-print").first().click();
+  await page.locator("input[name=name]").fill("Grandma Rose");
+  await page.locator("input[name=street1]").fill("12 Elm Street");
+  await page.locator("input[name=city]").fill("Springfield");
+  await page.locator("input[name=stateCode]").fill("IL");
+  await page.locator("input[name=postcode]").fill("6270");
+  await page.locator("input[name=phone]").fill("217-555-0100");
+  await page.getByTestId("get-prices").click();
+  await expect(page.getByText("Use a 5-digit ZIP code")).toBeVisible();
+  await page.locator("input[name=postcode]").fill("62704");
+  await page.getByTestId("get-prices").click();
+  const options = page.getByTestId("shipping-options");
+  await expect(options).toContainText("Standard mail");
+  await expect(options).toContainText("Express (overnight)");
+  await options.getByText("Ground", { exact: true }).click();
+  await page.locator("textarea[name=giftNote]").fill("Happy birthday from Grandma!");
+  await page.getByTestId("checkout").click();
+  await page.getByTestId("mock-pay").click();
+  await expect(page.getByTestId("order-status")).toContainText("With the printer", { timeout: 30_000 });
+  await expect(page.getByText("Happy birthday from Grandma!")).toBeVisible();
+  await expect(page.getByTestId("order-history")).toContainText("Payment received");
+  await page.getByTestId("check-status").click();
+  await expect(page.getByTestId("order-status")).toBeVisible();
+
+  await page.goto("/orders");
+  await expect(page.getByTestId("order-list")).toContainText("Grandma Rose");
+  await page.goto("/admin/orders");
+  await expect(page.getByTestId("admin-orders")).toContainText("Grandma Rose");
 });

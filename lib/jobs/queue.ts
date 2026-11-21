@@ -20,7 +20,9 @@ export type JobType =
   | "character.sheet"
   | "character.bible"
   | "book.export"
-  | "export.validate";
+  | "export.validate"
+  | "order.submit"
+  | "order.status";
 
 export interface EnqueueOptions {
   userId: string;

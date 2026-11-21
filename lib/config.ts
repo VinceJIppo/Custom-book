@@ -61,6 +61,31 @@ const EnvSchema = z.object({
   /** Lifetime of signed links handed to a print provider (PDFs only, never photos). */
   PRINT_FILE_URL_TTL_SECONDS: z.coerce.number().int().min(300).max(7 * 86400).default(6 * 3600),
 
+  /** Mock printer: seconds between status steps (created, printing, shipped, delivered). */
+  MOCK_PRINT_STEP_SECONDS: z.coerce.number().int().min(1).default(60),
+
+  /** Payments: auto = Stripe when STRIPE_SECRET_KEY is set, else the offline mock checkout. */
+  PAYMENT_PROVIDER: z.enum(["auto", "mock", "stripe"]).default("auto"),
+  STRIPE_SECRET_KEY: z.string().optional(),
+  /** Signing secret of the Stripe webhook endpoint (whsec_...). */
+  STRIPE_WEBHOOK_SECRET: z.string().optional(),
+  /**
+   * Safety switch: live Stripe keys and Lulu production are refused unless this
+   * is true, so a test setup can never charge a real card or print a real book.
+   */
+  ALLOW_LIVE_ORDERS: bool.default(false),
+  /** Your margin on top of the printer's price: a percentage plus a flat amount (USD). */
+  ORDER_MARGIN_PERCENT: z.coerce.number().min(0).max(500).default(0),
+  ORDER_MARGIN_FLAT_USD: z.coerce.number().min(0).max(1000).default(0),
+  /** Add the card processing fee (2.9% + $0.30) to the price so it doesn't come out of your pocket. */
+  ORDER_COVER_CARD_FEES: bool.default(true),
+  /** Email the printer contacts about print problems (defaults to the parent's email). */
+  ORDER_CONTACT_EMAIL: z.string().email().optional(),
+  /** Comma-separated emails that can see the admin orders page (single-user mode: that user). */
+  ADMIN_EMAILS: z.string().optional(),
+  /** How often the worker checks open orders with the printer (webhooks are faster). */
+  ORDER_POLL_MINUTES: z.coerce.number().int().min(1).default(30),
+
   CHARACTER_SHEET_OPTIONS: z.coerce.number().int().min(1).max(4).default(3),
   /** How many times a parent may generate a new set of character options. */
   CHARACTER_SHEET_MAX_ROUNDS: z.coerce.number().int().min(1).max(10).default(3),

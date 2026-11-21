@@ -10,7 +10,7 @@ const PROVIDER_SDKS = [
   { name: "openai", folder: "lib/providers/openai" },
   { name: "@google/genai", folder: "lib/providers/gemini" },
   { name: "replicate", folder: "lib/providers/replicate" },
-  { name: "stripe", folder: "lib/payments/stripe" },
+  { name: "stripe", folder: "lib/providers/stripe" },
 ];
 
 // Exact package names, plus subpaths for scoped packages (a bare "openai/*"
@@ -39,6 +39,8 @@ const config = [
     files: [`${s.folder}/**/*.ts`],
     rules: { "no-restricted-imports": "off" },
   })),
+  // Adapter tests may use an SDK's own test helpers (e.g. Stripe's signed test webhooks).
+  { files: ["tests/**/*.ts"], rules: { "no-restricted-imports": "off" } },
 ];
 
 export default config;

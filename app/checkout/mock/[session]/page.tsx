@@ -1,0 +1,40 @@
+import { notFound } from "next/navigation";
+import { getPaymentProvider } from "@/lib/providers/registry";
+import { MockPaymentProvider } from "@/lib/providers/payment/mock";
+import { formatMoney } from "@/lib/orders/pricing";
+import { mockPayAction } from "@/app/orders/actions";
+
+export const dynamic = "force-dynamic";
+
+/** Stands in for Stripe's checkout page when no Stripe key is set. No card, no charge. */
+export default async function MockCheckout({ params }: { params: Promise<{ session: string }> }) {
+  const payment = getPaymentProvider();
+  if (!(payment instanceof MockPaymentProvider)) notFound();
+  const sessionId = (await params).session;
+  const session = payment.session(sessionId);
+  return (
+    <div className="mx-auto max-w-md space-y-5 rounded-2xl bg-white p-6 ring-1 ring-[color:var(--line)]">
+      <p className="eyebrow text-coral">Test checkout</p>
+      <h1 className="font-display text-3xl font-medium">Pay for your book</h1>
+      {!session || session.status === "expired" ? (
+        <p>This test checkout has expired (the app may have restarted). Go back to the book and start the order again.</p>
+      ) : session.paid ? (
+        <p>Already paid.</p>
+      ) : (
+        <>
+          <p className="font-display text-2xl">{formatMoney(session.amountCents ?? 0)}</p>
+          <p className="text-sm text-[color:var(--muted)]">This is the offline test checkout: no card is needed and nothing is charged. Add Stripe test keys to use Stripe&apos;s real checkout page.</p>
+          <form action={mockPayAction} className="flex gap-3">
+            <input type="hidden" name="sessionId" value={sessionId} />
+            <button name="choice" value="pay" className="btn btn-primary" data-testid="mock-pay">
+              Pay (test)
+            </button>
+            <button name="choice" value="cancel" className="btn btn-secondary">
+              Cancel
+            </button>
+          </form>
+        </>
+      )}
+    </div>
+  );
+}

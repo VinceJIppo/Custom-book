@@ -288,30 +288,53 @@ model GenerationJob {
 }
 
 model Order {
-  id              String   @id @default(cuid())
-  userId          String
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  bookId          String
-  book            Book     @relation(fields: [bookId], references: [id], onDelete: Restrict)
-  provider        String
-  providerOrderId String?
-  productSku      String?
-  status          String   @default("draft") // draft | paid | created | in_production | shipped | delivered | rejected | cancelled
-  statusReason    String?
+  id                String    @id @default(cuid())
+  userId            String
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// Null once the child and their books are deleted; the order record stays for history.
+  bookId            String?
+  book              Book?     @relation(fields: [bookId], references: [id], onDelete: SetNull)
+  bookTitle         String    @default("")
+  /// The print files this order was made from (BookExport id).
+  exportId          String?
+  productId         String    @default("")
+  provider          String
+  providerOrderId   String?
+  productSku        String?
+  pageCount         Int       @default(0)
+  /// awaiting_payment | payment_failed | expired | paid | created | in_production | shipped | delivered | rejected | cancelled | failed | refunded
+  status            String    @default("awaiting_payment")
+  /// Raw provider status, e.g. Lulu UNPAID or PRODUCTION_DELAYED
+  providerStatus    String?
+  statusReason      String?
+  /// [{ at, status, message }]
+  statusHistory     Json?
   /// ShippingAddress
-  address         Json?
-  giftNote        String?
-  /// Internal quote breakdown: print, shipping, tax, margin, total
-  quote           Json?
-  paymentRef      String?
-  trackingUrl     String?
-  trackingNumber  String?
-  /// Storage keys of the exact PDFs sent to the provider
-  interiorPdfKey  String?
-  coverPdfKey     String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  address           Json?
+  giftNote          String?
+  shippingLevel     String    @default("MAIL")
+  /// Internal quote breakdown: print, shipping, fulfillment, tax, margin, card fees, total
+  quote             Json?
+  currency          String    @default("USD")
+  totalCents        Int       @default(0)
+  paymentProvider   String    @default("mock")
+  checkoutSessionId String?   @unique
+  /// Payment intent (or mock payment) id, used for refunds
+  paymentRef        String?
+  paidAt            DateTime?
+  submittedAt       DateTime?
+  lastCheckedAt     DateTime?
+  estimatedArrival  String?
+  trackingUrl       String?
+  trackingNumber    String?
+  carrier           String?
+  /// Storage keys of the exact PDFs sent to the provider (frozen copies)
+  interiorPdfKey    String?
+  coverPdfKey       String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
   @@index([userId])
   @@index([bookId])
+  @@index([status])
 }
