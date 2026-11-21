@@ -17,6 +17,12 @@ model User {
   email          String    @unique
   name           String?
   ageConfirmedAt DateTime?
+  /// Rewards: an admin can set a tier ("starter" | "member" | "star") regardless of orders.
+  tierOverride   String?
+  /// Rewards: extra allowance granted by an admin, on top of the tier.
+  bonusBooks      Int      @default(0)
+  bonusCharacters Int      @default(0)
+  bonusRedraws    Int      @default(0)
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 

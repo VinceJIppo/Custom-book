@@ -1,4 +1,5 @@
 import type { Prisma } from "@prisma/client";
+import { checkAllowance } from "../allowance";
 import { db } from "../db";
 import { getConfig } from "../config";
 import { enqueue } from "../jobs/queue";
@@ -57,6 +58,8 @@ export async function createAndStartBook(userId: string, input: { childId: strin
     if (!mod.ok) return { ok: false, message: mod.message ?? "Please rephrase." };
   }
 
+  const overLimit = await checkAllowance(userId, "book");
+  if (overLimit) return { ok: false, message: overLimit };
   const cfg = getConfig();
   const estimate = estimateFor(options);
   const today = await dailyUsage(userId);

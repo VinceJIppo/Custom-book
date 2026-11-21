@@ -14,6 +14,8 @@ export default defineConfig({
       STORAGE_SIGNING_SECRET: "test-signing-secret-test-signing-secret",
       STORAGE_ENCRYPTION_KEY: "test-encryption-key-test-encryption-key",
       STORY_PROVIDER: "mock",
+      // Allowances are tested on their own (tests/allowance.test.ts); other tests make many books.
+      ALLOWANCES_ENABLED: "false",
     },
   },
 });

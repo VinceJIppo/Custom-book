@@ -1,4 +1,5 @@
 import type { Prisma } from "@prisma/client";
+import { checkAllowance } from "../allowance";
 import { db } from "../db";
 import { enqueue } from "../jobs/queue";
 import { getModeration, getStoryProvider } from "../providers/registry";
@@ -79,6 +80,8 @@ export async function reviseTextWithAI(userId: string, pageId: string, instructi
   if (!note) return { ok: false, message: "Tell us what to change." };
   const problem = await checkNote(note);
   if (problem) return { ok: false, message: problem };
+  const overLimit = await checkAllowance(userId, "rewrite");
+  if (overLimit) return { ok: false, message: overLimit };
   const budget = await underBudget(userId, 0.05);
   if (budget) return { ok: false, message: budget };
   const ctx = storyContextFor(page.book);
@@ -122,6 +125,8 @@ export async function requestNewArt(userId: string, pageId: string, mode: "redra
   }
   const active = await db.generationJob.count({ where: { pageId, status: { in: ["queued", "running"] } } });
   if (active) return { ok: false, message: "This page is already being redrawn." };
+  const overLimit = await checkAllowance(userId, "redraw");
+  if (overLimit) return { ok: false, message: overLimit };
   const price = (IMAGE_PRICES[imageProviderChoice()] ?? PLANNING_IMAGE_PRICE).perIllustration * 2;
   const budget = await underBudget(userId, price);
   if (budget) return { ok: false, message: budget };

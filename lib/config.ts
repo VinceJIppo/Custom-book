@@ -90,6 +90,8 @@ const EnvSchema = z.object({
   /** How many times a parent may generate a new set of character options. */
   CHARACTER_SHEET_MAX_ROUNDS: z.coerce.number().int().min(1).max(10).default(3),
 
+  /** Rewards: limit books, characters and edits by tier (first-time vs repeat customers). Admins are unlimited. */
+  ALLOWANCES_ENABLED: bool.default(true),
   DAILY_COST_CAP_USD: z.coerce.number().min(0).default(10),
   DAILY_BOOK_CAP: z.coerce.number().int().min(0).default(10),
   WORKER_CONCURRENCY: z.coerce.number().int().min(1).max(16).default(3),

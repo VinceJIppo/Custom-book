@@ -1,4 +1,5 @@
 import type { Prisma } from "@prisma/client";
+import { checkAllowance } from "./allowance";
 import { db } from "./db";
 import { ThemeConfigSchema, type ThemeConfig } from "./schemas/theme";
 import { findProtectedNames } from "./safety/protectedNames";
@@ -61,6 +62,8 @@ export async function draftCustomTheme(userId: string, input: { description: str
   if (hits.length) return { ok: false, message: hits[0].message, suggestedThemeIds: hits[0].suggestedThemeIds };
   const mod = await getModeration().check(description);
   if (!mod.ok) return { ok: false, message: mod.message ?? "Please rephrase." };
+  const overLimit = await checkAllowance(userId, "theme");
+  if (overLimit) return { ok: false, message: overLimit };
   const cap = getConfig().DAILY_COST_CAP_USD;
   if ((await dailyUsage(userId)).costUsd + 0.1 > cap) return { ok: false, message: `That would go over today's generation budget of $${cap.toFixed(2)}.` };
 

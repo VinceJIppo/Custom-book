@@ -20,6 +20,7 @@ import { getPaymentProvider, getPrintRouter } from "../providers/registry";
 import type { PaymentEvent } from "../providers/payment/types";
 import { WebhookSignatureError, type PrintOrderState, type ShippingAddress, type ShippingLevel, SHIPPING_LEVELS } from "../providers/print/types";
 import { buildBookView } from "../books/view";
+import { isAdminEmail } from "../admin";
 import { GiftNoteSchema, parseAddress } from "./address";
 import { priceQuote, type CustomerQuote } from "./pricing";
 import { OPEN_PRINT_STATUSES, pushHistory, shouldApply, STATUS_LABELS, type OrderStatus } from "./status";
@@ -453,12 +454,7 @@ export async function getOrder(userId: string, orderId: string, opts: { admin?: 
 }
 
 export function isAdmin(user: { email: string }) {
-  const c = getConfig();
-  const list = (c.ADMIN_EMAILS ?? "")
-    .split(",")
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean);
-  return list.length ? list.includes(user.email.toLowerCase()) : user.email === c.SINGLE_USER_EMAIL;
+  return isAdminEmail(user.email);
 }
 
 export function quoteOf(order: Order): CustomerQuote | null {

@@ -29,6 +29,9 @@ export default async function AdminOrders({ searchParams }: { searchParams: Prom
     <div className="space-y-6">
       <div>
         <h1 className="font-display text-3xl font-medium">All orders</h1>
+        <Link href="/admin/users" className="text-sm font-semibold text-cobalt underline">
+          Customers and rewards
+        </Link>
         <p className="text-[color:var(--muted)]">
           {orders.length} shown · {formatMoney(paidCents)} paid · {formatMoney(marginCents)} margin · {attention.length} need attention
         </p>

@@ -1,4 +1,5 @@
 import type { Prisma } from "@prisma/client";
+import { checkAllowance } from "../allowance";
 import { db } from "../db";
 import { getConfig } from "../config";
 import { getStorage, keys } from "../storage";
@@ -111,6 +112,8 @@ export async function startCharacterSheet(userId: string, childId: string, input
   if (used >= cfg.CHARACTER_SHEET_MAX_ROUNDS) {
     return { ok: false, message: `You've made ${used} sets of characters in this style, which is the limit. Pick one of the existing options, or try a different style.` };
   }
+  const overLimit = await checkAllowance(userId, "character");
+  if (overLimit) return { ok: false, message: overLimit };
   if (await db.characterSheet.count({ where: { childId, status: "generating" } })) {
     return { ok: false, message: "Characters are already being drawn. Give it a minute." };
   }
