@@ -87,7 +87,7 @@ export default async function OrderPage({ params, searchParams }: { params: Prom
             )}
           </p>
         )}
-        {order.estimatedArrival && !["delivered", "rejected", "cancelled", "refunded", "expired"].includes(order.status) && (
+        {order.estimatedArrival && !["delivered", "rejected", "cancelled", "refunded", "expired", "failed", "payment_failed"].includes(order.status) && (
           <p>Estimated arrival: {new Date(`${order.estimatedArrival}T12:00:00`).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}</p>
         )}
         {order.providerOrderId && (

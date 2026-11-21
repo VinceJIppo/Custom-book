@@ -27,7 +27,7 @@ Known places that show raw errors today (found 2026-11-21):
 |---|---|---|
 | Order form, "See shipping options" (`lib/orders/service.ts` `shippingQuotes`) | Lulu's raw HTTP 400 body | `Lulu POST /print-job-cost-calculations/ failed (HTTP 400): {"shipping_address":{"detail":{"errors":[{"code":"INVALID","path":"postcode","message":"Postal code entered does not match the city or state that were entered. It should look like ['85000', '86999']"}]}}}`. Should be: "That ZIP code doesn't match Phoenix, AZ. ZIP codes there look like 85000 to 86999." shown under the ZIP field. |
 | Order checkout and refund (`startCheckout`, `refundOrder`) | Raw Lulu or Stripe errors after "couldn't price this order", "Checkout couldn't start", "The refund didn't go through" | |
-| Order page and admin (`order.statusReason`) | "Couldn't send the order to the printer: <raw error>" when the print job fails | |
+| Order page and admin (`order.statusReason`) | "Couldn't send the order to the printer: <raw error>" when the print job fails | Setup problems are shown to the parent: "lulu downloads the PDFs itself and can't reach localhost:3000. Set PUBLIC_BASE_URL in .env.local...". Parents should see "We're having trouble sending your book to the printer. We'll retry; you won't be charged again." and the setup advice should go to the admin page only. |
 | Print files page (`app/books/[id]/print/page.tsx`) | `Making the files failed: {e.error}` and Lulu validation problems/job errors | Chromium or render errors |
 | Page editor (`app/books/[id]/pages/[pageId]/page.tsx`) | `The last picture change didn't work: {lastJob.error}` | Gemini/OpenAI API errors |
 | Character options (`app/children/[id]/character/page.tsx`) | `This set didn't work: {s.error}` | Image provider errors |
