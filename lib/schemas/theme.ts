@@ -6,6 +6,7 @@ export const ART_STYLES = [
   "soft-3d",
   "paper-cutout",
   "crayon",
+  "whimsical-ink",
 ] as const;
 export const ArtStyleSchema = z.enum(ART_STYLES);
 export type ArtStyle = z.infer<typeof ArtStyleSchema>;
@@ -16,6 +17,7 @@ export const ART_STYLE_LABELS: Record<ArtStyle, string> = {
   "soft-3d": "Soft 3D animated",
   "paper-cutout": "Paper cutout",
   crayon: "Crayon",
+  "whimsical-ink": "Whimsical ink",
 };
 
 const hexColor = z.string().regex(/^#[0-9a-fA-F]{6}$/, "Use a 6-digit hex color like #1E88E5");

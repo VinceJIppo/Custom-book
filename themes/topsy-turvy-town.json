@@ -1,0 +1,39 @@
+{
+  "id": "topsy-turvy-town",
+  "name": "Topsy-Turvy Town",
+  "genre": "whimsical",
+  "ageRange": [2, 8],
+  "pitch": "The child wakes up in Wobbleton-on-the-Wiggle on the morning everything goes upside down, and sets off to get the town's great Giggle-Bell ringing again before the topsy-turviness becomes permanent.",
+  "setting": "Wobbleton-on-the-Wiggle, a jumbly hilltop town of leaning houses, corkscrew chimneys, bridges that loop the loop, hills like scoops of sherbet, and tufty lollipop trees in every color",
+  "supportingCast": [
+    { "name": "Mayor Fumbleflop", "role": "pompous, flustered mayor", "look": "round little mayor with an enormous curly mustache, a sash covered in medals, and a hat shaped like a teapot" },
+    { "name": "Professor Quibblewick", "role": "inventor who talks in big words", "look": "tall, bendy professor with spring-shaped hair, three pairs of spectacles pushed up on her head, and a coat with too many pockets" },
+    { "name": "Zizzle", "role": "loyal sidekick", "look": "small fluffy orange creature with long floppy ears, polka-dot paws and a tail that curls into a spiral" },
+    { "name": "The Grumblesnoot", "role": "grumpy creature who turns out to be lonely", "look": "big shaggy blue-green creature with droopy eyebrows, a long wiggly nose, and tiny mismatched socks" }
+  ],
+  "storyBeats": [
+    "upside-down morning",
+    "the mayor's muddle",
+    "the silent Giggle-Bell",
+    "a wild ride on the loop-the-loop bridge",
+    "meeting the Grumblesnoot",
+    "a clever rhyming trick",
+    "everyone joins in",
+    "the great giggle parade",
+    "snug sleepy ending"
+  ],
+  "powerIdeas": "The child fixes things with a clever, silly idea that uses one of their favorite things in a way nobody expected.",
+  "artDirection": {
+    "defaultStyle": "whimsical-ink",
+    "palette": ["#E63946", "#3DA5D9", "#FFD23F", "#7BC67E"],
+    "mood": "giddy, bouncy, wildly silly and warm-hearted"
+  },
+  "contentRules": [
+    "silliness and cartoon chaos only; nothing frightening",
+    "the grumpy character is lonely, not wicked, and becomes a friend",
+    "grown-ups can be ridiculous but are never cruel",
+    "no weapons",
+    "only original characters and invented words"
+  ],
+  "licensed": false
+}

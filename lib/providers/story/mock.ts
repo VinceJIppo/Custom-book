@@ -666,6 +666,7 @@ function titleNoun(themeName: string): string {
     "Ocean Deep": "Great Reef Rescue",
     "Dragon Knight": "Shy Little Dragon",
     "Construction Crew": "Brand-New Playground",
+    "Topsy-Turvy Town": "Great Giggle-Bell Muddle",
   };
   return map[themeName] ?? `${themeName} Adventure`;
 }

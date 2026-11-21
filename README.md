@@ -64,6 +64,10 @@ Lulu downloads the PDFs from a public link, and `localhost` isn't public. Use a 
 
 ## Story voices
 
+The **Topsy-Turvy Town** theme and the **Whimsical ink** art style (wobbly ink lines, leaning
+buildings, bold flat colors) pair with it for a classic rhyme-book feel, using only original
+characters and places.
+
 Every new book defaults to **Rhyming and mischievous**: bouncy rhyming couplets, invented silly
 words, a cheeky narrator who talks to the reader, and gloriously ridiculous grown-ups, with a warm
 heart and nothing mean or scary. Other voices: **Classic storybook**, **Gentle bedtime** and

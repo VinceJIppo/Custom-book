@@ -8,6 +8,7 @@ import dragonKnight from "./dragon-knight.json";
 import oceanDeep from "./ocean-deep.json";
 import spaceExplorer from "./space-explorer.json";
 import superheroSquad from "./superhero-squad.json";
+import topsyTurvyTown from "./topsy-turvy-town.json";
 
 export const BUILT_IN_THEME_FILES: Record<string, unknown> = {
   "construction-crew.json": constructionCrew,
@@ -16,4 +17,5 @@ export const BUILT_IN_THEME_FILES: Record<string, unknown> = {
   "ocean-deep.json": oceanDeep,
   "space-explorer.json": spaceExplorer,
   "superhero-squad.json": superheroSquad,
+  "topsy-turvy-town.json": topsyTurvyTown,
 };

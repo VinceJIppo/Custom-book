@@ -13,11 +13,15 @@ describe("protected names", () => {
     ["make it like star wars", "Star Wars"],
     ["she watches bluey every day", "Bluey"],
     ["lego bricks", "Lego"],
+    ["he loves the Cat in the Hat", "The Cat in the Hat"],
+    ["a story like the grinch", "The Grinch"],
+    ["Oompa Loompas everywhere", "Willy Wonka"],
+    ["in the style of Dr. Seuss", "Dr. Seuss"],
   ])("flags %s", (text, name) => {
     expect(findProtectedNames(text)[0]?.name).toBe(name);
   });
 
-  it.each(["frozen yogurt", "Mario is my neighbor", "a spider and a man", "building blocks", "superheroes and capes", "blue whale"])(
+  it.each(["frozen yogurt", "Mario is my neighbor", "a spider and a man", "building blocks", "superheroes and capes", "blue whale", "a hat for my cat", "green eggs for breakfast", "Horton Street"])(
     "does not flag %s",
     (text) => {
       expect(findProtectedNames(text)).toEqual([]);
@@ -29,6 +33,7 @@ describe("protected names", () => {
     expect(m.message).toMatch(/trademarked/);
     expect(m.message).not.toMatch(/dark|cape|mask|cowl/i);
     expect(m.suggestedThemeIds).toContain("superhero-squad");
+    expect(findProtectedNames("The Lorax")[0].suggestedThemeIds).toContain("topsy-turvy-town");
   });
 
   it("checks list fields and reports which field matched", () => {

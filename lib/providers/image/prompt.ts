@@ -17,6 +17,8 @@ export const STYLE_DESCRIPTIONS: Record<ArtStyle, string> = {
     "layered paper cutout collage illustration: cut construction paper shapes, subtle drop shadows between layers, visible paper grain",
   crayon:
     "hand-drawn crayon and colored pencil illustration as a talented child might draw: waxy strokes, textured fills, cheerful and loose",
+  "whimsical-ink":
+    "whimsical, topsy-turvy picture-book illustration: wobbly hand-inked black outlines, bold flat colors from a small bright palette with plenty of white, curvy leaning buildings and corkscrew towers, tufty lollipop trees, curly spirals and dotted patterns, rounded rubbery characters with expressive faces, playful impossible perspective",
 };
 
 export const NO_TEXT_RULE =

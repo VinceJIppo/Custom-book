@@ -1,64 +1,461 @@
 {
   "_note": "Trademarked or copyrighted characters and franchises. Matching is case-insensitive on whole words, ignoring spaces, dashes and punctuation. Avoid entries that are also common first names (e.g. Elsa, Mario) unless written as a distinctive phrase. Genres map to built-in original themes for suggestions.",
   "entries": [
-    { "name": "Marvel", "genre": "superheroes" },
-    { "name": "Avengers", "genre": "superheroes" },
-    { "name": "Spider-Man", "aliases": ["Spiderman", "Spidey", "Miles Morales"], "genre": "superheroes" },
-    { "name": "Iron Man", "aliases": ["Ironman", "Tony Stark"], "genre": "superheroes" },
-    { "name": "Captain America", "genre": "superheroes" },
-    { "name": "Hulk", "genre": "superheroes" },
-    { "name": "Black Panther", "genre": "superheroes" },
-    { "name": "Thor", "genre": "superheroes" },
-    { "name": "DC Comics", "genre": "superheroes" },
-    { "name": "Batman", "aliases": ["Bruce Wayne", "Gotham"], "genre": "superheroes" },
-    { "name": "Superman", "aliases": ["Clark Kent"], "genre": "superheroes" },
-    { "name": "Wonder Woman", "genre": "superheroes" },
-    { "name": "The Flash", "genre": "superheroes" },
-    { "name": "Paw Patrol", "aliases": ["Pawpatrol"], "genre": "vehicles" },
-    { "name": "PJ Masks", "genre": "superheroes" },
-    { "name": "Power Rangers", "genre": "superheroes" },
-    { "name": "Teenage Mutant Ninja Turtles", "aliases": ["Ninja Turtles", "TMNT"], "genre": "superheroes" },
-    { "name": "Disney", "genre": "fantasy" },
-    { "name": "Pixar", "genre": "fantasy" },
-    { "name": "Mickey Mouse", "aliases": ["Minnie Mouse", "Donald Duck"], "genre": "fantasy" },
-    { "name": "Frozen", "aliases": ["Elsa and Anna", "Princess Elsa", "Queen Elsa", "Olaf the snowman"], "genre": "fantasy", "phraseOnly": ["Frozen movie", "Disney Frozen", "Frozen princess", "Frozen theme"] },
-    { "name": "Moana", "genre": "ocean" },
-    { "name": "Encanto", "genre": "fantasy" },
-    { "name": "Toy Story", "aliases": ["Buzz Lightyear", "Sheriff Woody"], "genre": "space" },
-    { "name": "Lightning McQueen", "aliases": ["Disney Cars", "Pixar Cars"], "genre": "vehicles" },
-    { "name": "Finding Nemo", "aliases": ["Finding Dory"], "genre": "ocean" },
-    { "name": "The Little Mermaid", "aliases": ["Princess Ariel"], "genre": "ocean" },
-    { "name": "Lion King", "aliases": ["Simba"], "genre": "fantasy" },
-    { "name": "Star Wars", "aliases": ["Darth Vader", "Yoda", "Grogu", "Baby Yoda", "Jedi", "Lightsaber", "Mandalorian", "Skywalker"], "genre": "space" },
-    { "name": "Nintendo", "genre": "fantasy" },
-    { "name": "Super Mario", "aliases": ["Mario Kart", "Princess Peach", "Bowser"], "genre": "fantasy" },
-    { "name": "Zelda", "genre": "fantasy" },
-    { "name": "Pokemon", "aliases": ["Pokémon", "Pikachu"], "genre": "fantasy" },
-    { "name": "Kirby", "genre": "fantasy" },
-    { "name": "Sonic the Hedgehog", "genre": "superheroes" },
-    { "name": "Minecraft", "genre": "vehicles" },
-    { "name": "Roblox", "genre": "vehicles" },
-    { "name": "Fortnite", "genre": "superheroes" },
-    { "name": "Bluey", "genre": "dinosaurs" },
-    { "name": "Peppa Pig", "genre": "dinosaurs" },
-    { "name": "Cocomelon", "genre": "dinosaurs" },
-    { "name": "Daniel Tiger", "genre": "dinosaurs" },
-    { "name": "Sesame Street", "aliases": ["Elmo", "Cookie Monster", "Big Bird"], "genre": "dinosaurs" },
-    { "name": "Thomas the Tank Engine", "aliases": ["Thomas and Friends"], "genre": "vehicles" },
-    { "name": "Hot Wheels", "genre": "vehicles" },
-    { "name": "Transformers", "aliases": ["Optimus Prime", "Bumblebee Transformer"], "genre": "vehicles" },
-    { "name": "Lego", "aliases": ["Legos", "Duplo"], "genre": "vehicles" },
-    { "name": "Barbie", "genre": "fantasy" },
-    { "name": "Hello Kitty", "genre": "fantasy" },
-    { "name": "My Little Pony", "genre": "fantasy" },
-    { "name": "Harry Potter", "aliases": ["Hogwarts"], "genre": "fantasy" },
-    { "name": "Shrek", "genre": "fantasy" },
-    { "name": "Minions", "aliases": ["Despicable Me"], "genre": "superheroes" },
-    { "name": "SpongeBob", "aliases": ["Spongebob Squarepants"], "genre": "ocean" },
-    { "name": "Winnie the Pooh", "genre": "fantasy" },
-    { "name": "How to Train Your Dragon", "aliases": ["Toothless the dragon"], "genre": "fantasy" },
-    { "name": "Jurassic Park", "aliases": ["Jurassic World"], "genre": "dinosaurs" },
-    { "name": "Gabby's Dollhouse", "genre": "fantasy" },
-    { "name": "Blippi", "genre": "vehicles" }
+    {
+      "name": "Marvel",
+      "genre": "superheroes"
+    },
+    {
+      "name": "Avengers",
+      "genre": "superheroes"
+    },
+    {
+      "name": "Spider-Man",
+      "aliases": [
+        "Spiderman",
+        "Spidey",
+        "Miles Morales"
+      ],
+      "genre": "superheroes"
+    },
+    {
+      "name": "Iron Man",
+      "aliases": [
+        "Ironman",
+        "Tony Stark"
+      ],
+      "genre": "superheroes"
+    },
+    {
+      "name": "Captain America",
+      "genre": "superheroes"
+    },
+    {
+      "name": "Hulk",
+      "genre": "superheroes"
+    },
+    {
+      "name": "Black Panther",
+      "genre": "superheroes"
+    },
+    {
+      "name": "Thor",
+      "genre": "superheroes"
+    },
+    {
+      "name": "DC Comics",
+      "genre": "superheroes"
+    },
+    {
+      "name": "Batman",
+      "aliases": [
+        "Bruce Wayne",
+        "Gotham"
+      ],
+      "genre": "superheroes"
+    },
+    {
+      "name": "Superman",
+      "aliases": [
+        "Clark Kent"
+      ],
+      "genre": "superheroes"
+    },
+    {
+      "name": "Wonder Woman",
+      "genre": "superheroes"
+    },
+    {
+      "name": "The Flash",
+      "genre": "superheroes"
+    },
+    {
+      "name": "Paw Patrol",
+      "aliases": [
+        "Pawpatrol"
+      ],
+      "genre": "vehicles"
+    },
+    {
+      "name": "PJ Masks",
+      "genre": "superheroes"
+    },
+    {
+      "name": "Power Rangers",
+      "genre": "superheroes"
+    },
+    {
+      "name": "Teenage Mutant Ninja Turtles",
+      "aliases": [
+        "Ninja Turtles",
+        "TMNT"
+      ],
+      "genre": "superheroes"
+    },
+    {
+      "name": "Disney",
+      "genre": "fantasy"
+    },
+    {
+      "name": "Pixar",
+      "genre": "fantasy"
+    },
+    {
+      "name": "Mickey Mouse",
+      "aliases": [
+        "Minnie Mouse",
+        "Donald Duck"
+      ],
+      "genre": "fantasy"
+    },
+    {
+      "name": "Frozen",
+      "aliases": [
+        "Elsa and Anna",
+        "Princess Elsa",
+        "Queen Elsa",
+        "Olaf the snowman"
+      ],
+      "genre": "fantasy",
+      "phraseOnly": [
+        "Frozen movie",
+        "Disney Frozen",
+        "Frozen princess",
+        "Frozen theme"
+      ]
+    },
+    {
+      "name": "Moana",
+      "genre": "ocean"
+    },
+    {
+      "name": "Encanto",
+      "genre": "fantasy"
+    },
+    {
+      "name": "Toy Story",
+      "aliases": [
+        "Buzz Lightyear",
+        "Sheriff Woody"
+      ],
+      "genre": "space"
+    },
+    {
+      "name": "Lightning McQueen",
+      "aliases": [
+        "Disney Cars",
+        "Pixar Cars"
+      ],
+      "genre": "vehicles"
+    },
+    {
+      "name": "Finding Nemo",
+      "aliases": [
+        "Finding Dory"
+      ],
+      "genre": "ocean"
+    },
+    {
+      "name": "The Little Mermaid",
+      "aliases": [
+        "Princess Ariel"
+      ],
+      "genre": "ocean"
+    },
+    {
+      "name": "Lion King",
+      "aliases": [
+        "Simba"
+      ],
+      "genre": "fantasy"
+    },
+    {
+      "name": "Star Wars",
+      "aliases": [
+        "Darth Vader",
+        "Yoda",
+        "Grogu",
+        "Baby Yoda",
+        "Jedi",
+        "Lightsaber",
+        "Mandalorian",
+        "Skywalker"
+      ],
+      "genre": "space"
+    },
+    {
+      "name": "Nintendo",
+      "genre": "fantasy"
+    },
+    {
+      "name": "Super Mario",
+      "aliases": [
+        "Mario Kart",
+        "Princess Peach",
+        "Bowser"
+      ],
+      "genre": "fantasy"
+    },
+    {
+      "name": "Zelda",
+      "genre": "fantasy"
+    },
+    {
+      "name": "Pokemon",
+      "aliases": [
+        "Pokémon",
+        "Pikachu"
+      ],
+      "genre": "fantasy"
+    },
+    {
+      "name": "Kirby",
+      "genre": "fantasy"
+    },
+    {
+      "name": "Sonic the Hedgehog",
+      "genre": "superheroes"
+    },
+    {
+      "name": "Minecraft",
+      "genre": "vehicles"
+    },
+    {
+      "name": "Roblox",
+      "genre": "vehicles"
+    },
+    {
+      "name": "Fortnite",
+      "genre": "superheroes"
+    },
+    {
+      "name": "Bluey",
+      "genre": "dinosaurs"
+    },
+    {
+      "name": "Peppa Pig",
+      "genre": "dinosaurs"
+    },
+    {
+      "name": "Cocomelon",
+      "genre": "dinosaurs"
+    },
+    {
+      "name": "Daniel Tiger",
+      "genre": "dinosaurs"
+    },
+    {
+      "name": "Sesame Street",
+      "aliases": [
+        "Elmo",
+        "Cookie Monster",
+        "Big Bird"
+      ],
+      "genre": "dinosaurs"
+    },
+    {
+      "name": "Thomas the Tank Engine",
+      "aliases": [
+        "Thomas and Friends"
+      ],
+      "genre": "vehicles"
+    },
+    {
+      "name": "Hot Wheels",
+      "genre": "vehicles"
+    },
+    {
+      "name": "Transformers",
+      "aliases": [
+        "Optimus Prime",
+        "Bumblebee Transformer"
+      ],
+      "genre": "vehicles"
+    },
+    {
+      "name": "Lego",
+      "aliases": [
+        "Legos",
+        "Duplo"
+      ],
+      "genre": "vehicles"
+    },
+    {
+      "name": "Barbie",
+      "genre": "fantasy"
+    },
+    {
+      "name": "Hello Kitty",
+      "genre": "fantasy"
+    },
+    {
+      "name": "My Little Pony",
+      "genre": "fantasy"
+    },
+    {
+      "name": "Harry Potter",
+      "aliases": [
+        "Hogwarts"
+      ],
+      "genre": "fantasy"
+    },
+    {
+      "name": "Shrek",
+      "genre": "fantasy"
+    },
+    {
+      "name": "Minions",
+      "aliases": [
+        "Despicable Me"
+      ],
+      "genre": "superheroes"
+    },
+    {
+      "name": "SpongeBob",
+      "aliases": [
+        "Spongebob Squarepants"
+      ],
+      "genre": "ocean"
+    },
+    {
+      "name": "Winnie the Pooh",
+      "genre": "fantasy"
+    },
+    {
+      "name": "How to Train Your Dragon",
+      "aliases": [
+        "Toothless the dragon"
+      ],
+      "genre": "fantasy"
+    },
+    {
+      "name": "Jurassic Park",
+      "aliases": [
+        "Jurassic World"
+      ],
+      "genre": "dinosaurs"
+    },
+    {
+      "name": "Gabby's Dollhouse",
+      "genre": "fantasy"
+    },
+    {
+      "name": "Blippi",
+      "genre": "vehicles"
+    },
+    {
+      "name": "Dr. Seuss",
+      "aliases": [
+        "Dr Seuss",
+        "Seuss",
+        "Theodor Geisel"
+      ],
+      "genre": "whimsical"
+    },
+    {
+      "name": "The Cat in the Hat",
+      "aliases": [
+        "Cat in the Hat",
+        "Thing One and Thing Two",
+        "Thing 1 and Thing 2"
+      ],
+      "genre": "whimsical"
+    },
+    {
+      "name": "The Grinch",
+      "aliases": [
+        "Grinch",
+        "Whoville",
+        "Cindy Lou Who"
+      ],
+      "genre": "whimsical"
+    },
+    {
+      "name": "The Lorax",
+      "aliases": [
+        "Lorax",
+        "Truffula",
+        "Once-ler"
+      ],
+      "genre": "whimsical"
+    },
+    {
+      "name": "Horton",
+      "aliases": [
+        "Horton Hears a Who",
+        "Horton the elephant",
+        "Horton Hatches the Egg"
+      ],
+      "genre": "whimsical",
+      "phraseOnly": [
+        "Horton Hears a Who",
+        "Horton the elephant",
+        "Horton Hatches the Egg"
+      ]
+    },
+    {
+      "name": "Green Eggs and Ham",
+      "aliases": [
+        "Sam-I-Am",
+        "Sam I Am"
+      ],
+      "genre": "whimsical"
+    },
+    {
+      "name": "The Sneetches",
+      "aliases": [
+        "Sneetches",
+        "Sneetch"
+      ],
+      "genre": "whimsical"
+    },
+    {
+      "name": "Oh, the Places You'll Go",
+      "aliases": [
+        "Oh the Places You'll Go"
+      ],
+      "genre": "whimsical"
+    },
+    {
+      "name": "Roald Dahl",
+      "aliases": [
+        "Dahl"
+      ],
+      "genre": "whimsical"
+    },
+    {
+      "name": "Willy Wonka",
+      "aliases": [
+        "Wonka",
+        "Oompa Loompa",
+        "Oompa Loompas",
+        "Oompa-Loompa",
+        "Charlie and the Chocolate Factory"
+      ],
+      "genre": "whimsical"
+    },
+    {
+      "name": "The BFG",
+      "aliases": [
+        "BFG",
+        "Big Friendly Giant"
+      ],
+      "genre": "whimsical"
+    },
+    {
+      "name": "James and the Giant Peach",
+      "genre": "whimsical"
+    },
+    {
+      "name": "Fantastic Mr Fox",
+      "aliases": [
+        "Fantastic Mr. Fox"
+      ],
+      "genre": "whimsical"
+    },
+    {
+      "name": "The Twits",
+      "genre": "whimsical"
+    }
   ]
 }

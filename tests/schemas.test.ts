@@ -8,10 +8,17 @@ import { superhero } from "./helpers";
 
 describe("built-in themes", () => {
   const themes = loadBuiltInThemeFiles();
-  it("loads all six, each valid", () => {
+  it("loads all seven, each valid", () => {
     expect(themes.map((t) => t.id).sort()).toEqual(
-      ["construction-crew", "dinosaur-valley", "dragon-knight", "ocean-deep", "space-explorer", "superhero-squad"].sort(),
+      ["construction-crew", "dinosaur-valley", "dragon-knight", "ocean-deep", "space-explorer", "superhero-squad", "topsy-turvy-town"].sort(),
     );
+  });
+  it("contain no protected characters, franchises or real authors", async () => {
+    const { findProtectedNames } = await import("@/lib/safety/protectedNames");
+    for (const t of themes) {
+      expect(findProtectedNames(JSON.stringify(t))).toEqual([]);
+      expect(JSON.stringify(t)).not.toMatch(/seuss|geisel|dahl|grinch|lorax|truffula|whoville|sneetch|cat in the hat/i);
+    }
   });
   it("are never licensed and have unique ids", () => {
     expect(themes.every((t) => !t.licensed)).toBe(true);
