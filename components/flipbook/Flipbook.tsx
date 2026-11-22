@@ -1,5 +1,6 @@
 "use client";
 
+import { fitTextIn } from "@/lib/print/fitText";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { PageFlip } from "page-flip";
 import { BookPage, CoverBack, CoverFront, InsideCover } from "@/components/book/BookPage";
@@ -48,8 +49,10 @@ export function Flipbook({ book }: { book: BookView }) {
     mount.className = "flip-host";
     host.appendChild(mount);
 
-    import("page-flip").then(({ PageFlip }) => {
+    Promise.all([import("page-flip"), document.fonts?.ready]).then(([{ PageFlip }]) => {
       if (cancelled) return;
+      // Same text fitting as the print files, done on the hidden source pages before they're copied in.
+      fitTextIn(source);
       const nodes = Array.from(source.querySelectorAll<HTMLElement>(":scope > .flip-page")).map((n) => n.cloneNode(true) as HTMLElement);
       nodes.forEach((n) => mount.appendChild(n));
       const ratio = book.trim.heightIn / book.trim.widthIn;

@@ -235,8 +235,18 @@
   font-weight: 500;
   letter-spacing: 0.02em;
 }
+.bk-vignette {
+  display: flex;
+  flex-direction: column;
+}
+.bk-page[data-mode="screen"] .bk-vignette .bk-art {
+  /* Soft edges on screen; print files bake the same fade into the picture. */
+  -webkit-mask-image: radial-gradient(ellipse 72% 68% at 50% 50%, #000 62%, transparent 100%);
+  mask-image: radial-gradient(ellipse 72% 68% at 50% 50%, #000 62%, transparent 100%);
+}
 .bk-text-vignette {
-  position: absolute;
+  position: relative;
+  flex: none;
   display: flex;
   align-items: flex-start;
   justify-content: center;

@@ -90,13 +90,33 @@ describe("print export (real headless Chromium)", () => {
       await getStorage().put(key, art, "image/png");
       await db.page.update({ where: { id: p.id }, data: { imageKey: key, layout: "fullBleed" } });
     }
-    await db.page.update({ where: { id: pages[2].id }, data: { text: "So many words. ".repeat(60) } });
+    await db.page.update({ where: { id: pages[2].id }, data: { text: "So many words. ".repeat(240) } });
     const exp = await exportAndRead("hardcover-square-8.5");
     const report = exp.preflight as unknown as PreflightReport;
     expect(report.items.find((i) => i.code === "resolution")?.level).toBe("pass");
     expect(report.items.some((i) => i.code === "text-fit" && i.level === "error")).toBe(true);
     expect(exp.preflightOk).toBe(false);
     expect((await startValidation(userId, exp.id)).ok).toBe(false);
+  }, 180_000);
+
+  it("fixes print problems itself: long words are fitted, low-resolution pictures are enlarged to 300 ppi", async () => {
+    const pages = await db.page.findMany({ where: { bookId, kind: "story" }, orderBy: { index: "asc" } });
+    // 1200 px across a full 8.75 in page is about 137 ppi.
+    const small = await sharp({ create: { width: 1200, height: 1200, channels: 3, background: "#4477aa" } }).png().toBuffer();
+    for (const p of pages) {
+      const key = p.imageKey!.replace(/\.svg$/, ".png");
+      await getStorage().put(key, small, "image/png");
+      await db.page.update({ where: { id: p.id }, data: { imageKey: key, layout: "fullBleed", textZone: "top" } });
+    }
+    // A long page that overflows at the designed size but fits once the words are a little smaller.
+    await db.page.update({ where: { id: pages[1].id }, data: { text: "The trio reaches the old oak, and its little round door creaks open. ".repeat(4) } });
+    const exp = await exportAndRead("hardcover-square-8.5");
+    const report = exp.preflight as unknown as PreflightReport;
+    expect(report.items.filter((i) => i.level === "error")).toEqual([]);
+    expect(report.items.find((i) => i.code === "resolution")?.level).toBe("pass");
+    expect(exp.preflightOk).toBe(true);
+    const interior = await inspectPdf((await getStorage().get(exp.interiorKey!))!.data);
+    expect(interior.transparency).toEqual([]);
   }, 180_000);
 
   it("won't hand a localhost link to a real printer", async () => {

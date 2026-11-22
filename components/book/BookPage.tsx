@@ -86,18 +86,15 @@ function Story({ page, book }: { page: PageView; book: BookView }) {
   }
 
   if (lookFor(book.style) === "vignette") {
-    // Words at the top, a small picture floating on the white page below (like a classic gentle picture book).
-    const textH = safe.height * 0.3;
-    const textBox: Box = { x: safe.x, y: safe.y, width: safe.width, height: textH };
-    const artTop = safe.y + textH + 0.15;
-    const artBox: Box = { x: safe.x, y: artTop, width: safe.width, height: safe.y + safe.height - artTop };
+    // Words at the top, a picture floating on the white page below (like a classic gentle picture book).
+    // The words take the room they need (up to about half the page); the picture fills the rest.
     return (
-      <>
-        <div className="bk-text bk-text-vignette" style={{ ...boxStyle(textBox), fontSize: inch(FONT_SIZE_IN[book.readingLevel] * 1.05) }}>
+      <div className="bk-vignette" style={boxStyle(safe)}>
+        <div className="bk-text bk-text-vignette" style={{ fontSize: inch(FONT_SIZE_IN[book.readingLevel] * 1.05), maxHeight: inch(safe.height * 0.5) }}>
           {page.text}
         </div>
-        <Art url={page.imageUrl} status={page.imageStatus} alt={alt} style={{ ...boxStyle(artBox), objectFit: "contain" }} />
-      </>
+        <Art url={page.imageUrl} status={page.imageStatus} alt={alt} style={{ position: "relative", flex: "1 1 0", minHeight: 0, width: "100%", objectFit: "contain", marginTop: inch(0.15) }} />
+      </div>
     );
   }
 

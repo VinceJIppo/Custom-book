@@ -15,6 +15,10 @@ import type { BookView } from "../books/viewTypes";
 import type { CoverLayout } from "./cover";
 import { BLEED_IN, SAFE_IN, getTrim, pageSizeWithBleed } from "./geometry";
 import { getStorage } from "../storage";
+import { FIT_TEXT_SOURCE } from "./fitText";
+
+/** Print resolution every picture is brought up to (Lulu asks for 300 ppi). */
+const TARGET_PPI = 305;
 
 /** Fake origin that never leaves the machine: every request to it is answered locally. */
 export const ASSET_ORIGIN = "https://assets.storystar.invalid";
@@ -88,11 +92,86 @@ async function serveAsset(url: string): Promise<{ body: Buffer; contentType: str
     const obj = await getStorage().get(key);
     if (!obj) return null;
     // Placeholder SVGs are rasterized (3x, about 300 ppi on a full page) so print files never carry vector transparency.
-    const source = obj.meta.contentType === "image/svg+xml" ? sharp(obj.data, { density: 216 }) : sharp(obj.data);
+    let source = obj.meta.contentType === "image/svg+xml" ? sharp(obj.data, { density: 216 }) : sharp(obj.data);
+    // ?scale=: the picture is placed too large for its pixels; enlarge it (Lanczos) so it prints at 300 ppi.
+    const scale = Math.min(4, Number(u.searchParams.get("scale") ?? "1"));
+    if (scale > 1.001) {
+      const meta = await source.metadata();
+      source = sharp(await source.resize({ width: Math.round((meta.width ?? 1000) * scale), kernel: "lanczos3" }).toBuffer());
+    }
+    // ?feather=1: soft-edged pictures floating on a white page blend into the paper (no visible grey box).
+    if (u.searchParams.get("feather") === "1") source = sharp(await featherToWhite(await source.toBuffer()));
     const jpeg = await source.flatten({ background: "#ffffff" }).toColorspace("srgb").jpeg({ quality: 92, chromaSubsampling: "4:4:4", mozjpeg: true }).toBuffer();
     return { body: jpeg, contentType: "image/jpeg" };
   }
   return null;
+}
+
+/**
+ * Lifts the near-white background of a vignette picture to pure white and fades
+ * its edges into white, so it sits on the page like paint on paper. The result is
+ * opaque (flattened), so the PDF needs no transparency.
+ */
+export async function featherToWhite(input: Buffer): Promise<Buffer> {
+  const img = sharp(input).flatten({ background: "#ffffff" }).removeAlpha();
+  const { width = 1, height = 1 } = await img.metadata();
+  const inset = Math.round(Math.min(width, height) * 0.05);
+  const mask = await sharp(
+    Buffer.from(
+      `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}"><rect width="100%" height="100%" fill="black"/><rect x="${inset}" y="${inset}" width="${width - 2 * inset}" height="${height - 2 * inset}" fill="white"/></svg>`,
+    ),
+  )
+    .blur(Math.max(1, inset * 0.6))
+    .greyscale()
+    .raw()
+    .toBuffer();
+  // Paper is pure white: near-white pixels (the painting's paper) become white;
+  // anything with real color is left alone.
+  const lifted = await img.raw().toBuffer({ resolveWithObject: true });
+  const ch = lifted.info.channels;
+  for (let i = 0; i < lifted.data.length; i += ch) {
+    const m = Math.min(lifted.data[i], lifted.data[i + 1], lifted.data[i + 2]);
+    if (m <= 214) continue;
+    const t = Math.min(1, (m - 214) / 20);
+    for (let c = 0; c < 3; c++) lifted.data[i + c] = Math.round(lifted.data[i + c] + (255 - lifted.data[i + c]) * t);
+  }
+  return sharp(lifted.data, { raw: { width, height, channels: lifted.info.channels } })
+    .joinChannel(mask, { raw: { width, height, channels: 1 } })
+    .flatten({ background: "#ffffff" })
+    .png()
+    .toBuffer();
+}
+
+/**
+ * Before measuring: fit every text box (shrink a little, let capped boxes grow),
+ * blend vignette pictures into the page, and enlarge any picture placed below
+ * 300 ppi, so problems are fixed here instead of being handed to the parent.
+ */
+async function autoFix(page: import("playwright").Page) {
+  await page.evaluate(`${FIT_TEXT_SOURCE}(document)`);
+  const changed = await page.evaluate((target: number) => {
+    let n = 0;
+    document.querySelectorAll<HTMLImageElement>("img").forEach((img) => {
+      const src = img.getAttribute("src") ?? "";
+      if (!src.includes("/files/") || src.includes("?")) return;
+      const r = img.getBoundingClientRect();
+      if (!r.width || !r.height || !img.naturalWidth) return;
+      const ppi = Math.min(img.naturalWidth / (r.width / 96), img.naturalHeight / (r.height / 96));
+      const params = new URLSearchParams();
+      if (ppi < target) params.set("scale", (target / ppi + 0.01).toFixed(3));
+      if (img.closest(".bk-vignette")) params.set("feather", "1");
+      if ([...params.keys()].length) {
+        img.setAttribute("src", `${src}?${params.toString()}`);
+        n++;
+      }
+    });
+    return n;
+  }, TARGET_PPI);
+  if (changed) {
+    await page.evaluate(async () => {
+      await Promise.all(Array.from(document.images).map((img) => (img.complete && img.naturalWidth ? img.decode().catch(() => null) : new Promise((r) => { img.onload = img.onerror = () => r(null); }))));
+    });
+  }
 }
 
 async function withPage<T>(browser: Browser, html: string, fn: (page: import("playwright").Page) => Promise<T>): Promise<T> {
@@ -153,7 +232,7 @@ function toImageChecks(raw: Array<{ page: number; src: string; ppi: number }>): 
     .filter((i) => i.src.startsWith(prefix))
     .map((i) => {
       const key = decodeURIComponent(i.src.slice(prefix.length));
-      return { page: i.page, key, ppi: i.ppi, placeholder: key.endsWith(".svg") };
+      return { page: i.page, key: key.split("?")[0], ppi: i.ppi, placeholder: key.split("?")[0].endsWith(".svg") };
     });
 }
 
@@ -167,6 +246,7 @@ export async function renderInteriorPdf(browser: Browser, view: BookView): Promi
     </>,
   );
   return withPage(browser, htmlDocument(body, size.widthIn, size.heightIn), async (page) => {
+    await autoFix(page);
     const m = await measure(page, ".bk-page", BLEED_IN + SAFE_IN);
     const pdf = await page.pdf({ width: `${size.widthIn}in`, height: `${size.heightIn}in`, printBackground: true, preferCSSPageSize: true, margin: { top: "0", right: "0", bottom: "0", left: "0" } });
     return { pdf, pages: view.pages.length, textIssues: m.textIssues, images: toImageChecks(m.images) };
@@ -177,6 +257,7 @@ export async function renderCoverPdf(browser: Browser, view: BookView, layout: C
   const body = renderToStaticMarkup(<CoverSpread book={view} layout={layout} mode="print" />);
   return withPage(browser, htmlDocument(body, layout.widthIn, layout.heightIn), async (page) => {
     // Cover text is placed inside each panel's safe area by construction; check only for overflow here.
+    await autoFix(page);
     const m = await measure(page, ".bk-cover-spread", 0);
     const pdf = await page.pdf({ width: `${layout.widthIn}in`, height: `${layout.heightIn}in`, printBackground: true, preferCSSPageSize: true, margin: { top: "0", right: "0", bottom: "0", left: "0" } });
     return { pdf, pages: 1, textIssues: m.textIssues, images: toImageChecks(m.images) };
