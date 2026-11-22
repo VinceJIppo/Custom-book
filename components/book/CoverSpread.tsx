@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 import { lookFor } from "./BookPage";
 import { COVER_TITLE_BAND, type Box } from "@/lib/print/geometry";
+import { PAPER_COLORS } from "@/lib/schemas/theme";
 import type { CoverLayout } from "@/lib/print/cover";
 import type { BookView } from "@/lib/books/viewTypes";
 import { tint, type PageMode } from "./BookPage";
@@ -35,7 +36,7 @@ export function CoverSpread({ book, layout, mode }: { book: BookView; layout: Co
           <div className="bk-art-placeholder" style={box(frontArt)} />
         )}
 
-        {band > 0 && <div style={{ ...box({ x: layout.front.x, y: 0, width: layout.widthIn - layout.front.x, height: band }), background: "#ffffff" }} />}
+        {band > 0 && <div style={{ ...box({ x: layout.front.x, y: 0, width: layout.widthIn - layout.front.x, height: band }), background: PAPER_COLORS[book.style] ?? "#ffffff" }} />}
         <div className="bk-cover-title" style={{ ...box(titleBox), color: c1, display: "flex", flexDirection: "column", justifyContent: "center", ...(band ? { background: "transparent" } : {}) }}>
           <h1 className="bk-display" style={{ fontSize: inch(Math.min(0.62, layout.frontSafe.width / 12)) }}>
             {book.title}

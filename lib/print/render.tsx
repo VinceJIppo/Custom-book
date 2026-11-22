@@ -33,6 +33,8 @@ const FONT_CSS = [
   ["eb-garamond", "latin-400.css"],
   ["eb-garamond", "latin-400-italic.css"],
   ["eb-garamond", "latin-500.css"],
+  ["cormorant-garamond", "latin-500.css"],
+  ["cormorant-garamond", "latin-500-italic.css"],
 ] as const;
 
 function fontFaces(): string {
@@ -82,7 +84,7 @@ async function serveAsset(url: string): Promise<{ body: Buffer; contentType: str
   const u = new URL(url);
   if (u.pathname.startsWith("/fonts/")) {
     const [, , pkg, file] = u.pathname.split("/");
-    if (!/^[a-z]+$/.test(pkg) || !/^[a-z0-9.-]+$/.test(file)) return null;
+    if (!/^[a-z][a-z-]*$/.test(pkg) || !/^[a-z0-9.-]+$/.test(file)) return null;
     const p = path.join(process.cwd(), "node_modules", "@fontsource", pkg, "files", file);
     if (!fs.existsSync(p)) return null;
     return { body: fs.readFileSync(p), contentType: file.endsWith(".woff2") ? "font/woff2" : "font/woff" };
@@ -100,7 +102,10 @@ async function serveAsset(url: string): Promise<{ body: Buffer; contentType: str
       source = sharp(await source.resize({ width: Math.round((meta.width ?? 1000) * scale), kernel: "lanczos3" }).toBuffer());
     }
     // ?feather=1: soft-edged pictures floating on a white page blend into the paper (no visible grey box).
-    if (u.searchParams.get("feather") === "1") source = sharp(await featherToWhite(await source.toBuffer()));
+    if (u.searchParams.get("feather") === "1") {
+      const paper = /^[0-9a-f]{6}$/i.test(u.searchParams.get("paper") ?? "") ? `#${u.searchParams.get("paper")}` : "#ffffff";
+      source = sharp(await featherToWhite(await source.toBuffer(), paper));
+    }
     const jpeg = await source.flatten({ background: "#ffffff" }).toColorspace("srgb").jpeg({ quality: 92, chromaSubsampling: "4:4:4", mozjpeg: true }).toBuffer();
     return { body: jpeg, contentType: "image/jpeg" };
   }
@@ -112,8 +117,9 @@ async function serveAsset(url: string): Promise<{ body: Buffer; contentType: str
  * its edges into white, so it sits on the page like paint on paper. The result is
  * opaque (flattened), so the PDF needs no transparency.
  */
-export async function featherToWhite(input: Buffer): Promise<Buffer> {
-  const img = sharp(input).flatten({ background: "#ffffff" }).removeAlpha();
+export async function featherToWhite(input: Buffer, paper = "#ffffff"): Promise<Buffer> {
+  const pr = [1, 3, 5].map((i) => parseInt(paper.slice(i, i + 2), 16));
+  const img = sharp(input).flatten({ background: paper }).removeAlpha();
   const { width = 1, height = 1 } = await img.metadata();
   const inset = Math.round(Math.min(width, height) * 0.05);
   const mask = await sharp(
@@ -133,11 +139,11 @@ export async function featherToWhite(input: Buffer): Promise<Buffer> {
     const m = Math.min(lifted.data[i], lifted.data[i + 1], lifted.data[i + 2]);
     if (m <= 214) continue;
     const t = Math.min(1, (m - 214) / 20);
-    for (let c = 0; c < 3; c++) lifted.data[i + c] = Math.round(lifted.data[i + c] + (255 - lifted.data[i + c]) * t);
+    for (let c = 0; c < 3; c++) lifted.data[i + c] = Math.round(lifted.data[i + c] + (pr[c] - lifted.data[i + c]) * t);
   }
   return sharp(lifted.data, { raw: { width, height, channels: lifted.info.channels } })
     .joinChannel(mask, { raw: { width, height, channels: 1 } })
-    .flatten({ background: "#ffffff" })
+    .flatten({ background: paper })
     .png()
     .toBuffer();
 }
@@ -159,7 +165,12 @@ async function autoFix(page: import("playwright").Page) {
       const ppi = Math.min(img.naturalWidth / (r.width / 96), img.naturalHeight / (r.height / 96));
       const params = new URLSearchParams();
       if (ppi < target) params.set("scale", (target / ppi + 0.01).toFixed(3));
-      if (img.closest(".bk-vignette")) params.set("feather", "1");
+      if (img.closest(".bk-vignette")) {
+        params.set("feather", "1");
+        // Fade into the page's own paper color (cream for Hand-painted whimsy).
+        const bg = getComputedStyle(img.closest(".bk-page") ?? document.body).backgroundColor.match(/\d+/g);
+        if (bg && bg.length >= 3) params.set("paper", bg.slice(0, 3).map((n) => Number(n).toString(16).padStart(2, "0")).join(""));
+      }
       if ([...params.keys()].length) {
         img.setAttribute("src", `${src}?${params.toString()}`);
         n++;

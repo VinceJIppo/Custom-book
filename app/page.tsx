@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
 import { requireOnboardedUser } from "@/lib/session";
+import { getOptionalUser } from "@/lib/auth";
+import { Landing } from "@/components/Landing";
+import { bookThumbs, portraits } from "@/lib/books/thumbs";
 import { activeProviderNames } from "@/lib/providers/registry";
 import { getAllowance } from "@/lib/allowance";
 import { PlanCard } from "@/components/PlanCard";
@@ -9,72 +12,123 @@ import { getCredits } from "@/lib/credits";
 
 export const dynamic = "force-dynamic";
 
+const PILL: Record<string, string> = {
+  ready: "bg-olive/15 text-olive",
+  story_review: "bg-cobalt/10 text-cobalt",
+  generating: "bg-amber-100 text-amber-800 animate-pulse",
+  failed: "bg-coral/15 text-coral",
+};
+const RINGS = ["ring-pink/40", "ring-bluebell", "ring-olive/30", "ring-chartreuse/60"];
+const MONO = ["bg-pink", "bg-cobalt", "bg-olive", "bg-coral"];
+
 const STATUS: Record<string, string> = { generating: "Being made", story_review: "Story ready to read", ready: "Ready to read", failed: "Needs attention", draft: "Draft" };
 
 export default async function Home({ searchParams }: { searchParams: Promise<{ deleted?: string }> }) {
+  // Visitors who aren't signed in see the home page with example books.
+  if (!(await getOptionalUser())) return <Landing signedIn={false} startHref="/signin" />;
   const user = await requireOnboardedUser();
   const { deleted } = await searchParams;
   const grownUps = await db.childProfile.findMany({ where: { userId: user.id, kind: "grownup" }, orderBy: { createdAt: "asc" } });
   const children = await db.childProfile.findMany({
     where: { userId: user.id, kind: "child" },
     orderBy: { createdAt: "asc" },
-    include: { books: { orderBy: { createdAt: "desc" }, select: { id: true, title: true, status: true, createdAt: true } } },
+    include: { books: { orderBy: { createdAt: "desc" }, select: { id: true, title: true, status: true, createdAt: true, coverImageKey: true } } },
   });
   const providers = activeProviderNames();
-  const [allowance, credits] = await Promise.all([getAllowance(user.id), getCredits(user.id)]);
+  const [allowance, credits, thumbs, faces] = await Promise.all([getAllowance(user.id), getCredits(user.id), bookThumbs(children.flatMap((c) => c.books)), portraits(children)]);
 
   return (
     <div className="space-y-8">
       {deleted && (
         <p className="rounded-xl bg-emerald-50 px-4 py-3 text-emerald-900 ring-1 ring-emerald-200">That child and everything about them has been deleted.</p>
       )}
-      <section className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="font-display text-3xl font-medium sm:text-4xl">Your little heroes</h1>
-          <p className="mt-1 text-[color:var(--muted)]">Make a picture book where your child is the star.</p>
+      <section className="relative overflow-hidden rounded-3xl bg-sky px-6 py-8 sm:px-10">
+        <div aria-hidden className="pointer-events-none absolute -right-10 -top-14 h-48 w-48 rounded-full bg-bluebell/60" />
+        <div aria-hidden className="pointer-events-none absolute -bottom-16 right-40 h-36 w-36 rounded-full bg-pink/25" />
+        <div aria-hidden className="pointer-events-none absolute bottom-6 right-8 hidden text-4xl text-coral/70 sm:block">✦</div>
+        <div className="relative flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="eyebrow text-coral">My bookshelf</p>
+            <h1 className="font-display text-3xl font-medium text-navy sm:text-4xl">Your little heroes</h1>
+            <p className="mt-1 max-w-md text-navy/75">Make a picture book where your child is the star, then order a keepsake copy to hold.</p>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <Link href="/children/new" className="btn btn-primary">
+              + Add a child
+            </Link>
+            <Link href="/examples" className="btn btn-secondary bg-white">
+              See examples
+            </Link>
+          </div>
         </div>
-        <Link href="/children/new" className="btn btn-primary self-start sm:self-auto">
-          + Add a child
-        </Link>
       </section>
 
       {credits.enabled ? <CreditsCard c={credits} a={allowance} /> : <PlanCard a={allowance} />}
 
       {children.length === 0 ? (
-        <div className="rounded-xl border-2 border-dashed border-[color:var(--line)] bg-white p-10 text-center">
-          <p className="font-display text-2xl">No children yet</p>
+        <div className="rounded-3xl border-2 border-dashed border-bluebell bg-white p-10 text-center">
+          <p className="text-4xl" aria-hidden>
+            📖
+          </p>
+          <p className="mt-2 font-display text-2xl">No children yet</p>
           <p className="mt-2 text-[color:var(--muted)]">Start by telling us about your child: their name, age and favorite things.</p>
           <Link href="/children/new" className="btn btn-primary mt-5">
             Add your first child
           </Link>
         </div>
       ) : (
-        <div className="grid gap-5 sm:grid-cols-2">
-          {children.map((c) => (
-            <div key={c.id} className="rounded-xl bg-white p-5 ring-1 ring-[color:var(--line)]">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <Link href={`/children/${c.id}`} className="font-display text-2xl font-medium hover:text-cobalt">
-                    {c.nickname || c.firstName}
-                  </Link>
-                  <p className="text-sm text-[color:var(--muted)]">Age {c.age}</p>
-                </div>
-                <Link href={`/books/new?childId=${c.id}`} className="btn btn-sky btn-sm">
-                  New book
+        <div className="space-y-6">
+          {children.map((c, ci) => (
+            <section key={c.id} className="rounded-3xl bg-white p-5 ring-1 ring-[color:var(--line)] sm:p-6" data-testid="child-shelf">
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <Link href={`/children/${c.id}`} className="group flex items-center gap-4">
+                  <span className={`relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full ring-4 ${RINGS[ci % RINGS.length]}`}>
+                    {faces[c.id] ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={faces[c.id]} alt="" className="h-full w-full scale-[1.6] object-cover object-[20%_35%]" />
+                    ) : (
+                      <span className={`flex h-full w-full items-center justify-center font-display text-2xl text-white ${MONO[ci % MONO.length]}`}>{(c.nickname || c.firstName).slice(0, 1)}</span>
+                    )}
+                  </span>
+                  <span>
+                    <span className="block font-display text-2xl font-medium group-hover:text-cobalt">{c.nickname || c.firstName}</span>
+                    <span className="text-sm text-[color:var(--muted)]">
+                      Age {c.age} · {c.books.length} {c.books.length === 1 ? "book" : "books"}
+                    </span>
+                  </span>
+                </Link>
+                <Link href={`/books/new?childId=${c.id}`} className="btn btn-primary btn-sm">
+                  + New book
                 </Link>
               </div>
-              <ul className="mt-4 space-y-2">
-                {c.books.length === 0 && <li className="text-sm text-[color:var(--muted)]">No books yet.</li>}
+              <ul className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
                 {c.books.map((b) => (
                   <li key={b.id}>
-                    <Link href={`/books/${b.id}`} className="flex items-center justify-between rounded-xl bg-cream px-3 py-2 hover:bg-tint">
-                      <span className="font-semibold">{b.title ?? "New story"}</span>
-                      <span className="shrink-0 whitespace-nowrap pl-3 text-xs text-[color:var(--muted)]">{STATUS[b.status] ?? b.status}</span>
+                    <Link href={`/books/${b.id}`} className="group block">
+                      <span className="relative block aspect-square overflow-hidden rounded-lg bg-cream shadow-md ring-1 ring-black/5 transition group-hover:-translate-y-1 group-hover:rotate-[-1deg] group-hover:shadow-lg">
+                        {thumbs[b.id] ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={thumbs[b.id]} alt="" className="h-full w-full object-cover" />
+                        ) : (
+                          <span className="flex h-full w-full items-center justify-center p-3 text-center font-display text-sm text-navy/60">{b.status === "story_review" ? "Story ready to read" : "Painting..."}</span>
+                        )}
+                        <span aria-hidden className="absolute inset-y-0 left-0 w-2 bg-gradient-to-r from-black/15 to-transparent" />
+                      </span>
+                      <span className="mt-2 block text-sm font-semibold leading-snug group-hover:text-cobalt">{b.title ?? "New story"}</span>
+                      <span className={`mt-1 inline-block rounded-full px-2 py-0.5 text-[11px] font-semibold ${PILL[b.status] ?? "bg-sky text-navy"}`}>{STATUS[b.status] ?? b.status}</span>
                     </Link>
                   </li>
                 ))}
+                <li>
+                  <Link href={`/books/new?childId=${c.id}`} className="flex aspect-square flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-bluebell text-center text-sm text-cobalt transition hover:bg-tint">
+                    <span className="text-2xl" aria-hidden>
+                      +
+                    </span>
+                    {c.books.length ? "Another book" : "Their first book"}
+                  </Link>
+                </li>
               </ul>
-            </div>
+            </section>
           ))}
         </div>
       )}

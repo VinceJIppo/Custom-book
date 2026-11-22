@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { requireOnboardedUser } from "@/lib/session";
 import { listThemesForUser } from "@/lib/themes";
+import { themeSamples } from "@/lib/themeSamples";
+import { ThemeSamples } from "@/components/ThemeSamples";
 import { duplicateThemeAction } from "@/app/actions";
 
 export const dynamic = "force-dynamic";
@@ -11,13 +13,10 @@ export default async function Themes({ searchParams }: { searchParams: Promise<{
   const themes = await listThemesForUser(user.id);
   const mine = themes.filter((t) => !t.isBuiltIn);
   const builtIn = themes.filter((t) => t.isBuiltIn);
+  const samples = await themeSamples(user.id, themes.map((t) => ({ id: t.id, slug: t.slug })));
   const Card = ({ t, own }: { t: (typeof themes)[number]; own: boolean }) => (
     <li className="overflow-hidden rounded-xl bg-white ring-1 ring-[color:var(--line)]">
-      <div className="flex h-10">
-        {t.config.artDirection.palette.map((c, i) => (
-          <div key={i} className="flex-1" style={{ background: c }} />
-        ))}
-      </div>
+      <ThemeSamples samples={samples[t.id]} palette={t.config.artDirection.palette} name={t.config.name} tall />
       <div className="space-y-2 p-4">
         <p className="font-display text-lg font-medium">{t.config.name}</p>
         <p className="text-sm text-[color:var(--muted)]">{t.config.pitch}</p>

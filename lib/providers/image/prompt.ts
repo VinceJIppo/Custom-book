@@ -19,6 +19,8 @@ export const STYLE_DESCRIPTIONS: Record<ArtStyle, string> = {
     "hand-drawn crayon and colored pencil illustration as a talented child might draw: waxy strokes, textured fills, cheerful and loose",
   "gentle-ink-wash":
     "gentle classic picture-book illustration: fine, slightly sketchy pencil-and-ink outlines drawn with few lines, soft muted watercolor washes in honey, sage green, dusty rose and soft grey, delicate leafy branches and simple tufts of grass, tender understated expressions, quiet and calm; a small vignette scene on plain white paper whose edges fade softly into the white with no border, frame or background fill",
+  "painted-whimsy":
+    "delicate hand-painted children's book illustration in gouache and soft watercolor with fine colored-pencil linework, a nostalgic vintage-storybook feeling of childlike wonder: a soft, dreamy pastel palette of blush pink, butter yellow, powder blue, mint and cream with small touches of rose red; rosy cheeks and tiny painted freckles; dainty florals, ribbons, bows, gingham and polka dots; tiny magical details everywhere to discover (wildflowers, strawberries, little stars, teacups, butterflies, lace); gentle glowing light and visible brush and paper texture; sweet, tender and a little enchanted; the scene floats on warm cream paper with soft painterly edges that fade into the paper, no border or frame",
   "whimsical-ink":
     "whimsical, topsy-turvy picture-book illustration: wobbly hand-inked black outlines, bold flat colors from a small bright palette with plenty of white, curvy leaning buildings and corkscrew towers, tufty lollipop trees, curly spirals and dotted patterns, rounded rubbery characters with expressive faces, playful impossible perspective",
 };

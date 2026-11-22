@@ -12,6 +12,8 @@ import "@fontsource/fraunces/500.css";
 import "@fontsource/fraunces/600.css";
 import "@fontsource/eb-garamond/400.css";
 import "@fontsource/eb-garamond/400-italic.css";
+import "@fontsource/cormorant-garamond/500.css";
+import "@fontsource/cormorant-garamond/500-italic.css";
 import "@fontsource/eb-garamond/500.css";
 import "@fontsource/newsreader/400.css";
 import "@fontsource/newsreader/400-italic.css";
@@ -90,6 +92,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               </Link>
               <Link href="/themes" className="hover:text-cobalt sm:hidden">
                 Themes
+              </Link>
+              <Link href="/examples" className="hover:text-cobalt">
+                Examples
               </Link>
               <Link href="/orders" className="text-coral hover:text-navy">
                 Orders

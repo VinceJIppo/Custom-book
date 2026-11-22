@@ -8,6 +8,7 @@ export const ART_STYLES = [
   "crayon",
   "whimsical-ink",
   "gentle-ink-wash",
+  "painted-whimsy",
 ] as const;
 export const ArtStyleSchema = z.enum(ART_STYLES);
 export type ArtStyle = z.infer<typeof ArtStyleSchema>;
@@ -20,10 +21,14 @@ export const ART_STYLE_LABELS: Record<ArtStyle, string> = {
   crayon: "Crayon",
   "whimsical-ink": "Whimsical ink",
   "gentle-ink-wash": "Gentle ink & wash",
+  "painted-whimsy": "Hand-painted whimsy",
 };
 
 /** Styles whose pages use the quiet "vignette" look: serif text on white, small pictures that fade into the page. */
-export const VIGNETTE_STYLES: ReadonlySet<string> = new Set(["gentle-ink-wash"]);
+export const VIGNETTE_STYLES: ReadonlySet<string> = new Set(["gentle-ink-wash", "painted-whimsy"]);
+
+/** Vignette styles printed on warm cream paper instead of white (pictures fade into this color). */
+export const PAPER_COLORS: Readonly<Record<string, string>> = { "painted-whimsy": "#fbf6ee" };
 
 const hexColor = z.string().regex(/^#[0-9a-fA-F]{6}$/, "Use a 6-digit hex color like #1E88E5");
 

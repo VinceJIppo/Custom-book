@@ -8,9 +8,9 @@ import { superhero } from "./helpers";
 
 describe("built-in themes", () => {
   const themes = loadBuiltInThemeFiles();
-  it("loads all eight, each valid", () => {
+  it("loads all nine, each valid", () => {
     expect(themes.map((t) => t.id).sort()).toEqual(
-      ["construction-crew", "dinosaur-valley", "dragon-knight", "ocean-deep", "quiet-meadow", "space-explorer", "superhero-squad", "topsy-turvy-town"].sort(),
+      ["construction-crew", "dinosaur-valley", "dragon-knight", "ocean-deep", "quiet-meadow", "space-explorer", "superhero-squad", "topsy-turvy-town", "wishing-garden"].sort(),
     );
   });
   it("contain no protected characters, franchises or real authors", async () => {

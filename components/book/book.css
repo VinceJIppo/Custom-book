@@ -254,3 +254,24 @@
   white-space: pre-line;
   overflow: hidden;
 }
+
+
+/* Hand-painted whimsy: the vignette layout on warm cream paper, with delicate italic titles. */
+.bk-page[data-look="painted"],
+.bk-cover-spread[data-look="painted"] {
+  background: #fbf6ee;
+  font-family: "EB Garamond", Georgia, "Times New Roman", serif;
+  color: #4b3a3c;
+  line-height: 1.42;
+}
+.bk-page[data-look="painted"] .bk-display,
+.bk-cover-spread[data-look="painted"] .bk-display {
+  font-family: "Cormorant Garamond", "EB Garamond", Georgia, serif;
+  font-style: italic;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: #b0606f;
+}
+.bk-page[data-look="painted"] .bk-cover-title {
+  background: transparent;
+}

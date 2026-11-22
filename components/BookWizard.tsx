@@ -8,6 +8,7 @@ import { READING_LEVELS, READING_LEVEL_RULES, STORY_LENGTHS, type ReadingLevel }
 import { DEFAULT_VOICE, VOICES, VOICE_IDS, type VoiceId } from "@/lib/schemas/voices";
 import type { CostEstimate } from "@/lib/cost/estimate";
 import { CastPicker, type CastOption } from "./CastPicker";
+import { ThemeSamples } from "./ThemeSamples";
 
 export interface WizardTheme {
   id: string;
@@ -18,6 +19,8 @@ export interface WizardTheme {
   defaultStyle: ArtStyle;
   ageRange: [number, number];
   cast: string[];
+  /** Sample page pictures for the card. */
+  samples?: string[];
 }
 
 export interface WizardProps {
@@ -83,11 +86,7 @@ export function BookWizard({ child, themes, defaultReadingLevel, estimates, stor
                 }}
                 className={`overflow-hidden rounded-xl bg-white text-left ring-2 transition ${selected ? "ring-cobalt" : "ring-[color:var(--line)] hover:ring-sky"}`}
               >
-                <div className="flex h-16">
-                  {t.palette.map((c) => (
-                    <div key={c} className="flex-1" style={{ background: c }} />
-                  ))}
-                </div>
+                <ThemeSamples samples={t.samples} palette={t.palette} name={t.name} />
                 <div className="p-4">
                   <div className="flex items-center justify-between">
                     <span className="font-display text-lg font-medium">{t.name}</span>

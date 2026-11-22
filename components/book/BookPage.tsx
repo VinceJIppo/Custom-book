@@ -3,8 +3,12 @@ import { BLEED_IN, COVER_TITLE_BAND, IMAGE_TOP_FRACTION, SPOT_FRACTION, safeBox,
 import type { BookView, PageView } from "@/lib/books/viewTypes";
 import { VIGNETTE_STYLES } from "@/lib/schemas/theme";
 
-/** "vignette": the quiet look (serif text, small pictures fading into a white page). */
+/**
+ * "vignette": the quiet look (serif text, small pictures fading into a white page).
+ * "painted": the same page layout on warm cream paper with delicate italic titles (Hand-painted whimsy).
+ */
 export function lookFor(style: string) {
+  if (style === "painted-whimsy") return "painted";
   return VIGNETTE_STYLES.has(style) ? "vignette" : "classic";
 }
 
@@ -85,7 +89,7 @@ function Story({ page, book }: { page: PageView; book: BookView }) {
     );
   }
 
-  if (lookFor(book.style) === "vignette") {
+  if (lookFor(book.style) !== "classic") {
     // Words at the top, a picture floating on the white page below (like a classic gentle picture book).
     // The words take the room they need (up to about half the page); the picture fills the rest.
     return (
