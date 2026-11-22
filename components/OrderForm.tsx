@@ -27,11 +27,14 @@ export function OrderForm({
   files,
   countries,
   paymentName,
+  credits,
 }: {
   bookId: string;
   files: Array<{ exportId: string; label: string; detail: string }>;
   countries: Array<[string, string]>;
   paymentName: string;
+  /** Credits that can go toward this book (keeping the minimum in the account), and the balance. */
+  credits?: { redeemableUsd: number; balanceUsd: number; keepUsd: number };
 }) {
   const [quote, quoteFormAction, quoting] = useActionState<OrderFormState | null, FormData>(quoteAction, null);
   const [checkout, checkoutFormAction, paying] = useActionState<OrderFormState | null, FormData>(checkoutAction, null);
@@ -174,6 +177,25 @@ export function OrderForm({
               </label>
             ))}
             <p className="text-sm text-[color:var(--muted)]">One total per option: printing, shipping and tax included.</p>
+            {credits && (
+              <label className="flex items-start gap-3 rounded-lg bg-white p-3 ring-1 ring-[color:var(--line)]" data-testid="use-credits">
+                <input type="checkbox" name="useCredits" disabled={credits.redeemableUsd <= 0} defaultChecked={credits.redeemableUsd > 0} className="mt-1" />
+                <span className="text-sm">
+                  {credits.redeemableUsd > 0 ? (
+                    <>
+                      <span className="font-semibold">Use up to ${credits.redeemableUsd.toFixed(2)} of my credits</span>
+                      <span className="block text-[color:var(--muted)]">
+                        You have ${credits.balanceUsd.toFixed(2)}; ${credits.keepUsd.toFixed(2)} stays in your account for making more books. Buying this book also adds new credits.
+                      </span>
+                    </>
+                  ) : (
+                    <span className="text-[color:var(--muted)]">
+                      Credits can pay toward a book when you have more than ${credits.keepUsd.toFixed(2)} (you have ${credits.balanceUsd.toFixed(2)}). Buying this book adds credits.
+                    </span>
+                  )}
+                </span>
+              </label>
+            )}
             <button formAction={checkoutFormAction} disabled={paying} className="btn btn-primary" data-testid="checkout">
               {paying ? "Opening checkout..." : paymentName === "mock" ? "Continue to test checkout" : "Continue to secure checkout"}
             </button>

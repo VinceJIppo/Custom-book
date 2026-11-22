@@ -18,6 +18,7 @@ export default defineConfig({
       ALLOWANCES_ENABLED: "false",
       // Most tests make whole books in one go and check the automatic redraw; both have their own tests.
       STORY_REVIEW: "false",
+      CREDITS_ENABLED: "false",
       PICTURE_CHECK: "redraw",
       BATCH_POLL_SECONDS: "0",
     },

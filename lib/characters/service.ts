@@ -1,3 +1,6 @@
+import { creditProblem } from "../credits";
+import { moderate } from "../safety/moderate";
+import { recordInlineSpend } from "../credits/spend";
 import { Prisma } from "@prisma/client";
 import { checkAllowance } from "../allowance";
 import { db } from "../db";
@@ -11,7 +14,6 @@ import { CharacterBibleSchema, type CharacterBible } from "../schemas/story";
 import { IMAGE_PRICES, PLANNING_IMAGE_PRICE } from "../cost/prices";
 import { dailyUsage } from "../cost/usage";
 import { checkFieldsForProtectedNames } from "../safety/protectedNames";
-import { getModeration } from "../providers/registry";
 import { log } from "../log";
 
 export const MAX_PHOTOS = 3;
@@ -54,6 +56,7 @@ export async function addPhoto(userId: string, childId: string, file: Buffer, co
   }
 
   const check = await getVisionProvider().checkPhoto(photo);
+  await recordInlineSpend(userId, "photo.check", check.usage, { payload: { childId } });
   if (!check.value.ok) {
     return { ok: false, message: "This photo won't give a good likeness.", problems: check.value.problems.length ? check.value.problems : ["Please try a clearer photo of just your child."] };
   }
@@ -101,7 +104,7 @@ export async function startCharacterSheet(userId: string, childId: string, input
   if (outfit) {
     const hit = checkFieldsForProtectedNames({ outfit });
     if (hit) return { ok: false, message: hit.match.message };
-    const mod = await getModeration().check(outfit);
+    const mod = await moderate(outfit, { userId });
     if (!mod.ok) return { ok: false, message: mod.message ?? "Please describe the outfit differently." };
   }
   const photos = await db.childPhoto.count({ where: { childId } });
@@ -113,6 +116,10 @@ export async function startCharacterSheet(userId: string, childId: string, input
     return { ok: false, message: `You've made ${used} sets of characters in this style, which is the limit. Pick one of the existing options, or try a different style.` };
   }
   const overLimit = await checkAllowance(userId, "character");
+  if (!overLimit) {
+    const credit = await creditProblem(userId, (IMAGE_PRICES[imageProviderChoice()] ?? PLANNING_IMAGE_PRICE).perIllustration * 3);
+    if (credit) return { ok: false, message: credit };
+  }
   if (overLimit) return { ok: false, message: overLimit };
   if (await db.characterSheet.count({ where: { childId, status: "generating" } })) {
     return { ok: false, message: "Characters are already being drawn. Give it a minute." };
@@ -191,7 +198,7 @@ export async function saveBible(userId: string, sheetId: string, raw: unknown) {
   const text = Object.values(parsed.data).join(". ");
   const hit = checkFieldsForProtectedNames({ bible: text });
   if (hit) return { ok: false as const, message: hit.match.message };
-  const mod = await getModeration().check(text);
+  const mod = await moderate(text, { userId });
   if (!mod.ok) return { ok: false as const, message: mod.message ?? "Please rephrase." };
   await db.characterSheet.update({ where: { id: sheet.id }, data: { bible: parsed.data as unknown as Prisma.InputJsonValue, bibleStatus: "ready" } });
   return { ok: true as const };

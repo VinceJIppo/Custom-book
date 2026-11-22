@@ -134,6 +134,11 @@ export default async function OrderPage({ params, searchParams }: { params: Prom
             {formatMoney(order.totalCents, order.currency)}
           </p>
           <p className="text-sm text-[color:var(--muted)]">Printing, shipping and tax included. {order.pageCount} pages.</p>
+          {order.creditCents > 0 && (
+            <p className="text-sm" data-testid="order-credits">
+              {formatMoney(order.creditCents, order.currency)} paid with credits, {formatMoney(order.totalCents - order.creditCents, order.currency)} by card.
+            </p>
+          )}
           {admin && quote && (
             <dl className="mt-3 grid grid-cols-2 gap-x-4 text-sm" data-testid="price-breakdown">
               <dt>Printer: printing</dt>

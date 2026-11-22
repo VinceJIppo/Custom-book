@@ -4,6 +4,8 @@ import { requireOnboardedUser } from "@/lib/session";
 import { activeProviderNames } from "@/lib/providers/registry";
 import { getAllowance } from "@/lib/allowance";
 import { PlanCard } from "@/components/PlanCard";
+import { CreditsCard } from "@/components/CreditsCard";
+import { getCredits } from "@/lib/credits";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +21,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ d
     include: { books: { orderBy: { createdAt: "desc" }, select: { id: true, title: true, status: true, createdAt: true } } },
   });
   const providers = activeProviderNames();
-  const allowance = await getAllowance(user.id);
+  const [allowance, credits] = await Promise.all([getAllowance(user.id), getCredits(user.id)]);
 
   return (
     <div className="space-y-8">
@@ -36,7 +38,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ d
         </Link>
       </section>
 
-      <PlanCard a={allowance} />
+      {credits.enabled ? <CreditsCard c={credits} a={allowance} /> : <PlanCard a={allowance} />}
 
       {children.length === 0 ? (
         <div className="rounded-xl border-2 border-dashed border-[color:var(--line)] bg-white p-10 text-center">

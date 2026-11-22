@@ -10,6 +10,8 @@
  * Prices are always recalculated on the server; nothing the browser sends
  * about money is trusted.
  */
+import { getCredits, redeemForOrder, reverseOrderCredits, rewardForOrder } from "../credits";
+import { handleCreditPurchaseEvent } from "../credits/purchase";
 import type { Order, Prisma } from "@prisma/client";
 import { db } from "../db";
 import { getConfig } from "../config";
@@ -23,7 +25,7 @@ import { buildBookView } from "../books/view";
 import { isAdminEmail } from "../admin";
 import { notifyOrderStatus } from "./notify";
 import { GiftNoteSchema, parseAddress } from "./address";
-import { priceQuote, type CustomerQuote } from "./pricing";
+import { formatMoney, priceQuote, type CustomerQuote } from "./pricing";
 import { OPEN_PRINT_STATUSES, pushHistory, shouldApply, STATUS_LABELS, type OrderStatus } from "./status";
 
 export type Result<T> = ({ ok: true } & T) | { ok: false; message: string; errors?: Record<string, string> };
@@ -128,7 +130,7 @@ async function deleteFrozen(order: Pick<Order, "interiorPdfKey" | "coverPdfKey">
  */
 export async function startCheckout(
   userId: string,
-  input: { bookId: string; exportId: string; address: unknown; giftNote?: string; shippingLevel: string },
+  input: { bookId: string; exportId: string; address: unknown; giftNote?: string; shippingLevel: string; useCredits?: boolean },
 ): Promise<Result<{ orderId: string; url: string }>> {
   const level = SHIPPING_LEVELS.find((l) => l === input.shippingLevel) as ShippingLevel | undefined;
   if (!level) return { ok: false, message: "Choose a shipping option." };
@@ -152,6 +154,16 @@ export async function startCheckout(
 
   const user = await db.user.findUniqueOrThrow({ where: { id: userId } });
   const payment = getPaymentProvider();
+  // Credits toward the book, keeping CREDIT_REDEEM_KEEP_USD in the account. A card charge
+  // must be at least 50 cents, so credits either cover everything or leave at least that.
+  let creditCents = 0;
+  if (input.useCredits) {
+    const credits = await getCredits(userId);
+    creditCents = Math.min(quote.totalCents, Math.floor(credits.redeemableUsd * 100));
+    if (creditCents < quote.totalCents && quote.totalCents - creditCents < 50) creditCents = quote.totalCents - 50;
+    creditCents = Math.max(0, creditCents);
+  }
+  const dueCents = quote.totalCents - creditCents;
   const order = await db.order.create({
     data: {
       userId,
@@ -170,16 +182,23 @@ export async function startCheckout(
       quote: quote as unknown as Prisma.InputJsonValue,
       currency: quote.currency,
       totalCents: quote.totalCents,
-      paymentProvider: payment.name,
+      creditCents,
+      paymentProvider: dueCents === 0 ? "credits" : payment.name,
       estimatedArrival: quote.arrivalMax,
     },
   });
   try {
     const frozen = await freezeFiles(order, o.book, o.exp, 1);
     const appUrl = getConfig().APP_URL.replace(/\/$/, "");
+    if (dueCents === 0) {
+      // Paid entirely with credits: no card checkout.
+      await db.order.update({ where: { id: order.id }, data: { ...frozen } });
+      await markPaid(order.id, `credits_${order.id}`);
+      return { ok: true, orderId: order.id, url: `${appUrl}/orders/${order.id}` };
+    }
     const session = await payment.createCheckout({
       orderId: order.id,
-      amountCents: quote.totalCents,
+      amountCents: dueCents,
       currency: quote.currency.toLowerCase(),
       productName: `${o.book.title ?? "Picture book"} (${product.label})`,
       description: `Printed picture book, ${o.exp.pageCount} pages, shipped to ${parsed.address.name}`,
@@ -210,21 +229,34 @@ export async function fulfillCheckout(sessionId: string): Promise<Order | null> 
   const state = await getPaymentProvider().getCheckout(sessionId);
   if (state.status === "expired" && !state.paid) return markExpired(order);
   if (!state.paid) return order;
-  if (state.amountCents != null && state.amountCents !== order.totalCents) {
-    log.error("Paid amount differs from the order total", { orderId: order.id, paid: state.amountCents, expected: order.totalCents });
+  if (state.amountCents != null && state.amountCents !== order.totalCents - order.creditCents) {
+    log.error("Paid amount differs from the order total", { orderId: order.id, paid: state.amountCents, expected: order.totalCents - order.creditCents });
   }
+  return markPaid(order.id, state.paymentRef);
+}
+
+/**
+ * Moves an order to "paid" exactly once: queues the print job, takes any credits
+ * applied at checkout, and adds the per-book credits.
+ */
+async function markPaid(orderId: string, paymentRef?: string): Promise<Order | null> {
+  const order = await db.order.findUnique({ where: { id: orderId } });
+  if (!order) return null;
   const moved = await db.$transaction(async (tx) => {
     const r = await tx.order.updateMany({
       where: { id: order.id, status: { in: ["awaiting_payment", "payment_failed"] } },
       data: {
         status: "paid",
         paidAt: new Date(),
-        paymentRef: state.paymentRef,
-        statusHistory: pushHistory(order.statusHistory, { status: "paid", message: "Payment received" }) as unknown as Prisma.InputJsonValue,
+        paymentRef,
+        statusHistory: pushHistory(order.statusHistory, { status: "paid", message: order.creditCents ? `Payment received (${formatMoney(order.creditCents, order.currency)} in credits)` : "Payment received" }) as unknown as Prisma.InputJsonValue,
       },
     });
-    if (r.count === 1) await enqueue("order.submit", { orderId: order.id }, { userId: order.userId, bookId: order.bookId ?? undefined, maxAttempts: 5 }, tx);
-    return r.count === 1;
+    if (r.count !== 1) return false;
+    await enqueue("order.submit", { orderId: order.id }, { userId: order.userId, bookId: order.bookId ?? undefined, maxAttempts: 5 }, tx);
+    await redeemForOrder(order.userId, order.id, order.creditCents, tx);
+    await rewardForOrder(order.userId, order.id, tx);
+    return true;
   });
   const fresh = await db.order.findUnique({ where: { id: order.id } });
   if (moved) {
@@ -244,6 +276,8 @@ async function markExpired(order: Order) {
 }
 
 export async function handlePaymentEvent(event: PaymentEvent) {
+  // Credit packs use the same payment provider and webhook.
+  if (await db.creditPurchase.findUnique({ where: { checkoutSessionId: event.sessionId } })) return handleCreditPurchaseEvent(event);
   if (event.type === "checkout.completed") return fulfillCheckout(event.sessionId);
   const order = await db.order.findUnique({ where: { checkoutSessionId: event.sessionId } });
   if (!order) return null;
@@ -444,6 +478,7 @@ export async function refundOrder(orderId: string): Promise<Result<{ refundId: s
       where: { id: order.id },
       data: { status: "refunded", statusHistory: pushHistory(order.statusHistory, { status: "refunded", message: `Refunded (${r.id})` }) as unknown as Prisma.InputJsonValue },
     });
+    await reverseOrderCredits(order.userId, order.id);
     const queuedJobs = await db.generationJob.findMany({ where: { type: "order.submit", status: "queued" }, select: { id: true, payload: true } });
     const ids = queuedJobs.filter((j) => (j.payload as { orderId?: string }).orderId === orderId).map((j) => j.id);
     if (ids.length) await db.generationJob.updateMany({ where: { id: { in: ids } }, data: { status: "cancelled" } });

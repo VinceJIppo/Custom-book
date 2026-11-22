@@ -33,6 +33,62 @@ model User {
   jobs     GenerationJob[]
   orders   Order[]
   sessions Session[]
+  creditLots      CreditLot[]
+  creditEntries   CreditEntry[]
+  creditPurchases CreditPurchase[]
+}
+
+/// Usage credits, in US dollars. Each grant is a lot with its own expiry; usage
+/// draws from the lot that expires soonest. A "deficit" lot (negative, never
+/// expires) records usage that ran past the balance and is paid off by the next grant.
+model CreditLot {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// signup | order | purchase | admin | refund | deficit
+  kind         String
+  amountUsd    Float
+  remainingUsd Float
+  expiresAt    DateTime
+  /// Makes grants idempotent, e.g. "signup:<userId>", "order:<orderId>", "purchase:<id>".
+  sourceKey    String?  @unique
+  note         String?
+  createdAt    DateTime @default(now())
+
+  @@index([userId, expiresAt])
+}
+
+/// Every change to a balance, for the history page and audits. Amounts are signed.
+model CreditEntry {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// grant | usage | redeem | expire | refund
+  kind      String
+  amountUsd Float
+  bookId    String?
+  jobId     String?
+  orderId   String?
+  note      String?
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+}
+
+/// A credit pack bought through the payment provider.
+model CreditPurchase {
+  id                String    @id @default(cuid())
+  userId            String
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amountUsd         Float
+  priceCents        Int
+  /// awaiting_payment | paid | expired
+  status            String    @default("awaiting_payment")
+  paymentProvider   String
+  checkoutSessionId String?   @unique
+  paymentRef        String?
+  createdAt         DateTime  @default(now())
+  paidAt            DateTime?
 }
 
 /// One-time sign-in links. Only a hash of the token is stored.
@@ -361,6 +417,8 @@ model Order {
   quote             Json?
   currency          String    @default("USD")
   totalCents        Int       @default(0)
+  /// Usage credits applied at checkout (taken from the balance when the order is paid).
+  creditCents       Int       @default(0)
   paymentProvider   String    @default("mock")
   checkoutSessionId String?   @unique
   /// Payment intent (or mock payment) id, used for refunds

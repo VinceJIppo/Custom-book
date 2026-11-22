@@ -17,6 +17,7 @@ import { storyContextFor, outlineFor } from "./context";
 import { storyContextWithLooks } from "./appearance";
 import { checkNote, restoreVersion, snapshotPage, underBudget } from "./pages";
 import { queuePictures } from "./pictures";
+import { recordInlineSpend } from "../credits/spend";
 import type { JobOutcome } from "../jobs/types";
 
 export type ReviewResult = { ok: true; message: string; undoTag?: string } | { ok: false; message: string };
@@ -29,27 +30,14 @@ async function reviewingBook(userId: string, bookId: string) {
 }
 
 async function recordSpend(tx: Prisma.TransactionClient, book: Book, note: string, usage: { provider: string; costUsd: number }) {
-  // Counts as one AI rewrite against the parent's allowance, and its cost against the book.
-  await tx.generationJob.create({
-    data: {
-      type: "page.revise",
-      status: "succeeded",
-      payload: { note, scope: "story" },
-      userId: book.userId,
-      bookId: book.id,
-      attempts: 1,
-      provider: usage.provider,
-      costUsd: usage.costUsd,
-      usage: usage as unknown as Prisma.InputJsonValue,
-      finishedAt: new Date(),
-    },
-  });
+  // Counts as one AI rewrite against the parent's allowance, and its cost against the book and their credits.
+  await recordInlineSpend(book.userId, "page.revise", usage, { bookId: book.id, payload: { note, scope: "story" } }, tx);
 }
 
 async function vetNote(userId: string, raw: string, usd: number): Promise<string | { error: string }> {
   const note = raw.trim().replace(/\s+/g, " ").slice(0, 600);
   if (!note) return { error: "Tell us what you'd like to change." };
-  const problem = await checkNote(note);
+  const problem = await checkNote(note, userId);
   if (problem) return { error: problem };
   const overLimit = await checkAllowance(userId, "rewrite");
   if (overLimit) return { error: overLimit };

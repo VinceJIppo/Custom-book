@@ -51,6 +51,7 @@ export async function checkoutAction(_prev: OrderFormState | null, fd: FormData)
     address: addressFrom(fd),
     giftNote: String(fd.get("giftNote") ?? ""),
     shippingLevel: String(fd.get("shippingLevel") ?? ""),
+    useCredits: fd.get("useCredits") === "on",
   });
   if (!res.ok) return { message: res.message, errors: res.errors };
   redirect(res.url);

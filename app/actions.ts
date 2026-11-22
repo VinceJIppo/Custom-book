@@ -7,6 +7,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { createChild, deleteChildEverything, getChild, updateChild, type SaveResult } from "@/lib/children/service";
 import { createAndStartBook, retryFailedJobs, type CreateBookResult } from "@/lib/books/service";
 import { approveStory } from "@/lib/books/pictures";
+import { startCreditPurchase } from "@/lib/credits/purchase";
 import { rewritePageRange, rewriteWholeStory, undoRewrite } from "@/lib/books/review";
 import { acceptFlagged, changeLayout, movePage, requestNewArt, requestNewCover, restoreVersion, reviseTextWithAI, updatePageText } from "@/lib/books/pages";
 import { deleteCustomTheme, draftCustomTheme, duplicateTheme, saveCustomTheme } from "@/lib/customThemes";
@@ -101,6 +102,13 @@ export async function retryBookAction(fd: FormData) {
   const id = String(fd.get("bookId") ?? "");
   await retryFailedJobs(user.id, id);
   redirect(`/books/${id}`);
+}
+
+/** Buy a credit pack: off to the payment page. */
+export async function buyCreditsAction(fd: FormData) {
+  const user = await getCurrentUser();
+  const res = await startCreditPurchase(user.id, Number(fd.get("amount")));
+  redirect(res.ok ? res.url : `/credits?error=${encodeURIComponent(res.message)}`);
 }
 
 /** The parent approved the story: start the pictures. */

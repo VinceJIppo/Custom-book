@@ -1,16 +1,16 @@
+import { moderate } from "../safety/moderate";
 import type { Prisma } from "@prisma/client";
 import { db } from "../db";
 import { getStorage, keys } from "../storage";
 import { ChildProfileInputSchema, ChildSnapshotSchema, GrownUpInputSchema, type ChildProfileInput, type GrownUpInput } from "../schemas/child";
 import { checkFieldsForProtectedNames } from "../safety/protectedNames";
-import { getModeration } from "../providers/registry";
 import { log } from "../log";
 
 export type FieldErrors = Record<string, string>;
 export type SaveResult = { ok: true; id: string } | { ok: false; errors: FieldErrors; message?: string; suggestedThemeIds?: string[] };
 
 /** Validate, moderate and check for protected names. Shared by create and update. */
-export async function validateChildInput(raw: unknown): Promise<{ ok: true; data: ChildProfileInput } | Extract<SaveResult, { ok: false }>> {
+export async function validateChildInput(raw: unknown, userId?: string): Promise<{ ok: true; data: ChildProfileInput } | Extract<SaveResult, { ok: false }>> {
   const parsed = ChildProfileInputSchema.safeParse(raw);
   if (!parsed.success) {
     const errors: FieldErrors = {};
@@ -36,7 +36,7 @@ export async function validateChildInput(raw: unknown): Promise<{ ok: true; data
     };
   }
   const freeText = [...Object.values(d.favorites).flat(), d.petType, d.lesson].filter(Boolean).join(". ");
-  const mod = await getModeration().check(freeText);
+  const mod = await moderate(freeText, userId ? { userId } : undefined);
   if (!mod.ok) return { ok: false, errors: {}, message: mod.message };
   return { ok: true, data: d };
 }
@@ -56,14 +56,14 @@ function toRow(d: ChildProfileInput) {
 }
 
 export async function createChild(userId: string, raw: unknown): Promise<SaveResult> {
-  const v = await validateChildInput(raw);
+  const v = await validateChildInput(raw, userId);
   if (!v.ok) return v;
   const child = await db.childProfile.create({ data: { userId, ...toRow(v.data) } });
   return { ok: true, id: child.id };
 }
 
 export async function updateChild(userId: string, childId: string, raw: unknown): Promise<SaveResult> {
-  const v = await validateChildInput(raw);
+  const v = await validateChildInput(raw, userId);
   if (!v.ok) return v;
   const res = await db.childProfile.updateMany({ where: { id: childId, userId, kind: "child" }, data: toRow(v.data) });
   if (res.count !== 1) return { ok: false, errors: {}, message: "Child not found." };
@@ -71,7 +71,7 @@ export async function updateChild(userId: string, childId: string, raw: unknown)
 }
 
 /** Grown-ups (parents, grandparents...) who can star in a child's book. */
-export async function validateGrownUpInput(raw: unknown): Promise<{ ok: true; data: GrownUpInput } | Extract<SaveResult, { ok: false }>> {
+export async function validateGrownUpInput(raw: unknown, userId?: string): Promise<{ ok: true; data: GrownUpInput } | Extract<SaveResult, { ok: false }>> {
   const parsed = GrownUpInputSchema.safeParse({ ...(raw as object), kind: "grownup" });
   if (!parsed.success) {
     const errors: FieldErrors = {};
@@ -82,7 +82,7 @@ export async function validateGrownUpInput(raw: unknown): Promise<{ ok: true; da
   const hit = checkFieldsForProtectedNames({ about: d.about, look: d.look });
   if (hit) return { ok: false, errors: { [hit.field]: hit.match.message }, message: hit.match.message, suggestedThemeIds: hit.match.suggestedThemeIds };
   const text = [d.relationship, d.about, d.look].filter(Boolean).join(". ");
-  const mod = await getModeration().check(text);
+  const mod = await moderate(text, userId ? { userId } : undefined);
   if (!mod.ok) return { ok: false, errors: {}, message: mod.message };
   return { ok: true, data: d };
 }
@@ -103,14 +103,14 @@ function grownUpRow(d: GrownUpInput) {
 }
 
 export async function createGrownUp(userId: string, raw: unknown): Promise<SaveResult> {
-  const v = await validateGrownUpInput(raw);
+  const v = await validateGrownUpInput(raw, userId);
   if (!v.ok) return v;
   const p = await db.childProfile.create({ data: { userId, ...grownUpRow(v.data) } });
   return { ok: true, id: p.id };
 }
 
 export async function updateGrownUp(userId: string, id: string, raw: unknown): Promise<SaveResult> {
-  const v = await validateGrownUpInput(raw);
+  const v = await validateGrownUpInput(raw, userId);
   if (!v.ok) return v;
   const res = await db.childProfile.updateMany({ where: { id, userId, kind: "grownup" }, data: grownUpRow(v.data) });
   if (res.count !== 1) return { ok: false, errors: {}, message: "Person not found." };

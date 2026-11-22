@@ -130,6 +130,18 @@ const EnvSchema = z.object({
 
   /** Rewards: limit books, characters and edits by tier (first-time vs repeat customers). Admins are unlimited. */
   ALLOWANCES_ENABLED: bool.default(true),
+  /** Usage credits: every Claude and Gemini call is charged to the user's balance at its actual cost. */
+  CREDITS_ENABLED: bool.default(true),
+  /** Free credits every new account starts with (USD). */
+  CREDIT_SIGNUP_USD: z.coerce.number().min(0).default(5),
+  /** Credits added for every printed book bought (USD). */
+  CREDIT_PER_BOOK_USD: z.coerce.number().min(0).default(10),
+  /** Credits expire this many months after they are added. */
+  CREDIT_EXPIRY_MONTHS: z.coerce.number().int().min(1).max(60).default(6),
+  /** Credits can pay toward a book at checkout as long as this much stays in the account (USD). */
+  CREDIT_REDEEM_KEEP_USD: z.coerce.number().min(0).default(5),
+  /** Credit packs on sale, in USD, comma-separated. */
+  CREDIT_PACKS_USD: z.string().default("5,10,25"),
   DAILY_COST_CAP_USD: z.coerce.number().min(0).default(10),
   DAILY_BOOK_CAP: z.coerce.number().int().min(0).default(10),
   WORKER_CONCURRENCY: z.coerce.number().int().min(1).max(16).default(3),

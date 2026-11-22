@@ -1,3 +1,6 @@
+import { creditProblem } from "../credits";
+import { IMAGE_PRICES, PLANNING_IMAGE_PRICE } from "../cost/prices";
+import { imageProviderChoice } from "../providers/registry";
 import type { Book, Prisma } from "@prisma/client";
 import { db } from "../db";
 import { enqueue } from "../jobs/queue";
@@ -34,6 +37,11 @@ export async function approveStory(userId: string, bookId: string, speed?: strin
   if (!book) return { ok: false, message: "Book not found." };
   if (book.status !== "story_review") return { ok: false, message: "The pictures for this story have already been started." };
   const chosen = PictureSpeedSchema.safeParse(speed);
+  // Enough credits for the pictures (overnight is about half price).
+  const pictures = (await db.page.count({ where: { bookId: book.id, kind: "story" } })) + 1;
+  const each = (IMAGE_PRICES[imageProviderChoice()] ?? PLANNING_IMAGE_PRICE).perIllustration;
+  const credit = await creditProblem(userId, pictures * each * ((chosen.success ? chosen.data : pictureSpeedOf(book)) === "overnight" ? 0.5 : 1));
+  if (credit) return { ok: false, message: credit };
   const options = { ...(book.options as object), ...(chosen.success ? { pictureSpeed: chosen.data } : {}) };
   return db.$transaction(async (tx) => {
     // Only one approval wins, even if the button is pressed twice.

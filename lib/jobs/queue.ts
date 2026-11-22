@@ -1,4 +1,5 @@
 import type { GenerationJob, Prisma } from "@prisma/client";
+import { chargeUsage } from "../credits";
 import { db } from "../db";
 import { errorMessage, log } from "../log";
 import type { Usage } from "../providers/types";
@@ -134,6 +135,7 @@ export async function complete(
       error: null,
     },
   });
+  if (usage?.costUsd) await chargeUsage(job.userId, usage.costUsd, { bookId: job.bookId, jobId: job.id, note: job.type });
 }
 
 /** Exponential backoff: 2s, 4s, 8s ... capped at 2 minutes. */
@@ -164,6 +166,8 @@ export async function fail(
       finishedAt: retry ? null : new Date(),
     },
   });
+  // Failed tries are billed by the provider too, so they're charged like any other call.
+  if (opts.usage?.costUsd) await chargeUsage(job.userId, opts.usage.costUsd, { bookId: job.bookId, jobId: job.id, note: `${job.type} (failed try)` });
   log.warn(
     `Job ${job.type} ${job.id} ${retry ? "will retry" : "failed"}: ${msg}`,
     { attempt: job.attempts },

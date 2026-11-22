@@ -1,3 +1,5 @@
+import { creditProblem } from "../credits";
+import { moderate } from "../safety/moderate";
 import type { Prisma } from "@prisma/client";
 import { checkAllowance } from "../allowance";
 import { db } from "../db";
@@ -8,7 +10,7 @@ import { DEFAULT_VOICE } from "../schemas/voices";
 import { getThemeForUser } from "../themes";
 import { childSnapshot, getChild } from "../children/service";
 import { checkFieldsForProtectedNames } from "../safety/protectedNames";
-import { activeProviderNames, getModeration, imageProviderChoice } from "../providers/registry";
+import { activeProviderNames, imageProviderChoice } from "../providers/registry";
 import { approvedSheetFor } from "../characters/service";
 import { ART_STYLE_LABELS } from "../schemas/theme";
 import { CastMemberSnapshotSchema, type CastMemberSnapshot } from "../schemas/child";
@@ -97,7 +99,7 @@ export async function createAndStartBook(userId: string, input: { childId: strin
   }
   const freeText = [options.instructions, options.lesson, options.dedication, options.storyAbout, ...cast.map((c) => c.part)].filter(Boolean).join(". ");
   if (freeText) {
-    const mod = await getModeration().check(freeText);
+    const mod = await moderate(freeText, { userId });
     if (!mod.ok) return { ok: false, message: mod.message ?? "Please rephrase." };
   }
 
@@ -109,6 +111,8 @@ export async function createAndStartBook(userId: string, input: { childId: strin
   if (today.books >= cfg.DAILY_BOOK_CAP) {
     return { ok: false, message: `You've reached today's limit of ${cfg.DAILY_BOOK_CAP} books. Try again tomorrow.` };
   }
+  const credit = await creditProblem(userId, estimate.totalUsd);
+  if (credit) return { ok: false, message: credit };
   if (today.costUsd + estimate.totalUsd > cfg.DAILY_COST_CAP_USD) {
     return { ok: false, message: `This book would go over today's generation budget of $${cfg.DAILY_COST_CAP_USD.toFixed(2)}. Try again tomorrow.` };
   }

@@ -1,8 +1,11 @@
+import { creditProblem } from "../credits";
+import { moderate } from "../safety/moderate";
+import { recordInlineSpend } from "../credits/spend";
 import type { Prisma } from "@prisma/client";
 import { checkAllowance } from "../allowance";
 import { db } from "../db";
 import { enqueue } from "../jobs/queue";
-import { getModeration, getStoryProvider } from "../providers/registry";
+import { getStoryProvider } from "../providers/registry";
 import { checkFieldsForProtectedNames } from "../safety/protectedNames";
 import { STORY_LAYOUTS, TEXT_ZONES, type StoryLayout, type TextZone } from "../schemas/story";
 import { storyContextFor } from "./context";
@@ -44,14 +47,16 @@ export async function snapshotPage(pageId: string, note?: string, tx: Prisma.Tra
   return next;
 }
 
-export async function checkNote(note: string): Promise<string | null> {
+export async function checkNote(note: string, userId?: string): Promise<string | null> {
   const hit = checkFieldsForProtectedNames({ note });
   if (hit) return hit.match.message;
-  const mod = await getModeration().check(note);
+  const mod = await moderate(note, userId ? { userId } : undefined);
   return mod.ok ? null : (mod.message ?? "Please rephrase that note.");
 }
 
 export async function underBudget(userId: string, usd: number): Promise<string | null> {
+  const credit = await creditProblem(userId, usd);
+  if (credit) return credit;
   const cap = getConfig().DAILY_COST_CAP_USD;
   const today = await dailyUsage(userId);
   return today.costUsd + usd > cap ? `That would go over today's generation budget of $${cap.toFixed(2)}.` : null;
@@ -63,7 +68,7 @@ export async function updatePageText(userId: string, pageId: string, text: strin
   const clean = text.replace(/\r\n/g, "\n").trim();
   if (!clean) return { ok: false, message: "The page needs some text." };
   if (clean.length > 900) return { ok: false, message: "That's a lot of words for one page. Keep it under 900 characters." };
-  const problem = await checkNote(clean);
+  const problem = await checkNote(clean, userId);
   if (problem) return { ok: false, message: problem };
   await db.$transaction(async (tx) => {
     await snapshotPage(page.id, "Text edited", tx);
@@ -78,7 +83,7 @@ export async function reviseTextWithAI(userId: string, pageId: string, instructi
   if (!page || page.kind !== "story") return { ok: false, message: "Page not found." };
   const note = instruction.trim().slice(0, 300);
   if (!note) return { ok: false, message: "Tell us what to change." };
-  const problem = await checkNote(note);
+  const problem = await checkNote(note, userId);
   if (problem) return { ok: false, message: problem };
   const overLimit = await checkAllowance(userId, "rewrite");
   if (overLimit) return { ok: false, message: overLimit };
@@ -89,22 +94,8 @@ export async function reviseTextWithAI(userId: string, pageId: string, instructi
   await db.$transaction(async (tx) => {
     await snapshotPage(page.id, `Text revised: ${note}`, tx);
     await tx.page.update({ where: { id: page.id }, data: { text: res.value.text } });
-    // Record the spend against the book like any other generation.
-    await tx.generationJob.create({
-      data: {
-        type: "page.revise",
-        status: "succeeded",
-        payload: { pageId: page.id, note },
-        userId,
-        bookId: page.bookId,
-        pageId: page.id,
-        attempts: 1,
-        provider: res.usage.provider,
-        costUsd: res.usage.costUsd,
-        usage: res.usage as unknown as Prisma.InputJsonValue,
-        finishedAt: new Date(),
-      },
-    });
+    // Record the spend against the book like any other generation, and charge credits.
+    await recordInlineSpend(userId, "page.revise", res.usage, { bookId: page.bookId, pageId: page.id, payload: { pageId: page.id, note } }, tx);
   });
   return { ok: true, text: res.value.text };
 }
@@ -120,7 +111,7 @@ export async function requestNewArt(userId: string, pageId: string, mode: "redra
   if (mode === "edit" && !clean) return { ok: false, message: "Tell us what to change in the picture." };
   if (mode === "edit" && !page.imageKey) return { ok: false, message: "This page has no picture yet. Use Redraw instead." };
   if (clean) {
-    const problem = await checkNote(clean);
+    const problem = await checkNote(clean, userId);
     if (problem) return { ok: false, message: problem };
   }
   const active = await db.generationJob.count({ where: { pageId, status: { in: ["queued", "running"] } } });
@@ -146,7 +137,7 @@ export async function requestNewCover(userId: string, bookId: string, note?: str
   if (book.status !== "ready") return { ok: false, message: "The cover can be redrawn once the book is finished." };
   const clean = note?.trim().slice(0, 300) || undefined;
   if (clean) {
-    const problem = await checkNote(clean);
+    const problem = await checkNote(clean, userId);
     if (problem) return { ok: false, message: problem };
   }
   const active = await db.generationJob.count({ where: { bookId, type: "book.cover", status: { in: ["queued", "running"] } } });

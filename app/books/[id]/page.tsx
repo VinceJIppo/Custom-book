@@ -1,3 +1,4 @@
+import { bookCreditUse } from "@/lib/credits";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireOnboardedUser } from "@/lib/session";
@@ -26,6 +27,7 @@ export default async function BookPageRoute({ params, searchParams }: { params: 
       </div>
     );
   }
+  const creditUse = await bookCreditUse(user.id, book.id);
   const [view, progress] = await Promise.all([book.pages.length ? buildBookView(book) : null, getBookProgress(book.id, (book.options as { length?: number }).length ?? 16, { withProblems: isAdminEmail(user.email) })]);
   return (
     <div className="space-y-4">
@@ -33,6 +35,11 @@ export default async function BookPageRoute({ params, searchParams }: { params: 
         ← {book.child.nickname || book.child.firstName}
       </Link>
       <BookLive bookId={book.id} initial={{ status: book.status, title: book.title, progress, view }} />
+      {creditUse > 0 && (
+        <p className="text-sm text-[color:var(--muted)]" data-testid="book-credit-use">
+          This book has used ${creditUse.toFixed(2)} of credits so far. <Link href="/credits" className="underline">See your credits</Link>
+        </p>
+      )}
     </div>
   );
 }

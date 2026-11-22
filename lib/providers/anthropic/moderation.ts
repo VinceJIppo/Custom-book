@@ -32,6 +32,8 @@ export class AnthropicModerationProvider implements ModerationProvider {
       maxTokens: 2000,
     });
     const v = res.value;
-    return v.allowed ? { ok: true, categories: [] } : { ok: false, categories: v.categories, message: v.friendlyMessage || "Please rephrase so it suits a children's book." };
+    return v.allowed
+      ? { ok: true, categories: [], usage: res.usage }
+      : { ok: false, categories: v.categories, message: v.friendlyMessage || "Please rephrase so it suits a children's book.", usage: res.usage };
   }
 }

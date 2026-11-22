@@ -1,3 +1,5 @@
+import { getCredits } from "@/lib/credits";
+import { CreditBadge } from "@/components/CreditBadge";
 import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import "@fontsource/andika/400.css";
@@ -30,6 +32,7 @@ export const viewport: Viewport = { width: "device-width", initialScale: 1 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const user = await getOptionalUser();
+  const credits = user ? await getCredits(user.id).catch(() => null) : null;
   const signIn = authMode() === "email";
   return (
     <html lang="en">
@@ -91,6 +94,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <Link href="/orders" className="text-coral hover:text-navy">
                 Orders
               </Link>
+              {credits?.enabled && (
+                <CreditBadge initial={credits.balanceUsd} />
+              )}
             </nav>
           )}
           {!user && <div className="pb-4" />}

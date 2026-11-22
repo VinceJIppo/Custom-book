@@ -142,6 +142,9 @@ export function unlockMessage(a: Allowance, action: AllowanceAction): string {
 /** Returns null when allowed, or a friendly message saying how to get more. */
 export async function checkAllowance(userId: string, action: AllowanceAction, count = 1): Promise<string | null> {
   if (!allowancesEnabled()) return null;
+  // With usage credits on, books, redraws and rewrites are limited by the credit balance instead;
+  // tiers still unlock more character sets and custom themes.
+  if (getConfig().CREDITS_ENABLED && (action === "book" || action === "redraw" || action === "rewrite")) return null;
   const a = await getAllowance(userId);
   if (a.unlimited || a.remaining[action] >= count) return null;
   return unlockMessage(a, action);

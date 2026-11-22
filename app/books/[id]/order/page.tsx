@@ -1,3 +1,5 @@
+import { getConfig } from "@/lib/config";
+import { getCredits } from "@/lib/credits";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireOnboardedUser } from "@/lib/session";
@@ -10,6 +12,7 @@ export const dynamic = "force-dynamic";
 
 export default async function OrderBook({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ cancelled?: string }> }) {
   const user = await requireOnboardedUser();
+  const credits = await getCredits(user.id);
   const { book, exports } = await orderableExports(user.id, (await params).id);
   if (!book) notFound();
   const sp = await searchParams;
@@ -44,6 +47,7 @@ export default async function OrderBook({ params, searchParams }: { params: Prom
           }))}
           countries={COUNTRIES}
           paymentName={providers.payment}
+          credits={credits.enabled ? { redeemableUsd: credits.redeemableUsd, balanceUsd: credits.balanceUsd, keepUsd: getConfig().CREDIT_REDEEM_KEEP_USD } : undefined}
         />
       )}
     </div>
