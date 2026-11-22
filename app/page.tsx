@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { requireOnboardedUser } from "@/lib/session";
 import { getOptionalUser } from "@/lib/auth";
 import { Landing } from "@/components/Landing";
+import { ScrollBand } from "@/components/ScrollBand";
 import { bookThumbs, portraits } from "@/lib/books/thumbs";
 import { activeProviderNames } from "@/lib/providers/registry";
 import { getAllowance } from "@/lib/allowance";
@@ -18,6 +19,7 @@ const PILL: Record<string, string> = {
   generating: "bg-amber-100 text-amber-800 animate-pulse",
   failed: "bg-coral/15 text-coral",
 };
+const PIPES = ["pipe-pink", "pipe-blue", "pipe-olive", "pipe-sun"];
 const RINGS = ["ring-pink/40", "ring-bluebell", "ring-olive/30", "ring-chartreuse/60"];
 const MONO = ["bg-pink", "bg-cobalt", "bg-olive", "bg-coral"];
 
@@ -42,11 +44,9 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ d
       {deleted && (
         <p className="rounded-xl bg-emerald-50 px-4 py-3 text-emerald-900 ring-1 ring-emerald-200">That child and everything about them has been deleted.</p>
       )}
-      <section className="relative overflow-hidden rounded-3xl bg-sky px-6 py-8 sm:px-10">
-        <div aria-hidden className="pointer-events-none absolute -right-10 -top-14 h-48 w-48 rounded-full bg-bluebell/60" />
-        <div aria-hidden className="pointer-events-none absolute -bottom-16 right-40 h-36 w-36 rounded-full bg-pink/25" />
-        <div aria-hidden className="pointer-events-none absolute bottom-6 right-8 hidden text-4xl text-coral/70 sm:block">✦</div>
-        <div className="relative flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <section className="full-bleed scallop-bottom relative -mt-8 overflow-x-clip bg-sky [--scallop:var(--color-sky)] sm:-mt-12">
+        <div aria-hidden className="pointer-events-none absolute right-[8%] top-6 hidden text-4xl text-coral/70 sm:block">✦</div>
+        <div className="relative mx-auto flex max-w-6xl flex-col gap-4 px-5 py-10 sm:flex-row sm:items-end sm:justify-between sm:px-10">
           <div>
             <p className="eyebrow text-coral">My bookshelf</p>
             <h1 className="font-display text-3xl font-medium text-navy sm:text-4xl">Your little heroes</h1>
@@ -66,7 +66,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ d
       {credits.enabled ? <CreditsCard c={credits} a={allowance} /> : <PlanCard a={allowance} />}
 
       {children.length === 0 ? (
-        <div className="rounded-3xl border-2 border-dashed border-bluebell bg-white p-10 text-center">
+        <div className="frame-candy-blue p-10 text-center">
           <p className="text-4xl" aria-hidden>
             📖
           </p>
@@ -79,7 +79,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ d
       ) : (
         <div className="space-y-6">
           {children.map((c, ci) => (
-            <section key={c.id} className="rounded-3xl bg-white p-5 ring-1 ring-[color:var(--line)] sm:p-6" data-testid="child-shelf">
+            <section key={c.id} className={`${PIPES[ci % PIPES.length]} rise-in bg-white p-5 pt-7 ring-1 ring-[color:var(--line)] sm:p-6 sm:pt-8`} data-testid="child-shelf">
               <div className="flex flex-wrap items-center justify-between gap-4">
                 <Link href={`/children/${c.id}`} className="group flex items-center gap-4">
                   <span className={`relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full ring-4 ${RINGS[ci % RINGS.length]}`}>
@@ -105,7 +105,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ d
                 {c.books.map((b) => (
                   <li key={b.id}>
                     <Link href={`/books/${b.id}`} className="group block">
-                      <span className="relative block aspect-square overflow-hidden rounded-lg bg-cream shadow-md ring-1 ring-black/5 transition group-hover:-translate-y-1 group-hover:rotate-[-1deg] group-hover:shadow-lg">
+                      <span className="relative block aspect-square overflow-hidden bg-cream shadow-md ring-1 ring-black/5 transition group-hover:-translate-y-1 group-hover:rotate-[-1deg] group-hover:shadow-lg">
                         {thumbs[b.id] ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img src={thumbs[b.id]} alt="" className="h-full w-full object-cover" />
@@ -120,7 +120,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ d
                   </li>
                 ))}
                 <li>
-                  <Link href={`/books/new?childId=${c.id}`} className="flex aspect-square flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-bluebell text-center text-sm text-cobalt transition hover:bg-tint">
+                  <Link href={`/books/new?childId=${c.id}`} className="flex aspect-square flex-col items-center justify-center gap-1 border-2 border-dashed border-bluebell text-center text-sm text-cobalt transition hover:bg-tint">
                     <span className="text-2xl" aria-hidden>
                       +
                     </span>
@@ -132,6 +132,10 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ d
           ))}
         </div>
       )}
+
+      <ScrollBand src="/examples/bands/pond.jpg" alt="Friends by a pink pond at sunset">
+        <p className="font-display text-2xl italic sm:text-3xl">Every child deserves to be the hero of a story.</p>
+      </ScrollBand>
 
       <section className="space-y-3" data-testid="grownups">
         <div className="flex flex-wrap items-baseline justify-between gap-2">

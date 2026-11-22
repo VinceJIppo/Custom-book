@@ -109,7 +109,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         </header>
         <main className="mx-auto w-full max-w-6xl flex-1 px-5 py-8 sm:px-10 sm:py-12">{children}</main>
         <footer className="mt-16">
-          <div className="bg-sky">
+          <div className="ribbon-rainbow" aria-hidden />
+          <div className="scallop-top mt-[14px] bg-sky [--scallop:var(--color-sky)]">
             <div className="mx-auto grid max-w-6xl gap-8 px-5 py-10 text-sm text-navy sm:grid-cols-3 sm:px-10">
               <div>
                 <p className="font-display text-2xl">
