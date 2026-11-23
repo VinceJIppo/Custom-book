@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { db } from "./db";
 import { getConfig } from "./config";
 import { userForSession } from "./auth/magicLink";
+import { isApproved } from "./accounts/approval";
 
 export const SESSION_COOKIE = "storystar_session";
 
@@ -31,6 +32,8 @@ export const getOptionalUser = cache(async () => {
 export const getCurrentUser = cache(async () => {
   const user = await getOptionalUser();
   if (!user) redirect("/signin");
+  // Accounts waiting for approval can't use anything that costs money.
+  if (!isApproved(user)) redirect("/pending");
   return user;
 });
 

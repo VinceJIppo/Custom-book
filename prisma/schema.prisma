@@ -17,6 +17,10 @@ model User {
   email          String    @unique
   name           String?
   ageConfirmedAt DateTime?
+  /// Accounts can need an admin's approval before they can use anything that costs money:
+  /// "approved" | "pending" | "rejected". Existing accounts default to approved.
+  approval       String    @default("approved")
+  approvalRequestedAt DateTime?
   /// Rewards: an admin can set a tier ("starter" | "member" | "star") regardless of orders.
   tierOverride   String?
   /// Rewards: extra allowance granted by an admin, on top of the tier.

@@ -50,7 +50,7 @@ Don't put the app on a 512 MB plan: making print PDFs (headless Chromium) needs 
    | Key | Value |
    |---|---|
    | `APP_URL` | `https://yourdomain.com` (your real address; it goes into sign-in links) |
-   | `ADMIN_EMAILS` | your email |
+   | `ADMIN_EMAILS` | your email. You get an email for every new account; approve them at `/admin/accounts` (`NEW_ACCOUNT_APPROVAL` is on in `render.yaml`) |
    | `S3_ENDPOINT`, `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | from step 1 (bucket `storystar`) |
    | `RESEND_API_KEY`, `EMAIL_FROM` | from step 2 |
    | `ANTHROPIC_API_KEY`, `GEMINI_API_KEY` | your keys |

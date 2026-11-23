@@ -68,6 +68,11 @@ export async function grantCredits(
 /** Every account gets its starting credits once (also for accounts made before credits existed). */
 export async function ensureSignupCredits(userId: string) {
   if (!creditsEnabled()) return;
+  // Accounts waiting for approval get their welcome credits when they're approved.
+  if (getConfig().NEW_ACCOUNT_APPROVAL) {
+    const u = await db.user.findUnique({ where: { id: userId }, select: { approval: true, email: true } });
+    if (!u || (u.approval !== "approved" && !isAdminEmail(u.email))) return;
+  }
   const amount = getConfig().CREDIT_SIGNUP_USD;
   if (amount <= 0) return;
   try {
@@ -159,8 +164,9 @@ export async function chargeUsage(userId: string, costUsd: number, opts: { bookI
  */
 export async function creditProblem(userId: string, estimateUsd: number): Promise<string | null> {
   if (!creditsEnabled()) return null;
-  const user = await db.user.findUnique({ where: { id: userId }, select: { email: true } });
+  const user = await db.user.findUnique({ where: { id: userId }, select: { email: true, approval: true } });
   if (!user || isAdminEmail(user.email)) return null;
+  if (getConfig().NEW_ACCOUNT_APPROVAL && user.approval !== "approved") return "Your account is waiting for approval. We'll email you as soon as it's ready.";
   const { balanceUsd } = await getCredits(userId);
   const need = Math.max(estimateUsd, 0.01);
   if (balanceUsd >= need) return null;

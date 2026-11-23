@@ -9,6 +9,7 @@
  *   account, so nobody can probe for accounts. At most 5 links per email per hour.
  * - Sessions: a random token in an httpOnly cookie; the DB stores its hash.
  */
+import { initialApproval, notifyAdminsOfRequest } from "../accounts/approval";
 import crypto from "node:crypto";
 import { z } from "zod";
 import { db } from "../db";
@@ -78,7 +79,9 @@ export async function redeemSignInLink(rawEmail: unknown, token: string): Promis
   const claimed = await db.loginToken.updateMany({ where: { id: row.id, usedAt: null }, data: { usedAt: new Date() } });
   if (claimed.count !== 1) return expired;
 
-  const user = await db.user.upsert({ where: { email }, update: {}, create: { email } });
+  const user = await db.user.upsert({ where: { email }, update: {}, create: { email, approval: initialApproval(email) } });
+  // New accounts that need approval: tell the admins (once).
+  if (user.approval === "pending") await notifyAdminsOfRequest(user);
   const sessionToken = newToken();
   const expiresAt = new Date(Date.now() + getConfig().SESSION_DAYS * 86400_000);
   await db.session.create({ data: { tokenHash: hashToken(sessionToken), userId: user.id, expiresAt } });

@@ -130,6 +130,12 @@ const EnvSchema = z.object({
 
   /** Rewards: limit books, characters and edits by tier (first-time vs repeat customers). Admins are unlimited. */
   ALLOWANCES_ENABLED: bool.default(true),
+  /**
+   * New accounts wait for an admin (ADMIN_EMAILS) to approve them before they can make
+   * anything. Admins get an email for each request. Protects the welcome credits from
+   * someone creating many accounts.
+   */
+  NEW_ACCOUNT_APPROVAL: bool.default(false),
   /** Usage credits: every Claude and Gemini call is charged to the user's balance at its actual cost. */
   CREDITS_ENABLED: bool.default(true),
   /** Free credits every new account starts with (USD). */

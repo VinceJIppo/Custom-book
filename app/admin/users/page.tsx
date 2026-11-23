@@ -19,9 +19,14 @@ export default async function AdminUsers({ searchParams }: { searchParams: Promi
     <div className="space-y-6">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h1 className="font-display text-3xl font-medium">Customers and rewards</h1>
-        <Link href="/admin/orders" className="text-sm font-semibold text-cobalt underline">
+<span className="flex gap-4">
+          <Link href="/admin/accounts" className="text-sm font-semibold text-cobalt underline">
+            New accounts to approve
+          </Link>
+          <Link href="/admin/orders" className="text-sm font-semibold text-cobalt underline">
           All orders
         </Link>
+        </span>
       </div>
       <p className="text-[color:var(--muted)]">
         Tiers: {TIER_IDS.map((id) => `${TIERS[id].label} (${TIERS[id].minPaidOrders}+ printed orders: ${TIERS[id].limits.book} book${TIERS[id].limits.book === 1 ? "" : "s"}${TIERS[id].window === "30d" ? " a month" : " to try"})`).join(" · ")}

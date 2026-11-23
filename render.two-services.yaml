@@ -110,6 +110,9 @@ envVarGroups:
         value: production
       - key: AUTH_MODE
         value: email
+      # New accounts wait for your approval (you get an email for each; approve at /admin/accounts).
+      - key: NEW_ACCOUNT_APPROVAL
+        value: "true"
       - key: STORAGE_DRIVER
         value: s3
       - key: S3_REGION
