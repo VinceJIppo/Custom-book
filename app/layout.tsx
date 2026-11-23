@@ -39,7 +39,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="en">
       <body className="flex min-h-screen flex-col font-sans text-[15px] antialiased">
-        <div className="bg-bluebell px-4 py-2 text-center text-[13px] font-medium text-navy">
+        <div className="bg-sunny px-4 py-2 text-center text-[13px] font-medium text-navy">
           Personalized picture books where your child is the hero.{" "}
           {user && (
             <Link href="/orders" className="underline underline-offset-2">

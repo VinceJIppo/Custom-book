@@ -26,8 +26,8 @@ const EXAMPLE = {
 
 const STEPS = [
   { n: "1", pipe: "pipe-pink", dot: "bg-pink", title: "Tell us about your child", text: "Their name, age and favorite things, plus a few photos so the pictures look like them. Add grown-ups and siblings as co-stars." },
-  { n: "2", pipe: "pipe-blue", dot: "bg-cobalt", title: "Read the story first", text: "We write a story with a real beginning, middle and end. Change any words you like before a single picture is painted." },
-  { n: "3", pipe: "pipe-olive", dot: "bg-olive", title: "Watch it come to life", text: "Every page is painted in the style you choose. Read it on screen, then order a beautiful printed hardcover." },
+  { n: "2", pipe: "pipe-tangerine", dot: "bg-tangerine", title: "Read the story first", text: "We write a story with a real beginning, middle and end. Change any words you like before a single picture is painted." },
+  { n: "3", pipe: "pipe-mint", dot: "bg-mint", title: "Watch it come to life", text: "Every page is painted in the style you choose. Read it on screen, then order a beautiful printed hardcover." },
 ];
 
 const FRAMES = ["frame-candy", "frame-candy-blue", "frame-candy-olive"];
@@ -39,7 +39,7 @@ export function Landing({ signedIn, startHref }: { signedIn: boolean; startHref:
   return (
     <div className="-mt-8 pb-4 sm:-mt-12">
       {/* Hero */}
-      <section className="full-bleed scallop-bottom bg-sky [--scallop:var(--color-sky)]">
+      <section className="full-bleed scallop-bottom confetti bg-sky [--scallop:var(--color-sky)]">
         <div className="mx-auto grid max-w-6xl items-center gap-10 px-5 py-12 sm:px-10 lg:grid-cols-[1fr_1.15fr]">
           <div className="space-y-5">
             <p className="eyebrow text-coral">Personalized picture books</p>
@@ -120,7 +120,7 @@ export function Landing({ signedIn, startHref }: { signedIn: boolean; startHref:
           </p>
           <ul className="flex flex-wrap justify-center gap-2">
             {STYLES.map((s, i) => (
-              <li key={s} className={`bg-white px-4 py-1.5 text-sm ring-1 ring-[color:var(--line)] ${["pipe-pink", "pipe-blue", "pipe-olive", "pipe-sun"][i % 4]}`}>
+              <li key={s} className={`bg-white px-4 py-1.5 text-sm ring-1 ring-[color:var(--line)] ${["pipe-pink", "pipe-tangerine", "pipe-sun", "pipe-mint", "pipe-blue", "pipe-lilac"][i % 6]}`}>
                 {ART_STYLE_LABELS[s]}
               </li>
             ))}

@@ -20,6 +20,11 @@
   --color-pink: #e58a96;
   --color-olive: #4f6b3e;
   --color-chartreuse: #d8d46a;
+  /* A few bright accents for a little extra pop. */
+  --color-sunny: #ffd447;
+  --color-tangerine: #ff8f5e;
+  --color-mint: #5fcfae;
+  --color-lilac: #b49ae8;
   /* Crisp, nearly square corners. */
   --radius-sm: 2px;
   --radius-md: 3px;
@@ -167,13 +172,12 @@ body {
     height: 18px;
     background: linear-gradient(
       to bottom,
-      var(--color-pink) 0 4px,
-      #fff 4px 5px,
-      var(--color-chartreuse) 5px 9px,
-      #fff 9px 10px,
-      var(--color-cobalt) 10px 14px,
-      #fff 14px 15px,
-      var(--color-olive) 15px 18px
+      var(--color-pink) 0 3px,
+      var(--color-tangerine) 3px 6px,
+      var(--color-sunny) 6px 9px,
+      var(--color-mint) 9px 12px,
+      var(--color-cobalt) 12px 15px,
+      var(--color-lilac) 15px 18px
     );
   }
   /* Candy stripes: thin diagonal pink-and-white band. */
@@ -194,7 +198,7 @@ body {
     --c: var(--color-bluebell);
   }
   .frame-candy-olive {
-    --c: var(--color-chartreuse);
+    --c: var(--color-sunny);
   }
   /* A colored "piped" top edge for cards, cycling through the palette. */
   .pipe-pink {
@@ -207,7 +211,39 @@ body {
     border-top: 6px solid var(--color-olive);
   }
   .pipe-sun {
-    border-top: 6px solid var(--color-chartreuse);
+    border-top: 6px solid var(--color-sunny);
+  }
+  .pipe-tangerine {
+    border-top: 6px solid var(--color-tangerine);
+  }
+  .pipe-mint {
+    border-top: 6px solid var(--color-mint);
+  }
+  .pipe-lilac {
+    border-top: 6px solid var(--color-lilac);
+  }
+  /* Confetti dots for banner backgrounds: scattered on the right, behind the content. */
+  .confetti {
+    position: relative;
+    isolation: isolate;
+  }
+  .confetti::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 0 45%;
+    z-index: -1;
+    pointer-events: none;
+    opacity: 0.75;
+    background-image:
+      radial-gradient(circle, var(--color-sunny) 0 6px, transparent 7px),
+      radial-gradient(circle, var(--color-pink) 0 4px, transparent 5px),
+      radial-gradient(circle, var(--color-mint) 0 5px, transparent 6px),
+      radial-gradient(circle, var(--color-tangerine) 0 3px, transparent 4px),
+      radial-gradient(circle, var(--color-lilac) 0 4px, transparent 5px);
+    background-size: 173px 131px, 211px 167px, 157px 199px, 241px 113px, 197px 223px;
+    background-position: 23px 41px, 97px 13px, 151px 88px, 61px 104px, 7px 160px;
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 30%);
+    mask-image: linear-gradient(to right, transparent, #000 30%);
   }
   /* Scalloped edges (like a trimmed towel border). Set --scallop to the color of the block. */
   .scallop-bottom,

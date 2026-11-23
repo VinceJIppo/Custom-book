@@ -14,14 +14,14 @@ import { getCredits } from "@/lib/credits";
 export const dynamic = "force-dynamic";
 
 const PILL: Record<string, string> = {
-  ready: "bg-olive/15 text-olive",
-  story_review: "bg-cobalt/10 text-cobalt",
+  ready: "bg-mint/25 text-olive",
+  story_review: "bg-sunny/40 text-navy",
   generating: "bg-amber-100 text-amber-800 animate-pulse",
   failed: "bg-coral/15 text-coral",
 };
-const PIPES = ["pipe-pink", "pipe-blue", "pipe-olive", "pipe-sun"];
-const RINGS = ["ring-pink/40", "ring-bluebell", "ring-olive/30", "ring-chartreuse/60"];
-const MONO = ["bg-pink", "bg-cobalt", "bg-olive", "bg-coral"];
+const PIPES = ["pipe-pink", "pipe-tangerine", "pipe-mint", "pipe-lilac", "pipe-sun", "pipe-blue"];
+const RINGS = ["ring-pink/50", "ring-tangerine/50", "ring-mint/50", "ring-lilac/50", "ring-sunny/70", "ring-bluebell"];
+const MONO = ["bg-pink", "bg-tangerine", "bg-mint", "bg-lilac", "bg-sunny", "bg-cobalt"];
 
 const STATUS: Record<string, string> = { generating: "Being made", story_review: "Story ready to read", ready: "Ready to read", failed: "Needs attention", draft: "Draft" };
 
@@ -44,7 +44,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ d
       {deleted && (
         <p className="rounded-xl bg-emerald-50 px-4 py-3 text-emerald-900 ring-1 ring-emerald-200">That child and everything about them has been deleted.</p>
       )}
-      <section className="full-bleed scallop-bottom relative -mt-8 overflow-x-clip bg-sky [--scallop:var(--color-sky)] sm:-mt-12">
+      <section className="full-bleed scallop-bottom confetti relative -mt-8 overflow-x-clip bg-sky [--scallop:var(--color-sky)] sm:-mt-12">
         <div aria-hidden className="pointer-events-none absolute right-[8%] top-6 hidden text-4xl text-coral/70 sm:block">✦</div>
         <div className="relative mx-auto flex max-w-6xl flex-col gap-4 px-5 py-10 sm:flex-row sm:items-end sm:justify-between sm:px-10">
           <div>
@@ -87,7 +87,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ d
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={faces[c.id]} alt="" className="h-full w-full scale-[1.6] object-cover object-[20%_35%]" />
                     ) : (
-                      <span className={`flex h-full w-full items-center justify-center font-display text-2xl text-white ${MONO[ci % MONO.length]}`}>{(c.nickname || c.firstName).slice(0, 1)}</span>
+                      <span className={`flex h-full w-full items-center justify-center font-display text-2xl text-navy ${MONO[ci % MONO.length]}`}>{(c.nickname || c.firstName).slice(0, 1)}</span>
                     )}
                   </span>
                   <span>
