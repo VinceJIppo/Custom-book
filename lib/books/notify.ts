@@ -25,3 +25,23 @@ export async function notifyBookReady(bookId: string) {
     log.warn("Book ready email failed", { bookId, err: errorMessage(err) });
   }
 }
+
+/** "Your story is ready to read" (so nobody has to wait on the page while it's written). */
+export async function notifyStoryReady(bookId: string) {
+  try {
+    const book = await db.book.findUnique({ where: { id: bookId }, include: { user: true } });
+    if (!book || book.user.email.endsWith(".local")) return;
+    const title = book.title || "Your story";
+    const link = `${getConfig().APP_URL.replace(/\/$/, "")}/books/${book.id}`;
+    const line = `"${title}" is written. Read it, change any words you like, then approve it and we'll paint the pictures.`;
+    await getEmailProvider().send({
+      to: book.user.email,
+      subject: `Your story is ready to read: ${title}`,
+      text: `${line}\n\n${link}`,
+      html: `<p>${esc(line)}</p><p><a href="${link}">Read your story</a></p>`,
+      idempotencyKey: `story-ready-${book.id}-${book.updatedAt.getTime()}`,
+    });
+  } catch (err) {
+    log.warn("Story ready email failed", { bookId, err: errorMessage(err) });
+  }
+}

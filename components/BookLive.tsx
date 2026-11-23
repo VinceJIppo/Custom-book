@@ -53,8 +53,9 @@ export function BookLive({ bookId, initial }: { bookId: string; initial: LiveSta
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div className="flex flex-col gap-1">
           <h1 className="font-display text-3xl font-medium" data-testid="book-title">
-            {state.title ?? "Writing your story..."}
+            {state.title ?? "Planning your story..."}
           </h1>
+          {generating && p.premise && <p className="max-w-2xl italic text-[color:var(--muted)]" data-testid="book-premise">{p.premise}</p>}
           {state.view && (
             <p className="text-sm text-[color:var(--muted)]">
               {state.view.themeName} · {state.view.voiceLabel} voice · {state.view.pages.length} printed pages ·{" "}
@@ -121,7 +122,12 @@ export function BookLive({ bookId, initial }: { bookId: string; initial: LiveSta
             </div>
           )}
           <p className="mt-3 text-xs text-[color:var(--muted)]">
-            {p.overnight ? "Overnight pictures are drawn in Google's slower, cheaper queue. You can close this page; we'll email you when the book is ready." : "You can leave this page; the book keeps going in the background."} Spent so far: ${p.costUsd.toFixed(4)}
+            {p.phase === "story"
+              ? "Writing a story usually takes about 2 minutes. You can leave this page; we'll email you when it's ready to read."
+              : p.overnight
+                ? "Overnight pictures are drawn in Google's slower, cheaper queue. You can close this page; we'll email you when the book is ready."
+                : "You can leave this page; the book keeps going in the background."}{" "}
+            Spent so far: ${p.costUsd.toFixed(4)}
           </p>
         </div>
       )}

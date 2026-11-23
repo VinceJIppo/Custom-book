@@ -21,6 +21,8 @@ export interface WizardTheme {
   cast: string[];
   /** Sample page pictures for the card. */
   samples?: string[];
+  /** Ready-made story ideas for this theme. */
+  starters?: Array<{ id: string; title: string; idea: string }>;
 }
 
 export interface WizardProps {
@@ -103,6 +105,33 @@ export function BookWizard({ child, themes, defaultReadingLevel, estimates, stor
           })}
         </div>
       </section>
+
+      {theme?.starters?.length ? (
+        <fieldset key={theme.id} data-testid="starters">
+          <legend className="font-display text-xl font-medium">Pick a story</legend>
+          <p className="mt-1 text-sm text-[color:var(--muted)]">
+            A ready-made story is written faster and has been tried and tested. Either way it&apos;s written fresh around {child.name} and everyone you add.
+          </p>
+          <div className="mt-3 grid gap-3 sm:grid-cols-3">
+            {theme.starters.map((st, i) => (
+              <label key={st.id} className={`flex cursor-pointer items-start gap-3 bg-white p-4 ring-1 ring-[color:var(--line)] has-[:checked]:bg-tint has-[:checked]:ring-2 has-[:checked]:ring-cobalt ${["pipe-pink", "pipe-blue", "pipe-olive"][i % 3]}`}>
+                <input type="radio" name="starterId" value={st.id} defaultChecked={i === 0} className="mt-1" data-testid={`starter-${st.id}`} />
+                <span>
+                  <span className="block font-semibold">{st.title}</span>
+                  <span className="mt-1 block text-sm text-[color:var(--muted)]">{st.idea.replace(/\bthe child\b/gi, child.name)}</span>
+                </span>
+              </label>
+            ))}
+            <label className="flex cursor-pointer items-start gap-3 bg-white p-4 ring-1 ring-[color:var(--line)] has-[:checked]:bg-tint has-[:checked]:ring-2 has-[:checked]:ring-cobalt pipe-sun">
+              <input type="radio" name="starterId" value="" className="mt-1" data-testid="starter-new" />
+              <span>
+                <span className="block font-semibold">A brand-new story</span>
+                <span className="mt-1 block text-sm text-[color:var(--muted)]">We invent a new plot just for {child.name}. Takes a little longer.</span>
+              </span>
+            </label>
+          </div>
+        </fieldset>
+      ) : null}
 
       <CastPicker heroId={child.id} heroName={child.name} people={people} style={style ?? theme?.defaultStyle ?? null} needsCharacter={needsCharacter} />
 

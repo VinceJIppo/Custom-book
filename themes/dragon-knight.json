@@ -2,20 +2,65 @@
   "id": "dragon-knight",
   "name": "Dragon Knight",
   "genre": "fantasy",
-  "ageRange": [3, 8],
+  "ageRange": [
+    3,
+    8
+  ],
   "pitch": "A kind young knight-in-training sets out to meet the dragon everyone is afraid of and discovers it is just shy and lonely.",
   "setting": "The Kingdom of Applebright, with a hilltop castle, patchwork fields, a misty mountain, and a cave full of glittering crystals",
   "supportingCast": [
-    { "name": "Ember", "role": "shy dragon", "look": "small round dragon with lavender scales, tiny wings, and puffs of pink smoke when nervous" },
-    { "name": "Sir Bramble", "role": "mentor", "look": "an old, cheerful knight with a big white mustache and slightly rusty armor" },
-    { "name": "Hazel", "role": "loyal pony", "look": "fluffy chestnut pony with a braided mane and ribbons" }
+    {
+      "name": "Ember",
+      "role": "shy dragon",
+      "look": "small round dragon with lavender scales, tiny wings, and puffs of pink smoke when nervous"
+    },
+    {
+      "name": "Sir Bramble",
+      "role": "mentor",
+      "look": "an old, cheerful knight with a big white mustache and slightly rusty armor"
+    },
+    {
+      "name": "Hazel",
+      "role": "loyal pony",
+      "look": "fluffy chestnut pony with a braided mane and ribbons"
+    }
   ],
-  "storyBeats": ["knight practice", "the rumor", "the journey", "the misty mountain", "meeting the dragon", "a kind choice", "friends at the feast", "cozy ending"],
+  "storyBeats": [
+    "knight practice",
+    "the rumor",
+    "the journey",
+    "the misty mountain",
+    "meeting the dragon",
+    "a kind choice",
+    "friends at the feast",
+    "cozy ending"
+  ],
   "artDirection": {
     "defaultStyle": "paper-cutout",
-    "palette": ["#8E24AA", "#F06292", "#FFCA28", "#A5D6A7"],
+    "palette": [
+      "#8E24AA",
+      "#F06292",
+      "#FFCA28",
+      "#A5D6A7"
+    ],
     "mood": "storybook, warm, brave and gentle"
   },
-  "contentRules": ["no fighting the dragon", "swords only as costume props, never used", "cartoon peril only"],
-  "licensed": false
+  "contentRules": [
+    "no fighting the dragon",
+    "swords only as costume props, never used",
+    "cartoon peril only"
+  ],
+  "licensed": false,
+  "starters": [
+    {
+      "id": "dragons-birthday",
+      "title": "The Dragon's Birthday",
+      "idea": "Everyone in the castle is afraid of Ember, who keeps the kingdom's lanterns lit. The knights try to sneak past and the cook sends a cake by catapult, which goes wrong. The child walks up and asks Ember's name, learns it is Ember's birthday and no one ever came, and the whole kingdom throws a lantern party."
+    },
+    {
+      "id": "lost-voice",
+      "title": "Ember Loses Her Roar",
+      "idea": "Ember wakes with no fire and no roar on the night of the Winter Lights. Sir Bramble's warm potion and Hazel's galloping race don't bring it back. The child realizes Ember is simply nervous and sings their favorite song with her; her laugh turns into a warm glow that lights every lantern."
+    }
+  ]
 }

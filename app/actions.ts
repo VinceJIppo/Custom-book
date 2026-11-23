@@ -91,6 +91,7 @@ export async function createBookAction(_prev: CreateBookResult | null, fd: FormD
     spotlightId: opt(fd.get("spotlightId")),
     storyAbout: opt(fd.get("storyAbout")),
     pictureSpeed: opt(fd.get("pictureSpeed")),
+    starterId: opt(fd.get("starterId")),
   };
   const res = await createAndStartBook(user.id, { childId: String(fd.get("childId") ?? ""), themeId: String(fd.get("themeId") ?? ""), options });
   if (!res.ok) return res;

@@ -26,6 +26,8 @@ export type ModelCaller = (args: {
   content: UserContent;
   format: JsonFormat;
   maxTokens: number;
+  /** Overrides the default reasoning effort for this call. */
+  effort?: Effort;
 }) => Promise<ModelCallResult>;
 
 export interface JsonFormat {
@@ -56,7 +58,7 @@ export interface ClaudeOptions {
 
 export function realCaller(opts: ClaudeOptions): ModelCaller {
   const client = new Anthropic({ apiKey: opts.apiKey, maxRetries: 2 });
-  return async ({ system, content, format, maxTokens }) => {
+  return async ({ system, content, format, maxTokens, effort }) => {
     // Streaming avoids HTTP timeouts on long outputs. Server-side fallbacks
     // re-run a refused request on a fallback model inside the same call.
     const stream = client.beta.messages.stream({
@@ -64,7 +66,7 @@ export function realCaller(opts: ClaudeOptions): ModelCaller {
       max_tokens: maxTokens,
       system,
       messages: [{ role: "user", content }],
-      output_config: { format, effort: opts.effort },
+      output_config: { format, effort: effort ?? opts.effort },
       ...(opts.fallbacks ? { betas: ["server-side-fallback-2026-07-01"], fallbacks: "default" as const } : {}),
     });
     const msg = await stream.finalMessage();
@@ -124,12 +126,14 @@ export class ClaudeJson {
      */
     softCheck?: (v: T) => string[];
     maxTokens: number;
+    /** Reasoning effort for this step (defaults to the configured STORY_EFFORT). */
+    effort?: Effort;
   }): Promise<WithUsage<T>> {
     const usages: Usage[] = [];
     let problems: string[] | undefined;
     let softRetries = 0;
     for (let attempt = 1; attempt <= this.maxAttempts; attempt++) {
-      const res = await this.call({ system: opts.system, content: opts.build(problems), format: jsonFormat(opts.wire), maxTokens: opts.maxTokens });
+      const res = await this.call({ system: opts.system, content: opts.build(problems), format: jsonFormat(opts.wire), maxTokens: opts.maxTokens, effort: opts.effort });
       usages.push(this.toUsage(res));
       if (res.stopReason === "refusal") {
         const err = new PermanentProviderError("The AI service declined this request. Try different wording or a different theme.");

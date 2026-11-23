@@ -9,6 +9,10 @@ export interface BookProgress {
   costUsd: number;
   /** Pictures are waiting in the overnight (batch) queue. */
   overnight?: boolean;
+  /** "story": the words are being written (pictures come after approval). */
+  phase?: "story" | "pictures";
+  /** The story idea in one line, shown as soon as the plan is made. */
+  premise?: string;
   percent: number;
   /** Admins only: why jobs failed, grouped, with a plain-English hint. */
   problems?: Array<{ count: number; hint: string; detail: string }>;
@@ -35,7 +39,8 @@ function stateOf(jobs: Array<{ status: string }>): StepState {
 
 /** Plain-English progress for the live progress panel. */
 export async function getBookProgress(bookId: string, expectedStoryPages: number, opts: { withProblems?: boolean } = {}): Promise<BookProgress> {
-  const [jobs, pages] = await Promise.all([
+  const [book, jobs, pages] = await Promise.all([
+    db.book.findUnique({ where: { id: bookId }, select: { status: true, outline: true } }),
     db.generationJob.findMany({ where: { bookId }, orderBy: { createdAt: "asc" }, select: { type: true, status: true, costUsd: true, error: true, attempts: true, maxAttempts: true } }),
     db.page.findMany({ where: { bookId, kind: "story" }, select: { imageStatus: true } }),
   ]);
@@ -45,6 +50,33 @@ export async function getBookProgress(bookId: string, expectedStoryPages: number
   const outline = stateOf(latest("book.outline"));
   const text = stateOf(latest("book.pages"));
   const cover = stateOf(latest("book.cover"));
+  const draft = (book?.outline ?? null) as { premise?: string; drafting?: string } | null;
+  const premise = draft?.premise || undefined;
+  const pictureJobs = jobs.some((j) => ["page.illustrate", "book.cover", "book.batch", "book.artdirect"].includes(j.type));
+  if (!pictureJobs && book && (book.status === "generating" || book.status === "story_review" || book.status === "failed")) {
+    // Writing the words: the parent reads them before any picture is drawn.
+    const stage = draft?.drafting ?? (text === "done" ? "done" : outline === "done" ? "writing" : "planning");
+    const order = ["planning", "writing", "editing", "polishing", "done"];
+    const at = Math.max(0, order.indexOf(stage));
+    const st = (i: number): StepState => (text === "failed" || outline === "failed") && at === i ? "failed" : at > i || book.status === "story_review" ? "done" : at === i ? "working" : "waiting";
+    const steps = [
+      { id: "outline", label: "Planning the story", state: outline === "done" ? "done" : outline === "failed" ? "failed" : "working", detail: outline === "done" ? undefined : "about a minute" },
+      { id: "pages", label: "Writing every page", state: outline !== "done" ? "waiting" : st(1), detail: at === 1 ? "about a minute" : undefined },
+      { id: "edit", label: "Our editor reads it and fixes anything unclear", state: outline !== "done" ? "waiting" : at >= 2 ? (book.status === "story_review" ? "done" : st(Math.min(at, 3))) : "waiting", detail: at >= 2 && book.status !== "story_review" ? "under a minute" : undefined },
+      { id: "ready", label: "Ready for you to read", state: book.status === "story_review" ? "done" : "waiting" },
+    ] as BookProgress["steps"];
+    const percent = book.status === "story_review" ? 100 : Math.round(((outline === "done" ? 1 : 0.15) + at * 0.85) / 4.5 * 100);
+    return {
+      steps,
+      illustrations: { done: 0, failed: 0, total: 0 },
+      failedJobs: jobs.filter((j) => j.status === "failed").length,
+      costUsd: Math.round(jobs.reduce((s2, j) => s2 + j.costUsd, 0) * 10000) / 10000,
+      percent: Math.min(97, percent),
+      problems: opts.withProblems ? groupProblems(jobs.filter((j) => j.status === "failed" && j.error).map((j) => j.error!)) : undefined,
+      phase: "story",
+      premise,
+    };
+  }
   const total = pages.length;
   const done = pages.filter((p) => p.imageStatus === "ready").length;
   const failed = pages.filter((p) => p.imageStatus === "failed").length;
@@ -56,6 +88,8 @@ export async function getBookProgress(bookId: string, expectedStoryPages: number
     { id: "art", label: "Painting the pictures", state: art, detail: total ? `${done} of ${total}${failed ? `, ${failed} need another try` : ""}` : undefined },
     { id: "cover", label: "Making the cover", state: cover },
   ];
+  const planning = jobs.some((j) => j.type === "book.artdirect" && (j.status === "queued" || j.status === "running"));
+  if (planning && art === "working") steps[2].detail = "Planning each picture from your story...";
   const overnight = jobs.some((j) => (j.type === "book.batch" || j.type === "book.batch.poll") && (j.status === "queued" || j.status === "running"));
   if (overnight) steps[2].detail = "Overnight: usually a few hours, always within a day";
   if (retrying) steps[steps.findIndex((s) => s.state === "working") >= 0 ? steps.findIndex((s) => s.state === "working") : 0].detail = "Hit a snag, retrying automatically...";
@@ -66,6 +100,8 @@ export async function getBookProgress(bookId: string, expectedStoryPages: number
     illustrations: { done, failed, total },
     failedJobs: jobs.filter((j) => j.status === "failed").length,
     overnight,
+    phase: "pictures",
+    premise,
     costUsd: Math.round(jobs.reduce((s, j) => s + j.costUsd, 0) * 10000) / 10000,
     percent: Math.round((finished / Math.max(units, 1)) * 100),
     problems: opts.withProblems ? groupProblems(jobs.filter((j) => j.status === "failed" && j.error).map((j) => j.error!)) : undefined,

@@ -47,6 +47,7 @@ export default async function NewBook({ searchParams }: { searchParams: Promise<
           ageRange: t.config.ageRange,
           cast: t.config.supportingCast.map((c) => c.name),
           samples: samples[t.id],
+          starters: t.config.starters,
         }))}
         defaultReadingLevel={readingLevelForAge(child.age)}
         estimates={estimates}

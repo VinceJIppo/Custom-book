@@ -72,6 +72,8 @@ Check, in order of importance:
 10. Do characters stay the same? Check every page against the character guide and appearances: flag any page where an animal changes kind or color, or where a character gains or loses glasses, a hat, an outfit or a carried item without the words showing it happen (no one can change clothes or put on glasses mid-adventure). Flag any physical detail about a character that first appears late in the book, or that contradicts their appearance.
 11. Does the ending resolve the problem and echo the opening?
 
+Mark each issue "major" when a child or parent would be confused or notice a contradiction (a plot hole, a broken rule, an unexplained jump, a character who changes), and "minor" when it is only wording, rhythm or polish.
+
 Return "pass" only when a parent would find nothing confusing. Otherwise return "revise" with the most important issues first (at most 8), each tied to a page number (0 for the whole book) with a concrete fix. Keep each problem and each fix to one or two short sentences (under 300 characters).`;
 
 export const ART_SYSTEM_PROMPT = `You are the art director for a children's picture book. You turn a finished manuscript into precise picture instructions so that every illustration shows exactly what its words say, and the world stays consistent from page to page.
@@ -165,14 +167,23 @@ export function describeContext(ctx: StoryContext): string {
   return JSON.stringify(payload, null, 2);
 }
 
+/** The theme's ready-made story idea the parent picked, if any. */
+export function chosenStarter(ctx: StoryContext) {
+  return ctx.options.starterId ? ctx.theme.starters?.find((s) => s.id === ctx.options.starterId) : undefined;
+}
+
 export function outlinePrompt(ctx: StoryContext, problems?: string[]): string {
   const n = ctx.options.length;
+  const starter = chosenStarter(ctx);
   return [
     "Here are the details for this book:",
     describeContext(ctx),
     "",
     voiceBlock(ctx),
     "",
+    starter
+      ? `The parent chose this story idea. Build the spine on it: keep its problem, the reason the first tries fail, and how the hero solves it, but tell it with this child as the hero and give every person in otherPeopleInTheStory a real part. Adapt names, details and the number of pages to this book.\nStory idea "${starter.title}": ${starter.idea}\n`
+      : "",
     `Plan the story spine before any words are written. The book has exactly ${n} story pages.`,
     "- title: short, includes the child's name or nickname, suits the voice. premise: one line.",
     "- worldRule: how the magic or situation in this world works, in one or two plain sentences, including why the obvious quick fix will not work.",

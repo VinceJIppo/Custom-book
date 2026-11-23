@@ -117,7 +117,9 @@ export async function undoRewrite(userId: string, bookId: string, tag: string): 
 }
 
 /** True when the words changed after the picture plans were made. */
-export function plansAreStale(book: Pick<Book, "outline">, pages: Array<{ storyNumber: number | null; text: string; kind: string }>) {
+export function plansAreStale(book: Pick<Book, "outline">, pages: Array<{ storyNumber: number | null; text: string; kind: string; scene?: unknown }>) {
+  // Picture plans are made after approval (or the words changed after they were made).
+  if (pages.some((p) => p.kind === "story" && p.scene == null)) return true;
   const artText = (book.outline as { artText?: Record<string, string> } | null)?.artText;
   if (!artText) return false;
   return pages.some((p) => p.kind === "story" && p.storyNumber != null && artText[String(p.storyNumber)] !== p.text);

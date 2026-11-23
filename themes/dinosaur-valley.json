@@ -2,20 +2,65 @@
   "id": "dinosaur-valley",
   "name": "Dinosaur Valley",
   "genre": "dinosaurs",
-  "ageRange": [2, 8],
+  "ageRange": [
+    2,
+    8
+  ],
   "pitch": "On a time-hopping field trip, the child is guided by a gentle triceratops and helps a baby dinosaur find its family before the time portal closes.",
   "setting": "Fernhollow Valley, long ago: giant ferns, steaming warm springs, a sparkling waterfall, and a quiet volcano that only puffs harmless smoke rings",
   "supportingCast": [
-    { "name": "Clover", "role": "guide", "look": "gentle mint-green triceratops with rosy cheeks and a flower tucked behind one frill" },
-    { "name": "Peep", "role": "lost baby", "look": "tiny purple duckbill dinosaur with big curious eyes and a cracked bit of eggshell on its head" },
-    { "name": "Professor Tock", "role": "time guide", "look": "a cheerful tortoise wearing a pocket watch and a bow tie" }
+    {
+      "name": "Clover",
+      "role": "guide",
+      "look": "gentle mint-green triceratops with rosy cheeks and a flower tucked behind one frill"
+    },
+    {
+      "name": "Peep",
+      "role": "lost baby",
+      "look": "tiny purple duckbill dinosaur with big curious eyes and a cracked bit of eggshell on its head"
+    },
+    {
+      "name": "Professor Tock",
+      "role": "time guide",
+      "look": "a cheerful tortoise wearing a pocket watch and a bow tie"
+    }
   ],
-  "storyBeats": ["field trip morning", "through the time portal", "meet the guide", "a lost baby", "following clues", "a tricky crossing", "family found", "home in time"],
+  "storyBeats": [
+    "field trip morning",
+    "through the time portal",
+    "meet the guide",
+    "a lost baby",
+    "following clues",
+    "a tricky crossing",
+    "family found",
+    "home in time"
+  ],
   "artDirection": {
     "defaultStyle": "watercolor-storybook",
-    "palette": ["#43A047", "#AED581", "#FF8A65", "#FFF8E1"],
+    "palette": [
+      "#43A047",
+      "#AED581",
+      "#FF8A65",
+      "#FFF8E1"
+    ],
     "mood": "warm, curious, gently adventurous"
   },
-  "contentRules": ["dinosaurs are friendly, no predators chasing anyone", "cartoon peril only", "no weapons"],
-  "licensed": false
+  "contentRules": [
+    "dinosaurs are friendly, no predators chasing anyone",
+    "cartoon peril only",
+    "no weapons"
+  ],
+  "licensed": false,
+  "starters": [
+    {
+      "id": "peeps-nest",
+      "title": "Peep Finds Her Nest",
+      "idea": "Baby Peep is lost and the time portal closes at sunset. Following the biggest footprints leads to the wrong herd, and calling loudly scares the others away. The child notices Peep hums the same song as a mother dinosaur far away; they follow the song and Peep is home just before the portal closes."
+    },
+    {
+      "id": "tock-clock",
+      "title": "Professor Tock's Broken Clock",
+      "idea": "Professor Tock's time-watch freezes in the age of the dinosaurs. Shaking it and asking a pterodactyl both fail. The child spots that a tiny fern is stuck in the gears, Clover gently blows it free with a sneeze, and everyone gets home, with a footprint fossil as a keepsake."
+    }
+  ]
 }

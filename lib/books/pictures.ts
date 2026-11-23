@@ -52,7 +52,7 @@ export async function approveStory(userId: string, bookId: string, speed?: strin
     if (claimed.count !== 1) return { ok: false as const, message: "The pictures for this story have already been started." };
     const mode = chosen.success ? chosen.data : pictureSpeedOf(book);
     // Words changed since the picture plans were made: refresh the plans first (that job starts the pictures).
-    const pages = await tx.page.findMany({ where: { bookId: book.id }, select: { storyNumber: true, text: true, kind: true } });
+    const pages = await tx.page.findMany({ where: { bookId: book.id }, select: { storyNumber: true, text: true, kind: true, scene: true } });
     if (plansAreStale(book, pages)) {
       await enqueue("book.artdirect", {}, { userId: book.userId, bookId: book.id }, tx);
       return { ok: true as const, mode };

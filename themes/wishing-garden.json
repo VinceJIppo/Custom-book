@@ -2,13 +2,28 @@
   "id": "wishing-garden",
   "name": "The Wishing Garden",
   "genre": "whimsical",
-  "ageRange": [2, 7],
+  "ageRange": [
+    2,
+    7
+  ],
   "pitch": "The child finds a tiny painted door in the garden wall and slips into a miniature world of tea-party flowers, where a little firefly has lost her glow on the night of the Moon Picnic.",
   "setting": "The Wishing Garden, a tiny secret world behind a painted door in an old garden wall: rose bushes as tall as houses, teacup ponds, toadstool cottages with lace curtains, ribbon-tied bluebell lanterns, strawberry patches, a wishing well made from a thimble, and a soft moonlit meadow for the Moon Picnic",
   "supportingCast": [
-    { "name": "Clementine", "role": "brave, warm-hearted friend who leads the way", "look": "a small cream bunny with pink-lined ears, a butter-yellow knitted cardigan with tiny heart buttons, and a daisy tucked behind one ear" },
-    { "name": "Pipkin", "role": "tiny, thoughtful friend who notices small things", "look": "a little grey field mouse in a blush-pink pinafore with a thimble for a hat and a tiny woven basket" },
-    { "name": "Luma", "role": "a shy little firefly who has lost her glow", "look": "a tiny round firefly with lacy pale-blue wings, rosy cheeks and a soft golden tail that has gone dim" }
+    {
+      "name": "Clementine",
+      "role": "brave, warm-hearted friend who leads the way",
+      "look": "a small cream bunny with pink-lined ears, a butter-yellow knitted cardigan with tiny heart buttons, and a daisy tucked behind one ear"
+    },
+    {
+      "name": "Pipkin",
+      "role": "tiny, thoughtful friend who notices small things",
+      "look": "a little grey field mouse in a blush-pink pinafore with a thimble for a hat and a tiny woven basket"
+    },
+    {
+      "name": "Luma",
+      "role": "a shy little firefly who has lost her glow",
+      "look": "a tiny round firefly with lacy pale-blue wings, rosy cheeks and a soft golden tail that has gone dim"
+    }
   ],
   "storyBeats": [
     "a painted door in the garden wall",
@@ -25,7 +40,12 @@
   "powerIdeas": "The child's gentleness, kindness or way of noticing tiny things is what helps; one of the child's favorite things can become a small, magical detail of the garden.",
   "artDirection": {
     "defaultStyle": "painted-whimsy",
-    "palette": ["#F2C6CF", "#F6E3A1", "#B9D3EA", "#C9E4CF"],
+    "palette": [
+      "#F2C6CF",
+      "#F6E3A1",
+      "#B9D3EA",
+      "#C9E4CF"
+    ],
     "mood": "whimsical, nostalgic and enchanted, sweet and delicate, glowing with childlike wonder and soft light"
   },
   "contentRules": [
@@ -35,5 +55,17 @@
     "no weapons",
     "only original characters"
   ],
-  "licensed": false
+  "licensed": false,
+  "starters": [
+    {
+      "id": "lumas-glow",
+      "title": "Luma's Lost Glow",
+      "idea": "Luma the firefly has lost her glow on the night of the Moon Picnic, and the lanterns can't be lit without her. A jar of moonlight and Clementine's brave pep talk don't work. Pipkin notices Luma glows when she feels loved, the child gives her a tiny daisy crown and a hug, and her glow lights every bluebell lantern."
+    },
+    {
+      "id": "teacup-pond",
+      "title": "The Teacup Pond Party",
+      "idea": "The roses have planned a tea party but the teacup pond has gone dry. Carrying water in thimbles is too slow and a raincloud won't come. The child spots a sleepy snail sitting on the little spring, kindly helps him move, and the pond fills just in time for a sparkling tea."
+    }
+  ]
 }

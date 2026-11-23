@@ -18,6 +18,8 @@ import { getTrim, illustrationTargetPx } from "@/lib/print/geometry";
 import { PermanentProviderError, type ImageData } from "@/lib/providers/types";
 import type { BatchItem, BatchResult, BatchState, IllustrationRequest } from "@/lib/providers/image/types";
 import type { VisionProvider } from "@/lib/providers/vision/types";
+import { getBookProgress } from "@/lib/books/progress";
+import { MockEmailProvider } from "@/lib/providers/email/mock";
 import { makeUser, resetDb } from "./helpers";
 
 const childInput = {
@@ -118,6 +120,11 @@ describe("cost savers", () => {
     const book = await db.book.findUniqueOrThrow({ where: { id: bookId }, include: { pages: true } });
     expect(book.status).toBe("story_review");
     expect(await jobsOf(bookId, "page.illustrate")).toHaveLength(0);
+    // The progress panel shows the story steps, all done, and the parent got an email.
+    const progress = await getBookProgress(bookId, 12);
+    expect(progress.phase).toBe("story");
+    expect(progress.steps.at(-1)).toMatchObject({ label: "Ready for you to read", state: "done" });
+    expect(new MockEmailProvider().lastTo("test@example.com")?.subject).toMatch(/Your story is ready to read/);
     expect(await jobsOf(bookId, "book.cover")).toHaveLength(0);
     expect(images.singles).toBe(0);
 

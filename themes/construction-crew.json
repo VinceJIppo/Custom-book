@@ -2,20 +2,65 @@
   "id": "construction-crew",
   "name": "Construction Crew",
   "genre": "vehicles",
-  "ageRange": [2, 7],
+  "ageRange": [
+    2,
+    7
+  ],
   "pitch": "The child becomes foreman for a day and runs the big machines to build a brand-new playground for the whole town.",
   "setting": "Maple Junction, a friendly small town with an empty lot, a busy main street, and a hill perfect for a slide",
   "supportingCast": [
-    { "name": "Digby", "role": "excavator", "look": "big yellow excavator with friendly headlight eyes and a scoop like a smile" },
-    { "name": "Rosie Rumble", "role": "crew chief", "look": "construction worker with an orange hard hat, curly red hair, and a clipboard" },
-    { "name": "Tumble", "role": "dump truck", "look": "small red dump truck who loves to make the beep-beep backing-up sound" }
+    {
+      "name": "Digby",
+      "role": "excavator",
+      "look": "big yellow excavator with friendly headlight eyes and a scoop like a smile"
+    },
+    {
+      "name": "Rosie Rumble",
+      "role": "crew chief",
+      "look": "construction worker with an orange hard hat, curly red hair, and a clipboard"
+    },
+    {
+      "name": "Tumble",
+      "role": "dump truck",
+      "look": "small red dump truck who loves to make the beep-beep backing-up sound"
+    }
   ],
-  "storyBeats": ["hard hat morning", "the empty lot", "the plan", "digging in", "a muddy mix-up", "fixing it together", "grand opening", "tired and happy"],
+  "storyBeats": [
+    "hard hat morning",
+    "the empty lot",
+    "the plan",
+    "digging in",
+    "a muddy mix-up",
+    "fixing it together",
+    "grand opening",
+    "tired and happy"
+  ],
   "artDirection": {
     "defaultStyle": "crayon",
-    "palette": ["#FBC02D", "#F4511E", "#6D4C41", "#90CAF9"],
+    "palette": [
+      "#FBC02D",
+      "#F4511E",
+      "#6D4C41",
+      "#90CAF9"
+    ],
     "mood": "busy, cheerful, satisfying"
   },
-  "contentRules": ["safety gear always on", "machines never crash into people", "cartoon peril only"],
-  "licensed": false
+  "contentRules": [
+    "safety gear always on",
+    "machines never crash into people",
+    "cartoon peril only"
+  ],
+  "licensed": false,
+  "starters": [
+    {
+      "id": "rainy-day-playground",
+      "title": "The Playground Before the Rain",
+      "idea": "The crew must finish the new playground before the big rain arrives tomorrow, but the slide won't fit through the gate. Digby tries to dig wider and Tumble tries to squeeze through, and both fail. The child notices the slide can come apart in two pieces, the crew rebuilds it inside, and the town plays just as the first drops fall."
+    },
+    {
+      "id": "missing-bolt",
+      "title": "The Missing Golden Bolt",
+      "idea": "Rosie Rumble's lucky golden bolt, the last piece of the town clock tower, rolls away. The crew searches the dirt pile and the cement mixer with no luck. The child remembers the sound it made, follows the 'clink' trail to a puddle, and the clock chimes for the first time."
+    }
+  ]
 }

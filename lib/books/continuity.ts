@@ -39,6 +39,7 @@ export function continuityProblems(
     if (!first || first.pageNumber === sorted[0]?.pageNumber) continue;
     if (re.test(planned)) continue;
     issues.push({
+      severity: "major",
       page: first.pageNumber,
       problem: `"${a}" first appears on page ${first.pageNumber}, but no character has ${a} in their look and nothing in the plan sets it up. Characters can't put on new things in the middle of an adventure.`,
       fix: `Remove "${a}" from page ${first.pageNumber}, or, if it matters, show a character finding or putting it on and explain why.`,
@@ -50,7 +51,7 @@ export function continuityProblems(
     const re = new RegExp(`${esc(heroName)}[^.!?]{0,60}(glasses|spectacles)|(glasses|spectacles)[^.!?]{0,60}${esc(heroName)}|\\b(his|her|their) (glasses|spectacles)`, "i");
     for (const p of sorted) {
       if (re.test(p.text)) {
-        issues.push({ page: p.pageNumber, problem: `Page ${p.pageNumber} gives ${heroName} glasses, but ${heroName} doesn't wear glasses.`, fix: `Remove the glasses from page ${p.pageNumber}.` });
+        issues.push({ severity: "major", page: p.pageNumber, problem: `Page ${p.pageNumber} gives ${heroName} glasses, but ${heroName} doesn't wear glasses.`, fix: `Remove the glasses from page ${p.pageNumber}.` });
         break;
       }
     }
@@ -64,7 +65,7 @@ export function continuityProblems(
     for (const p of sorted) {
       const m = p.text.match(new RegExp(`${name},? the (?:[\\p{L}-]+ ){0,2}?(${ANIMALS.map(esc).join("|")})\\b`, "iu"));
       if (m && kind(m[1].toLowerCase()) !== kind(own)) {
-        issues.push({ page: p.pageNumber, problem: `Page ${p.pageNumber} calls ${c.name} a ${m[1]}, but ${c.name} is ${c.species}.`, fix: `Call ${c.name} ${c.species.replace(/^an? /i, "the ")} (or just ${c.name}) on page ${p.pageNumber}, the same as every other page.` });
+        issues.push({ severity: "major", page: p.pageNumber, problem: `Page ${p.pageNumber} calls ${c.name} a ${m[1]}, but ${c.name} is ${c.species}.`, fix: `Call ${c.name} ${c.species.replace(/^an? /i, "the ")} (or just ${c.name}) on page ${p.pageNumber}, the same as every other page.` });
         break;
       }
     }

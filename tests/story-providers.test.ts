@@ -166,6 +166,73 @@ describe("AnthropicStoryProvider (no network)", () => {
     expect(res.usage.costUsd).toBeCloseTo(0.132, 6); // 6 calls x $0.022
   });
 
+  it("faster drafting: only wording notes means no second review; editing thinks at medium effort", async () => {
+    const outline = await spineOutline(ctx);
+    const efforts: Array<string | undefined> = [];
+    const replies = [
+      reply(manuscript("Draft")),
+      reply({ verdict: "revise", overall: "Lovely; two small wording notes.", issues: [{ page: 3, problem: "A clunky line.", fix: "Smooth it.", severity: "minor" }] }),
+      reply({ pages: [{ pageNumber: 3, text: "A smoother line." }], dedication: "", backCoverBlurb: "" }),
+    ];
+    const caller: ModelCaller = async ({ effort }) => {
+      efforts.push(effort);
+      return replies.shift()!;
+    };
+    const saved: string[] = [];
+    const stages: string[] = [];
+    const res = await provider(caller).writeManuscript(outline, ctx, { save: async (cp) => void saved.push(cp.stage), onStage: async (s) => void stages.push(s) });
+    expect(efforts).toEqual([undefined, "medium", undefined]); // write, edit (medium), rewrite
+    expect(res.value.pages[2].text).toBe("A smoother line.");
+    expect(saved).toEqual(["written", "done"]);
+    expect(stages).toEqual(["writing", "editing"]);
+  });
+
+  it("serious problems still get a second review and a light polish", async () => {
+    const outline = await spineOutline(ctx);
+    const efforts: Array<string | undefined> = [];
+    const replies = [
+      reply(manuscript("Draft")),
+      reply({ verdict: "revise", overall: "A plot hole.", issues: [{ page: 8, problem: "The rule is never stated.", fix: "State it on page 2.", severity: "major" }] }),
+      reply({ pages: [{ pageNumber: 2, text: "Rule stated." }], dedication: "", backCoverBlurb: "" }),
+      reply({ verdict: "revise", overall: "Nearly.", issues: [{ page: 12, problem: "A tiny slip.", fix: "Fix it.", severity: "minor" }] }),
+      reply({ pages: [{ pageNumber: 12, text: "Polished end." }], dedication: "", backCoverBlurb: "" }),
+    ];
+    const caller: ModelCaller = async ({ effort }) => {
+      efforts.push(effort);
+      return replies.shift()!;
+    };
+    const res = await provider(caller).writeManuscript(outline, ctx);
+    expect(efforts).toEqual([undefined, "medium", undefined, "medium", "medium"]);
+    expect(res.value.pages[11].text).toBe("Polished end.");
+    expect(res.value.editorNotes).toHaveLength(2);
+  });
+
+  it("a retry picks up from the saved draft instead of writing again", async () => {
+    const outline = await spineOutline(ctx);
+    const { caller, prompts } = scripted([reply({ verdict: "pass", overall: "Good.", issues: [] })]);
+    const draft = { stage: "written" as const, ...manuscript("Saved"), editorNotes: [] };
+    const res = await provider(caller).writeManuscript(outline, ctx, { resume: draft });
+    expect(prompts).toHaveLength(1); // only the editor; no new manuscript
+    expect(prompts[0]).toContain("Saved page 4.");
+    expect(res.value.pages[3].text).toBe("Saved page 4.");
+  });
+
+  it("a chosen story idea is the spine of the plan, with lighter thinking", async () => {
+    const theme = { ...superhero(), starters: [{ id: "first-power", title: "The Power Nobody Saw", idea: "The child helps a crying kid first, and that kindness is their power." }] };
+    const c2 = { ...ctx, theme, options: { ...ctx.options, starterId: "first-power" } };
+    const good = await spineOutline(c2);
+    const efforts: Array<string | undefined> = [];
+    const prompts: string[] = [];
+    const caller: ModelCaller = async ({ content, effort }) => {
+      efforts.push(effort);
+      prompts.push(String(content));
+      return reply(good);
+    };
+    await provider(caller).generateOutline(c2);
+    expect(prompts[0]).toContain('Story idea "The Power Nobody Saw"');
+    expect(efforts).toEqual(["medium"]);
+  });
+
   it("removes long dashes from the printed words", async () => {
     const outline = await spineOutline(ctx);
     const m = manuscript("Draft");

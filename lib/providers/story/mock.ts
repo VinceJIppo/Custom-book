@@ -1,4 +1,4 @@
-import type { ArtDirection, ArtInputPage, StoryContext, StoryProvider, ThemeDraftRequest } from "./types";
+import type { ArtDirection, ArtInputPage, ManuscriptOptions, ManuscriptResult, StoryContext, StoryProvider, ThemeDraftRequest } from "./types";
 import type { ThemeConfig } from "../../schemas/theme";
 import type { CharacterBible, Outline, Scene, StoryLayout, StoryPage, StoryPagesResult, TextZone } from "../../schemas/story";
 import { READING_LEVEL_RULES } from "../../schemas/book";
@@ -540,6 +540,14 @@ export class MockStoryProvider implements StoryProvider {
       },
       usage: mockUsage(),
     };
+  }
+
+  async writeManuscript(outline: Outline, ctx: StoryContext, opts: ManuscriptOptions = {}): Promise<WithUsage<ManuscriptResult>> {
+    await opts.onStage?.("writing");
+    const r = (await this.generatePages(outline, ctx)).value;
+    const value = { pages: r.pages.map((p) => ({ pageNumber: p.pageNumber, text: p.text })), dedication: r.dedication, backCoverBlurb: r.backCoverBlurb, editorNotes: [] };
+    await opts.save?.({ stage: "done", ...value });
+    return { value, usage: mockUsage() };
   }
 
   async revisePages(_outline: Outline, pages: Array<{ pageNumber: number; text: string }>, target: number[], instruction: string): Promise<WithUsage<{ pages: Array<{ pageNumber: number; text: string }> }>> {

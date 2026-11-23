@@ -125,6 +125,8 @@ export const EditorIssueSchema = z.object({
   page: z.number().int().min(0),
   problem: note(400, 3),
   fix: note(400, 3),
+  /** "major": confusing, contradictory or broken (worth a second editor pass). "minor": wording and rhythm polish. */
+  severity: z.enum(["major", "minor"]).default("major"),
 });
 export type EditorIssue = z.infer<typeof EditorIssueSchema>;
 

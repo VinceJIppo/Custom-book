@@ -55,6 +55,15 @@ export const ThemeConfigSchema = z
     }),
     contentRules: z.array(z.string().min(2).max(160)).max(12),
     genre: z.string().min(2).max(40).optional(),
+    /**
+     * Ready-made story ideas (problem, failed tries, the child's solution). Starting
+     * from one makes the story plan quicker and more dependable; the story is still
+     * written fresh around the child and everyone in it.
+     */
+    starters: z
+      .array(z.object({ id: z.string().regex(/^[a-z0-9-]+$/), title: z.string().min(2).max(60), idea: z.string().min(20).max(600) }))
+      .max(4)
+      .optional(),
     licensed: z.boolean().default(false),
   })
   .refine((t) => t.ageRange[0] <= t.ageRange[1], { message: "ageRange must be [min, max]", path: ["ageRange"] });

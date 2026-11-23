@@ -2,20 +2,65 @@
   "id": "space-explorer",
   "name": "Space Explorer",
   "genre": "space",
-  "ageRange": [3, 8],
+  "ageRange": [
+    3,
+    8
+  ],
   "pitch": "The child becomes captain of a tiny rocket and visits a string of friendly planets to deliver a lost star back to the sky.",
   "setting": "The Twinkle Belt, a cozy corner of space with a jelly-bean moon, a planet made of soft clouds, and a ringed planet that hums lullabies",
   "supportingCast": [
-    { "name": "Bolt", "role": "co-pilot", "look": "small silver robot dog with antenna ears and a blinking blue nose" },
-    { "name": "Mira", "role": "mission control", "look": "friendly grandmother astronomer with silver braids and star-shaped glasses, seen on the rocket's round screen" },
-    { "name": "Glimmer", "role": "lost star", "look": "a small, shy, glowing yellow star with a sleepy smile" }
+    {
+      "name": "Bolt",
+      "role": "co-pilot",
+      "look": "small silver robot dog with antenna ears and a blinking blue nose"
+    },
+    {
+      "name": "Mira",
+      "role": "mission control",
+      "look": "friendly grandmother astronomer with silver braids and star-shaped glasses, seen on the rocket's round screen"
+    },
+    {
+      "name": "Glimmer",
+      "role": "lost star",
+      "look": "a small, shy, glowing yellow star with a sleepy smile"
+    }
   ],
-  "storyBeats": ["countdown at home", "a star falls", "blast off", "planet of clouds", "getting lost", "clever idea", "star returned", "home to bed"],
+  "storyBeats": [
+    "countdown at home",
+    "a star falls",
+    "blast off",
+    "planet of clouds",
+    "getting lost",
+    "clever idea",
+    "star returned",
+    "home to bed"
+  ],
   "artDirection": {
     "defaultStyle": "soft-3d",
-    "palette": ["#283593", "#7E57C2", "#FFD54F", "#80DEEA"],
+    "palette": [
+      "#283593",
+      "#7E57C2",
+      "#FFD54F",
+      "#80DEEA"
+    ],
     "mood": "wonder-filled, calm, sparkly"
   },
-  "contentRules": ["space is friendly, never dangerous", "no aliens that look scary", "no weapons"],
-  "licensed": false
+  "contentRules": [
+    "space is friendly, never dangerous",
+    "no aliens that look scary",
+    "no weapons"
+  ],
+  "licensed": false,
+  "starters": [
+    {
+      "id": "glimmer-home",
+      "title": "Taking Glimmer Home",
+      "idea": "Glimmer the little star fell out of the sky and the night is missing its brightest light. The rocket can't fly high enough and the big planets are too busy to help. The child asks each small planet for a tiny push, one after another, and Glimmer floats back to her place in time for bedtime."
+    },
+    {
+      "id": "moon-garden",
+      "title": "The Moon Garden",
+      "idea": "Mira at mission control reports the moon's flower garden has stopped blooming. Bolt tries a giant flashlight and then a bucket of space water, but nothing grows. The child notices the flowers turn toward laughter, the crew tells their silliest jokes, and the whole moon blooms."
+    }
+  ]
 }

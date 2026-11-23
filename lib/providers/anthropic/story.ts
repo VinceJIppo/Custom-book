@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { continuityProblems } from "../../books/continuity";
-import type { ArtDirection, ArtInputPage, StoryContext, StoryProvider, ThemeDraftRequest } from "../story/types";
+import type { ArtDirection, ArtInputPage, DraftCheckpoint, ManuscriptOptions, ManuscriptResult, StoryContext, StoryProvider, ThemeDraftRequest } from "../story/types";
+import type { Effort } from "./client";
 import {
   CharacterBibleSchema,
   EditorReportSchema,
@@ -33,8 +34,7 @@ import {
   outlinePrompt,
   revisePrompt,
   rewritePrompt,
-  themePrompt,
-} from "./storyPrompts";
+  themePrompt, chosenStarter } from "./storyPrompts";
 import { findProtectedNames } from "../../safety/protectedNames";
 
 /*
@@ -102,7 +102,7 @@ type Patch = z.infer<typeof PatchSchema>;
 const WireEditor = z.object({
   verdict: z.enum(["pass", "revise"]),
   overall: z.string(),
-  issues: z.array(z.object({ page: z.number().int(), problem: z.string(), fix: z.string() })),
+  issues: z.array(z.object({ page: z.number().int(), problem: z.string(), fix: z.string(), severity: z.enum(["major", "minor"]) })),
 });
 const WireArt = z.object({
   pages: z.array(
@@ -203,8 +203,11 @@ export class AnthropicStoryProvider implements StoryProvider {
   readonly name = "anthropic";
   private readonly claude: ClaudeJson;
 
+  private readonly effort: Effort;
+
   constructor(opts: ClaudeOptions) {
     this.claude = new ClaudeJson(opts);
+    this.effort = opts.effort;
   }
 
   async generateOutline(ctx: StoryContext): Promise<WithUsage<Outline>> {
@@ -213,6 +216,8 @@ export class AnthropicStoryProvider implements StoryProvider {
       label: "outline",
       system: STORY_SYSTEM_PROMPT,
       build: (p) => outlinePrompt(ctx, p),
+      // A chosen story idea already has its plot worked out: planning needs less thinking.
+      effort: chosenStarter(ctx) ? this.lightEffort : undefined,
       wire: WireOutline,
       schema: OutlineSchema,
       extraCheck: (o) => {
@@ -230,13 +235,19 @@ export class AnthropicStoryProvider implements StoryProvider {
     return { ...res, value: { ...res.value, title: cleanDashes(res.value.title) } };
   }
 
+  /** Editing steps think a little less than planning and writing: same quality, much faster. */
+  private get lightEffort(): Effort {
+    const order: Effort[] = ["low", "medium", "high", "xhigh", "max"];
+    return order.indexOf(this.effort) < order.indexOf("medium") ? this.effort : "medium";
+  }
+
   /**
-   * Writes the book in stages, like an author and editor: the whole manuscript,
-   * an editor's review, a targeted rewrite and second review when the editor
-   * finds problems, a final polish for any remaining notes, and finally
-   * art direction (scenes, must-show details, continuity) for the finished words.
+   * Writes the words in stages, like an author and editor: the whole manuscript,
+   * an editor's review, a targeted rewrite, and (only when the first review found
+   * serious problems) a second review and a final polish. Progress is saved after
+   * every stage so a retry never starts over.
    */
-  async generatePages(outline: Outline, ctx: StoryContext): Promise<WithUsage<StoryPagesResult>> {
+  async writeManuscript(outline: Outline, ctx: StoryContext, opts: ManuscriptOptions = {}): Promise<WithUsage<ManuscriptResult>> {
     const n = ctx.options.length;
     const usages: Usage[] = [];
     const run = async <T>(r: Promise<WithUsage<T>>) => {
@@ -244,28 +255,31 @@ export class AnthropicStoryProvider implements StoryProvider {
       usages.push(out.usage);
       return out.value;
     };
-
     const verse = (pages: Array<{ pageNumber: number; text: string }>) => verseProblems(pages, ctx.options.voice, ctx.options.readingLevel);
+    const resume = opts.resume && opts.resume.pages.length === n ? opts.resume : null;
+    let manuscript: Manuscript = resume ? { pages: resume.pages, dedication: resume.dedication, backCoverBlurb: resume.backCoverBlurb } : (null as unknown as Manuscript);
+    const editorNotes: EditorReport[] = resume ? [...resume.editorNotes] : [];
+    const save = async (stage: DraftCheckpoint["stage"]) => opts.save?.({ stage, ...manuscript, editorNotes });
 
-    let manuscript: Manuscript = cleanManuscript(
-      await run(
-        this.claude.generate({
-          label: "manuscript",
-          system: STORY_SYSTEM_PROMPT,
-          build: (p) => manuscriptPrompt(ctx, outline, p),
-          wire: WireManuscript,
-          schema: ManuscriptSchema,
-          extraCheck: (m) => numberingProblems(m.pages, n),
-          softCheck: (m) => verse(m.pages),
-          maxTokens: 48000,
-        }),
-      ),
-    );
+    if (!resume) {
+      await opts.onStage?.("writing");
+      manuscript = cleanManuscript(
+        await run(
+          this.claude.generate({
+            label: "manuscript",
+            system: STORY_SYSTEM_PROMPT,
+            build: (p) => manuscriptPrompt(ctx, outline, p),
+            wire: WireManuscript,
+            schema: ManuscriptSchema,
+            extraCheck: (m) => numberingProblems(m.pages, n),
+            softCheck: (m) => verse(m.pages),
+            maxTokens: 48000,
+          }),
+        ),
+      );
+      await save("written");
+    }
 
-    // Editor review, a targeted rewrite, a second review, and a final polish
-    // that answers the second review's notes. Rewrites return only the pages
-    // they change, which keeps them quick and cheap.
-    const editorNotes: EditorReport[] = [];
     const review = () =>
       run(
         this.claude.generate({
@@ -275,6 +289,7 @@ export class AnthropicStoryProvider implements StoryProvider {
           wire: WireEditor,
           schema: EditorReportSchema,
           maxTokens: 24000,
+          effort: this.lightEffort,
         }),
       );
     const patch = async (report: EditorReport, mode: "rewrite" | "polish") => {
@@ -291,46 +306,69 @@ export class AnthropicStoryProvider implements StoryProvider {
           },
           softCheck: (x) => verse(applyPatch(manuscript, x).pages),
           maxTokens: 32000,
+          // The first rewrite fixes real story problems; the final polish only touches up.
+          effort: mode === "polish" ? this.lightEffort : undefined,
         }),
       );
       manuscript = cleanManuscript(applyPatch(manuscript, p));
     };
     const needsWork = (r: EditorReport) => r.verdict === "revise" && r.issues.length > 0;
+    const hasMajor = (r: EditorReport) => r.issues.some((i) => i.severity !== "minor");
     const heroName = ctx.child.nickname || ctx.child.firstName;
-    // Plain-code continuity slips (new glasses mid-adventure, a fox called a puppy) always go to the rewrite.
+    // Plain-code continuity slips (new glasses mid-adventure, a fox called a puppy) always go to the rewrite, as major.
     const withSlips = (r: EditorReport): EditorReport => {
-      const slips = continuityProblems(manuscript.pages, outline, heroName, ctx.appearance?.hero);
+      const slips = continuityProblems(manuscript.pages, outline, heroName, ctx.appearance?.hero).map((x) => ({ ...x, severity: "major" as const }));
       return slips.length ? { ...r, verdict: "revise", issues: [...slips, ...r.issues].slice(0, 12) } : r;
     };
 
-    const first = withSlips(await review());
-    editorNotes.push(first);
-    if (needsWork(first)) {
-      await patch(first, "rewrite");
+    const stage = resume?.stage ?? "written";
+    if (stage === "written") {
+      await opts.onStage?.("editing");
+      const first = withSlips(await review());
+      editorNotes.push(first);
+      if (needsWork(first)) await patch(first, "rewrite");
+      await save(needsWork(first) && hasMajor(first) ? "rewritten" : "done");
+      if (!(needsWork(first) && hasMajor(first))) return this.finishManuscript(ctx, manuscript, editorNotes, usages);
+    }
+    if (stage === "written" || stage === "rewritten" || stage === "reviewed") {
+      // Only after serious problems: check the rewrite, then a light final polish.
+      await opts.onStage?.("polishing");
       const second = withSlips(await review());
       editorNotes.push(second);
       if (needsWork(second)) await patch(second, "polish");
+      await save("done");
     }
+    return this.finishManuscript(ctx, manuscript, editorNotes, usages);
+  }
 
-    const art = await run(this.directArt(outline, manuscript.pages, ctx));
+  private finishManuscript(ctx: StoryContext, m: Manuscript, editorNotes: EditorReport[], usages: Usage[]): WithUsage<ManuscriptResult> {
+    return {
+      value: { pages: m.pages, dedication: ctx.options.dedication || m.dedication, backCoverBlurb: m.backCoverBlurb, editorNotes },
+      usage: sumUsage(this.name, usages),
+    };
+  }
 
-    const textByPage = new Map(manuscript.pages.map((p) => [p.pageNumber, p.text]));
-    const pages: StoryPage[] = art.pages
+  /** The words, then the picture plans (used when parents don't review the story first). */
+  async generatePages(outline: Outline, ctx: StoryContext, opts: ManuscriptOptions = {}): Promise<WithUsage<StoryPagesResult>> {
+    const n = ctx.options.length;
+    const written = await this.writeManuscript(outline, ctx, opts);
+    const art = await this.directArt(outline, written.value.pages, ctx);
+    const textByPage = new Map(written.value.pages.map((p) => [p.pageNumber, p.text]));
+    const pages: StoryPage[] = art.value.pages
       .sort((a, b) => a.pageNumber - b.pageNumber)
       .map((p) => ({ pageNumber: p.pageNumber, text: textByPage.get(p.pageNumber) ?? "", scene: p.scene, layout: p.layout, textZone: p.textZone }));
     const problems = validateStoryPages(pages, n);
     if (problems.length) throw new Error(`The story pages didn't line up: ${problems.join(" ")}`);
-
     return {
       value: {
         pages,
-        dedication: ctx.options.dedication || manuscript.dedication,
-        backCoverBlurb: manuscript.backCoverBlurb,
-        coverScene: art.coverScene,
-        storySummary: art.storySummary,
-        editorNotes,
+        dedication: written.value.dedication,
+        backCoverBlurb: written.value.backCoverBlurb,
+        coverScene: art.value.coverScene,
+        storySummary: art.value.storySummary,
+        editorNotes: written.value.editorNotes,
       },
-      usage: sumUsage(this.name, usages),
+      usage: sumUsage(this.name, [written.usage, art.usage]),
     };
   }
 
@@ -341,6 +379,7 @@ export class AnthropicStoryProvider implements StoryProvider {
     const res = await this.claude.generate({
       label: "art direction",
       system: ART_SYSTEM_PROMPT,
+      effort: this.lightEffort,
       build: (p) => artDirectionPrompt(ctx, outline, manuscriptPages, p),
       wire: WireArt,
       schema: ArtSchema,

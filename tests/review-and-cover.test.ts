@@ -106,10 +106,12 @@ describe("changing the story during review", () => {
     expect((await db.book.findUniqueOrThrow({ where: { id: bookId } })).status).toBe("ready");
   });
 
-  it("skips the refresh when nothing changed, and refuses changes once pictures start", async () => {
+  it("plans the pictures once, after approval, and refuses changes once pictures start", async () => {
+    // Picture plans aren't made while the story is written (faster drafting): no scenes yet.
+    expect((await storyPages()).every((p) => p.scene === null)).toBe(true);
     await approveStory(userId, bookId);
     await drainQueue();
-    expect(story.artCalls).toHaveLength(0);
+    expect(story.artCalls).toHaveLength(1);
     expect((await rewritePageRange(userId, bookId, 1, 2, "shorter")).ok).toBe(false);
     expect((await rewriteWholeStory(userId, bookId, "shorter")).ok).toBe(false);
   });

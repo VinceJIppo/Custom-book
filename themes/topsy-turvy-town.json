@@ -2,14 +2,33 @@
   "id": "topsy-turvy-town",
   "name": "Topsy-Turvy Town",
   "genre": "whimsical",
-  "ageRange": [2, 8],
+  "ageRange": [
+    2,
+    8
+  ],
   "pitch": "The child wakes up in Wobbleton-on-the-Wiggle on the morning everything goes upside down, and sets off to get the town's great Giggle-Bell ringing again before the topsy-turviness becomes permanent.",
   "setting": "Wobbleton-on-the-Wiggle, a jumbly hilltop town of leaning houses, corkscrew chimneys, bridges that loop the loop, hills like scoops of sherbet, and tufty lollipop trees in every color",
   "supportingCast": [
-    { "name": "Mayor Fumbleflop", "role": "pompous, flustered mayor", "look": "round little mayor with an enormous curly mustache, a sash covered in medals, and a hat shaped like a teapot" },
-    { "name": "Professor Quibblewick", "role": "inventor who talks in big words", "look": "tall, bendy professor with spring-shaped hair, three pairs of spectacles pushed up on her head, and a coat with too many pockets" },
-    { "name": "Zizzle", "role": "loyal sidekick", "look": "small fluffy orange creature with long floppy ears, polka-dot paws and a tail that curls into a spiral" },
-    { "name": "The Grumblesnoot", "role": "grumpy creature who turns out to be lonely", "look": "big shaggy blue-green creature with droopy eyebrows, a long wiggly nose, and tiny mismatched socks" }
+    {
+      "name": "Mayor Fumbleflop",
+      "role": "pompous, flustered mayor",
+      "look": "round little mayor with an enormous curly mustache, a sash covered in medals, and a hat shaped like a teapot"
+    },
+    {
+      "name": "Professor Quibblewick",
+      "role": "inventor who talks in big words",
+      "look": "tall, bendy professor with spring-shaped hair, three pairs of spectacles pushed up on her head, and a coat with too many pockets"
+    },
+    {
+      "name": "Zizzle",
+      "role": "loyal sidekick",
+      "look": "small fluffy orange creature with long floppy ears, polka-dot paws and a tail that curls into a spiral"
+    },
+    {
+      "name": "The Grumblesnoot",
+      "role": "grumpy creature who turns out to be lonely",
+      "look": "big shaggy blue-green creature with droopy eyebrows, a long wiggly nose, and tiny mismatched socks"
+    }
   ],
   "storyBeats": [
     "upside-down morning",
@@ -25,7 +44,12 @@
   "powerIdeas": "The child fixes things with a clever, silly idea that uses one of their favorite things in a way nobody expected.",
   "artDirection": {
     "defaultStyle": "whimsical-ink",
-    "palette": ["#E63946", "#3DA5D9", "#FFD23F", "#7BC67E"],
+    "palette": [
+      "#E63946",
+      "#3DA5D9",
+      "#FFD23F",
+      "#7BC67E"
+    ],
     "mood": "giddy, bouncy, wildly silly and warm-hearted"
   },
   "contentRules": [
@@ -35,5 +59,17 @@
     "no weapons",
     "only original characters and invented words"
   ],
-  "licensed": false
+  "licensed": false,
+  "starters": [
+    {
+      "id": "giggle-bell",
+      "title": "The Great Giggle-Bell",
+      "idea": "The town's Giggle-Bell has stopped and everything has turned upside down. Mayor Fumbleflop's speech and Professor Quibblewick's machine both fail. The child finds the Grumblesnoot is lonely, makes him laugh with a silly dance, and the bell (which only rings when someone laughs together) rings everything right side up."
+    },
+    {
+      "id": "sideways-rain",
+      "title": "The Day It Rained Sideways",
+      "idea": "In Wobbleton the rain starts falling sideways, soaking everyone's laundry. Holding giant umbrellas and turning the houses both go wrong. The child turns the weathervane the right way round, the rain falls down again, and the town hangs a rainbow out to dry."
+    }
+  ]
 }
