@@ -125,8 +125,10 @@ export function BookWizard({ child, themes, defaultReadingLevel, estimates, stor
             <label className="flex cursor-pointer items-start gap-3 bg-white p-4 ring-1 ring-[color:var(--line)] has-[:checked]:bg-tint has-[:checked]:ring-2 has-[:checked]:ring-cobalt pipe-sun">
               <input type="radio" name="starterId" value="" className="mt-1" data-testid="starter-new" />
               <span>
-                <span className="block font-semibold">A brand-new story</span>
-                <span className="mt-1 block text-sm text-[color:var(--muted)]">We invent a new plot just for {child.name}. Takes a little longer.</span>
+                <span className="flex flex-wrap items-center gap-2 font-semibold">
+                  A brand-new story <span className="chip chip-sun">Experimental</span>
+                </span>
+                <span className="mt-1 block text-sm text-[color:var(--muted)]">We invent a new plot just for {child.name}. Takes a little longer, and results can vary more than a ready-made story.</span>
               </span>
             </label>
           </div>
