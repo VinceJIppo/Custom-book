@@ -1,11 +1,13 @@
-# Render Blueprint for StoryStar (checked against Render's Blueprint YAML reference on 2026-11-21).
-# In Render: New > Blueprint > pick this repo. Render creates the database, the web app and the
-# worker, then asks for every value marked `sync: false` (your keys). Nothing secret lives here.
-# Render doesn't allow `sync: false` inside an environment group, so each service lists the keys
-# it needs (enter the same value in both places when asked).
+# Render Blueprint for StoryStar, LITE: one service runs the website AND the background worker,
+# plus the smallest database. About $31 a month (Render's prices; check render.com/pricing).
+# When orders pick up, switch to render.two-services.yaml (website and worker apart).
+# Checked against Render's Blueprint YAML reference on 2026-11-23.
+# In Render: New > Blueprint > pick this repo. Render creates the database and the app (website
+# plus worker), then asks for every value marked `sync: false` (your keys). Nothing secret lives here.
+# Render doesn't allow `sync: false` inside an environment group, so the service lists the keys it needs.
 #
-# Plans are a starting point; change them in the dashboard. The worker renders print PDFs with
-# headless Chromium, so give it at least 2 GB of memory.
+# The worker renders print PDFs with headless Chromium, so the one service needs at least
+# 2 GB of memory (the 1c-2g plan). Don't use a 512 MB plan.
 
 services:
   - type: web
@@ -13,6 +15,8 @@ services:
     runtime: docker
     region: oregon
     plan: 1c-2g
+    # Website and background worker in one container (if either stops, Render restarts both).
+    dockerCommand: npm run start:all
     healthCheckPath: /api/health
     # Apply database migrations before each deploy goes live.
     preDeployCommand: npm run db:deploy
@@ -44,6 +48,11 @@ services:
         sync: false
       - key: ANTHROPIC_API_KEY
         sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      # Sharing one machine with the website: draw two pictures at a time.
+      - key: WORKER_CONCURRENCY
+        value: "2"
       - key: LULU_CLIENT_KEY
         sync: false
       - key: LULU_CLIENT_SECRET
@@ -53,49 +62,13 @@ services:
       - key: STRIPE_WEBHOOK_SECRET
         sync: false
 
-  - type: worker
-    name: storystar-worker
-    runtime: docker
-    region: oregon
-    plan: 1c-2g
-    dockerCommand: npm run worker
-    envVars:
-      - fromGroup: storystar-shared
-      - key: DATABASE_URL
-        fromDatabase:
-          name: storystar-db
-          property: connectionString
-      - key: APP_URL
-        sync: false
-      - key: ADMIN_EMAILS
-        sync: false
-      - key: S3_ENDPOINT
-        sync: false
-      - key: S3_BUCKET
-        sync: false
-      - key: S3_ACCESS_KEY_ID
-        sync: false
-      - key: S3_SECRET_ACCESS_KEY
-        sync: false
-      - key: RESEND_API_KEY
-        sync: false
-      - key: EMAIL_FROM
-        sync: false
-      - key: ANTHROPIC_API_KEY
-        sync: false
-      - key: GEMINI_API_KEY
-        sync: false
-      - key: LULU_CLIENT_KEY
-        sync: false
-      - key: LULU_CLIENT_SECRET
-        sync: false
-      - key: STRIPE_SECRET_KEY
-        sync: false
-
 databases:
   - name: storystar-db
     region: oregon
-    plan: 0.5c-1g
+    # The smallest paid database (0.1 CPU, 256 MB). Pictures and PDFs live in R2, so 1 GB of disk
+    # goes a long way; disk can be increased later (never decreased).
+    plan: 0.1c-256mb
+    diskSizeGB: 1
     postgresMajorVersion: "18"
     databaseName: storystar
     # Only Render services in this account can connect (no public access).

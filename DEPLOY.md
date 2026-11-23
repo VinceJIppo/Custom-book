@@ -31,12 +31,21 @@ Do the steps in order. Use **test/sandbox keys** throughout; going live is the l
 2. Resend lists DNS records. Add each one in Cloudflare (**DNS > Records**), then click **Verify** in Resend.
 3. **API Keys > Create**, with sending access. Your sender will be like `StoryStar <hello@yourdomain.com>`.
 
-## 3. Render: app, worker and database
+## 3. Render: app and database
+
+`render.yaml` is the **lite** setup, about **$31 a month**: one service (1 CPU, 2 GB) runs the
+website and the background worker together, plus the smallest paid database. That is plenty for
+launch and early customers. When orders pick up, switch to `render.two-services.yaml` (about $70 a
+month): the website and the worker get their own machines, so making print files never slows the
+site down. To switch, open the Blueprint in Render, set **Blueprint path** to
+`render.two-services.yaml`, and sync. Check current prices on render.com/pricing.
+
+Don't put the app on a 512 MB plan: making print PDFs (headless Chromium) needs about 2 GB.
 
 1. Create a Render account and connect GitHub with access to this repository.
 2. **New > Blueprint**, pick the repository and the branch you want to deploy. Render reads
-   `render.yaml` and shows the database, web service and worker.
-3. Fill in the values it asks for (each service asks separately; use the same values in both):
+   `render.yaml` and shows the database and the web service.
+3. Fill in the values it asks for (with the two-service file, each service asks separately; use the same values in both):
 
    | Key | Value |
    |---|---|
@@ -50,7 +59,7 @@ Do the steps in order. Use **test/sandbox keys** throughout; going live is the l
    | `STRIPE_WEBHOOK_SECRET` | leave empty for now (step 5) |
 
 4. **Apply**. The first deploy builds the image (a few minutes), applies the database migrations,
-   and starts the app and the worker. When it's live, `https://<service>.onrender.com/api/health`
+   and starts the app (website and worker together). When it's live, `https://<service>.onrender.com/api/health`
    answers `{"ok":true}`.
 
 ## 4. Your domain

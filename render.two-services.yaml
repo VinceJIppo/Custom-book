@@ -1,0 +1,126 @@
+# Render Blueprint for StoryStar, TWO SERVICES (website and worker apart; about $70 a month).
+# Use this when traffic grows: in Render, point the Blueprint at this file (Blueprint settings >
+# Blueprint path: render.two-services.yaml). Checked against Render's Blueprint reference on 2026-11-21.
+# In Render: New > Blueprint > pick this repo. Render creates the database, the web app and the
+# worker, then asks for every value marked `sync: false` (your keys). Nothing secret lives here.
+# Render doesn't allow `sync: false` inside an environment group, so each service lists the keys
+# it needs (enter the same value in both places when asked).
+#
+# Plans are a starting point; change them in the dashboard. The worker renders print PDFs with
+# headless Chromium, so give it at least 2 GB of memory.
+
+services:
+  - type: web
+    name: storystar-web
+    runtime: docker
+    region: oregon
+    plan: 1c-2g
+    healthCheckPath: /api/health
+    # Apply database migrations before each deploy goes live.
+    preDeployCommand: npm run db:deploy
+    envVars:
+      - fromGroup: storystar-shared
+      - key: DATABASE_URL
+        fromDatabase:
+          name: storystar-db
+          property: connectionString
+      # Your site's public address, e.g. https://storystar.example.com
+      - key: APP_URL
+        sync: false
+      # Comma-separated admin emails (you): /admin pages and no limits.
+      - key: ADMIN_EMAILS
+        sync: false
+      # Cloudflare R2: https://<ACCOUNT_ID>.r2.cloudflarestorage.com, bucket name, R2 API token keys.
+      - key: S3_ENDPOINT
+        sync: false
+      - key: S3_BUCKET
+        sync: false
+      - key: S3_ACCESS_KEY_ID
+        sync: false
+      - key: S3_SECRET_ACCESS_KEY
+        sync: false
+      # Resend: API key and sender on your verified domain, e.g. StoryStar <hello@yourdomain.com>
+      - key: RESEND_API_KEY
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: LULU_CLIENT_KEY
+        sync: false
+      - key: LULU_CLIENT_SECRET
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+
+  - type: worker
+    name: storystar-worker
+    runtime: docker
+    region: oregon
+    plan: 1c-2g
+    dockerCommand: npm run worker
+    envVars:
+      - fromGroup: storystar-shared
+      - key: DATABASE_URL
+        fromDatabase:
+          name: storystar-db
+          property: connectionString
+      - key: APP_URL
+        sync: false
+      - key: ADMIN_EMAILS
+        sync: false
+      - key: S3_ENDPOINT
+        sync: false
+      - key: S3_BUCKET
+        sync: false
+      - key: S3_ACCESS_KEY_ID
+        sync: false
+      - key: S3_SECRET_ACCESS_KEY
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: LULU_CLIENT_KEY
+        sync: false
+      - key: LULU_CLIENT_SECRET
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+
+databases:
+  - name: storystar-db
+    region: oregon
+    plan: 0.5c-1g
+    postgresMajorVersion: "18"
+    databaseName: storystar
+    # Only Render services in this account can connect (no public access).
+    ipAllowList: []
+
+envVarGroups:
+  - name: storystar-shared
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: AUTH_MODE
+        value: email
+      - key: STORAGE_DRIVER
+        value: s3
+      - key: S3_REGION
+        value: auto
+      # Start with the Lulu sandbox and Stripe test keys; switch when you're ready to sell.
+      - key: LULU_API_BASE
+        value: https://api.sandbox.lulu.com
+      - key: ALLOW_LIVE_ORDERS
+        value: "false"
+      # Only used by local storage; set so nothing ever falls back to a development value.
+      - key: STORAGE_SIGNING_SECRET
+        generateValue: true
+      - key: STORAGE_ENCRYPTION_KEY
+        generateValue: true

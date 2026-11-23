@@ -9,6 +9,7 @@
     "worker": "tsx scripts/worker.ts",
     "build": "next build",
     "start": "next start",
+    "start:all": "concurrently -k -n web,worker \"next start\" \"tsx scripts/worker.ts\"",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
