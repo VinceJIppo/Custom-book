@@ -51,7 +51,10 @@ export class StripePaymentProvider implements PaymentProvider {
       customer_email: req.customerEmail,
       // The printer's price can change, so a checkout is only good for an hour.
       expires_at: Math.floor(Date.now() / 1000) + 60 * 60,
-    });
+    },
+    // A network retry for the same order never creates a second checkout.
+    { idempotencyKey: `checkout-${req.orderId}` },
+    );
     if (!session.url) throw new Error("Stripe did not return a checkout page URL.");
     return { id: session.id, url: session.url };
   }
@@ -93,7 +96,8 @@ export class StripePaymentProvider implements PaymentProvider {
   }
 
   async refund(paymentRef: string) {
-    const r = await this.stripe.refunds.create({ payment_intent: paymentRef });
+    // A repeated click or retry never refunds twice.
+    const r = await this.stripe.refunds.create({ payment_intent: paymentRef }, { idempotencyKey: `refund-${paymentRef}` });
     return { id: r.id };
   }
 }
