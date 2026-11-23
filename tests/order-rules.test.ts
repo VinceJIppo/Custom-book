@@ -97,7 +97,7 @@ describe("Stripe adapter (no network)", () => {
     const p = new StripePaymentProvider({ secretKey: "sk_test_x", allowLive: false, client });
     expect(await p.getCheckout("cs_test_1")).toEqual({ id: "cs_test_1", status: "complete", paid: true, paymentRef: "pi_1", amountCents: 2999, orderId: "order_1" });
     expect(await p.refund("pi_1")).toEqual({ id: "re_1" });
-    expect(refunds).toHaveBeenCalledWith({ payment_intent: "pi_1" });
+    expect(refunds).toHaveBeenCalledWith({ payment_intent: "pi_1" }, { idempotencyKey: "refund-pi_1" });
   });
 
   it("verifies webhook signatures on the raw body and maps checkout events", async () => {
