@@ -4,6 +4,8 @@ import { isAdminEmail } from "@/lib/admin";
 import { getConfig } from "@/lib/config";
 import { getStorage } from "@/lib/storage";
 import { activeProviderNames } from "@/lib/providers/registry";
+import { S3Storage } from "@/lib/storage/s3";
+import { moveMisplacedAction } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -52,9 +54,18 @@ async function storageChecks(): Promise<Check[]> {
 }
 
 /** Admin-only: checks storage (R2) and which AI providers are switched on. */
-export default async function AdminHealth() {
+export default async function AdminHealth({ searchParams }: { searchParams: Promise<{ moved?: string; skipped?: string; error?: string }> }) {
   const me = await requireOnboardedUser();
   if (!isAdminEmail(me.email)) notFound();
+  const sp = await searchParams;
+  let misplaced: { count: number; more: boolean } | null = null;
+  let misplacedError = "";
+  try {
+    const s = getStorage();
+    if (s instanceof S3Storage) misplaced = await s.countMisplaced();
+  } catch (err) {
+    misplacedError = String(err).slice(0, 300);
+  }
   const c = getConfig();
   const p = activeProviderNames();
   const checks: Check[] = [
@@ -69,6 +80,26 @@ export default async function AdminHealth() {
         <h1 className="font-display text-3xl font-medium">System check</h1>
         <p className="text-[color:var(--muted)]">Secrets are never shown, only whether they look right. Reload the page to run it again.</p>
       </div>
+      {sp.moved !== undefined && (
+        <p className="rounded-xl bg-emerald-50 px-4 py-3 text-emerald-900 ring-1 ring-emerald-200">
+          Moved {sp.moved} file(s) back into place{Number(sp.skipped) > 0 && ` (${sp.skipped} already had a newer copy, so the old one was removed)`}. Pictures made before the endpoint fix should show again.
+        </p>
+      )}
+      {sp.error && <p className="rounded-xl bg-amber-50 px-4 py-3 text-amber-900 ring-1 ring-amber-200">Moving files didn&apos;t finish: {sp.error}. You can press the button again; it carries on where it stopped.</p>}
+      {misplaced && misplaced.count > 0 && (
+        <section className="rounded-xl bg-amber-50 p-5 ring-1 ring-amber-200">
+          <h2 className="font-display text-xl font-medium text-amber-950">Files saved in the wrong folder</h2>
+          <p className="mt-1 text-sm text-amber-900">
+            {misplaced.count}
+            {misplaced.more && "+"} file(s) were saved while S3_ENDPOINT ended in the bucket name, so the app can&apos;t find them (they show as broken pictures). Moving them puts them back where the app looks. Nothing is redrawn and it costs nothing.
+          </p>
+          <form action={moveMisplacedAction} className="mt-3">
+            <button className="btn btn-primary">Move {misplaced.count}{misplaced.more && "+"} file(s) into place</button>
+          </form>
+        </section>
+      )}
+      {misplaced && misplaced.count === 0 && <p className="text-sm text-[color:var(--muted)]">No files are in the wrong folder.</p>}
+      {misplacedError && <p className="text-sm text-amber-900">Couldn&apos;t look for misplaced files: {misplacedError}</p>}
       <ul className="divide-y divide-[color:var(--line)] rounded-xl bg-white ring-1 ring-[color:var(--line)]">
         {checks.map((ch) => (
           <li key={ch.name} className="flex gap-3 px-4 py-3">

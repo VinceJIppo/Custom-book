@@ -9,7 +9,7 @@
  * The bucket stays private (no public access, no r2.dev URL). Browsers and the
  * printer only ever get short-lived presigned links.
  */
-import { DeleteObjectCommand, DeleteObjectsCommand, GetObjectCommand, HeadObjectCommand, ListObjectsV2Command, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { CopyObjectCommand, DeleteObjectCommand, DeleteObjectsCommand, GetObjectCommand, HeadObjectCommand, ListObjectsV2Command, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { assertSafeKey, type SignedUrlOptions, type Storage, type StoredObjectMeta } from "./types";
 
@@ -107,6 +107,40 @@ export class S3Storage implements Storage {
       token = page.IsTruncated ? page.NextContinuationToken : undefined;
     } while (token);
     return deleted;
+  }
+
+  /**
+   * Files saved while S3_ENDPOINT wrongly ended in "/<bucket>" landed under an extra
+   * "<bucket>/" folder. Counts them (up to `limit`).
+   */
+  async countMisplaced(limit = 1000) {
+    const page = await this.client.send(new ListObjectsV2Command({ Bucket: this.opts.bucket, Prefix: `${this.opts.bucket}/`, MaxKeys: limit }));
+    return { count: page.KeyCount ?? (page.Contents ?? []).length, more: !!page.IsTruncated };
+  }
+
+  /** Moves those files back to where the app looks for them. Never overwrites a newer file. */
+  async moveMisplaced() {
+    const prefix = `${this.opts.bucket}/`;
+    let moved = 0;
+    let skipped = 0;
+    let token: string | undefined;
+    do {
+      const page = await this.client.send(new ListObjectsV2Command({ Bucket: this.opts.bucket, Prefix: prefix, ContinuationToken: token }));
+      for (const o of page.Contents ?? []) {
+        if (!o.Key) continue;
+        const target = o.Key.slice(prefix.length);
+        if (!target) continue;
+        if (await this.exists(target)) {
+          skipped++;
+        } else {
+          await this.client.send(new CopyObjectCommand({ Bucket: this.opts.bucket, Key: target, CopySource: `${this.opts.bucket}/${o.Key.split("/").map(encodeURIComponent).join("/")}` }));
+          moved++;
+        }
+        await this.client.send(new DeleteObjectCommand({ Bucket: this.opts.bucket, Key: o.Key }));
+      }
+      token = page.IsTruncated ? page.NextContinuationToken : undefined;
+    } while (token);
+    return { moved, skipped };
   }
 
   /** A presigned link (always absolute). downloadName makes the browser save the file. */
