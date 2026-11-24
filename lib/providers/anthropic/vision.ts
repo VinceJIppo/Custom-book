@@ -38,7 +38,7 @@ export class AnthropicVisionProvider implements VisionProvider {
     return this.claude.model;
   }
 
-  async checkPhoto(photo: ImageData): Promise<WithUsage<PhotoCheck>> {
+  async checkPhoto(photo: ImageData, subject: "child" | "grownup" = "child"): Promise<WithUsage<PhotoCheck>> {
     const res = await this.claude.generate({
       label: "checkPhoto",
       system: VISION_SYSTEM,
@@ -46,7 +46,7 @@ export class AnthropicVisionProvider implements VisionProvider {
         imageBlock(photo),
         {
           type: "text",
-          text: "A parent uploaded this photo of their child so an illustrator can draw the child as a cartoon character. Count the human faces. Say whether one face is clearly visible (not blurry, not tiny, not covered by hands, hats, sunglasses or heavy shadow). List up to 3 short, friendly problems a parent could fix by choosing a different photo; return an empty list if the photo is good.",
+          text: `${subject === "grownup" ? "A parent uploaded this photo of a grown-up (for example a parent or grandparent) so an illustrator can draw them as a cartoon character in a child's book." : "A parent uploaded this photo of their child so an illustrator can draw the child as a cartoon character."} Count the human faces. Say whether one face is clearly visible (not blurry, not tiny, not covered by hands, hats, sunglasses or heavy shadow). List up to 3 short, friendly problems a parent could fix by choosing a different photo; return an empty list if the photo is good.`,
         },
       ],
       wire: WirePhoto,
@@ -56,7 +56,7 @@ export class AnthropicVisionProvider implements VisionProvider {
     const v = res.value;
     const problems = [...v.problems];
     if (v.faces === 0) problems.unshift("We couldn't find a face in this photo.");
-    if (v.faces > 1) problems.unshift(`We found ${v.faces} faces. Please use a photo with only your child in it.`);
+    if (v.faces > 1) problems.unshift(`We found ${v.faces} faces. Please use a photo with only ${subject === "grownup" ? "this person" : "your child"} in it.`);
     return { value: { faces: v.faces, ok: v.faces === 1 && v.faceClearlyVisible, problems: problems.slice(0, 4) }, usage: res.usage };
   }
 

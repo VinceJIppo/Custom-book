@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { requireOnboardedUser } from "@/lib/session";
 import { getStorage } from "@/lib/storage";
 import { getConfig } from "@/lib/config";
-import { MAX_PHOTOS, PHOTO_TIPS, sheetOptionCost } from "@/lib/characters/service";
+import { MAX_PHOTOS, photoTips, sheetOptionCost } from "@/lib/characters/service";
 import { ART_STYLES, ART_STYLE_LABELS, type ArtStyle } from "@/lib/schemas/theme";
 import { CharacterBibleSchema } from "@/lib/schemas/story";
 import { activeProviderNames } from "@/lib/providers/registry";
@@ -31,6 +31,7 @@ export default async function CharacterPage({ params, searchParams }: { params: 
   if (!child) notFound();
   const storage = getStorage();
   const name = child.nickname || child.firstName;
+  const grownUp = child.kind === "grownup";
   const cfg = getConfig();
   const providers = activeProviderNames();
 
@@ -61,7 +62,9 @@ export default async function CharacterPage({ params, searchParams }: { params: 
         </Link>
         <h1 className="mt-1 font-display text-3xl font-medium">{name}&apos;s character</h1>
         <p className="mt-1 text-[color:var(--muted)]">
-          We turn a few photos into an illustrated character, then draw that same character on every page.
+          {grownUp
+            ? `We turn a few photos of ${name} into an illustrated character, then draw that same character whenever ${name} appears in a child\u2019s book.`
+            : "We turn a few photos into an illustrated character, then draw that same character on every page."}
           {providers.image === "mock" && " Image provider: mock (placeholder art). Add GEMINI_API_KEY to draw real characters."}
         </p>
       </div>
@@ -96,7 +99,7 @@ export default async function CharacterPage({ params, searchParams }: { params: 
                 ))}
               </ul>
             )}
-            <PhotoUpload childId={child.id} consentGiven={!!child.guardianConsentAt} remaining={MAX_PHOTOS - photos.length} grownUp={child.kind === "grownup"} />
+            <PhotoUpload childId={child.id} consentGiven={!!child.guardianConsentAt} remaining={MAX_PHOTOS - photos.length} grownUp={grownUp} />
             <form action={setDeleteOriginalsAction} className="flex items-center gap-2 text-sm">
               <input type="hidden" name="childId" value={child.id} />
               <input type="checkbox" name="value" defaultChecked={child.deleteOriginalsAfterApproval} className="size-4 accent-[color:var(--color-cobalt)]" />
@@ -107,7 +110,7 @@ export default async function CharacterPage({ params, searchParams }: { params: 
           <div className="rounded-lg bg-cream p-4 text-sm">
             <p className="font-semibold">Photo tips</p>
             <ul className="mt-2 list-disc space-y-1 pl-5">
-              {PHOTO_TIPS.map((t) => (
+              {photoTips(grownUp).map((t) => (
                 <li key={t}>{t}</li>
               ))}
             </ul>
@@ -201,8 +204,8 @@ export default async function CharacterPage({ params, searchParams }: { params: 
           ))}
         </div>
         {approved.length > 0 && (
-          <Link href={`/books/new?childId=${child.id}`} className="btn btn-sky mt-6">
-            Make a book with {name} →
+          <Link href={grownUp ? "/books/new" : `/books/new?childId=${child.id}`} className="btn btn-sky mt-6">
+            {grownUp ? `Add ${name} to a child\u2019s book →` : `Make a book with ${name} →`}
           </Link>
         )}
       </section>

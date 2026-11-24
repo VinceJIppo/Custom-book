@@ -35,7 +35,8 @@ export interface PageCheck {
 export interface VisionProvider {
   readonly name: string;
   readonly model: string;
-  checkPhoto(photo: ImageData): Promise<WithUsage<PhotoCheck>>;
+  /** subject: whose photo it is, so the wording fits (a child, or a grown-up). */
+  checkPhoto(photo: ImageData, subject?: "child" | "grownup"): Promise<WithUsage<PhotoCheck>>;
   /** One check per page: likeness to the character sheet, and words versus picture. */
   checkPage(input: PageCheckInput): Promise<WithUsage<PageCheck>>;
 }

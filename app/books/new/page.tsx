@@ -16,10 +16,27 @@ export default async function NewBook({ searchParams }: { searchParams: Promise<
   const user = await requireOnboardedUser();
   const { childId } = await searchParams;
   if (!childId) {
+    const kids = (await listPeople(user.id)).filter((p) => p.kind !== "grownup");
     return (
-      <p>
-        Pick a child first from <Link href="/" className="text-cobalt underline">your dashboard</Link>.
-      </p>
+      <div className="space-y-4">
+        <h1 className="font-display text-3xl font-medium">Whose book is it?</h1>
+        <p className="text-[color:var(--muted)]">Every book stars a child. Pick one, then add grown-ups to the story in the next step.</p>
+        {kids.length === 0 ? (
+          <p>
+            Add a child first: <Link href="/children/new" className="text-cobalt underline">tell us about your child</Link>.
+          </p>
+        ) : (
+          <ul className="flex flex-wrap gap-3">
+            {kids.map((k) => (
+              <li key={k.id}>
+                <Link href={`/books/new?childId=${k.id}`} className="btn btn-secondary">
+                  {k.nickname || k.firstName}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     );
   }
   const child = await getChild(user.id, childId);

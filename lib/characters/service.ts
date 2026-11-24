@@ -18,6 +18,11 @@ import { log } from "../log";
 
 export const MAX_PHOTOS = 3;
 
+/** Photo tips for a child, or for a grown-up (parent, grandparent...). */
+export function photoTips(grownUp = false) {
+  return [grownUp ? "Just this person in the photo, facing the camera." : "Just your child in the photo, facing the camera.", ...PHOTO_TIPS.slice(1)];
+}
+
 export const PHOTO_TIPS = [
   "Just your child in the photo, facing the camera.",
   "Bright, even light (near a window works well). No strong shadows.",
@@ -39,9 +44,14 @@ export type PhotoResult = { ok: true; photoId: string } | { ok: false; message: 
  */
 export async function addPhoto(userId: string, childId: string, file: Buffer, consent: boolean): Promise<PhotoResult> {
   const child = await ownedChild(userId, childId);
-  if (!child) return { ok: false, message: "Child not found.", problems: [] };
+  if (!child) return { ok: false, message: "We couldn't find that profile.", problems: [] };
+  const grownUp = child.kind === "grownup";
   if (!consent && !child.guardianConsentAt) {
-    return { ok: false, message: "Please confirm you are this child's parent or legal guardian, or have their permission.", problems: [] };
+    return {
+      ok: false,
+      message: grownUp ? "Please confirm these are photos of you, or that this person has given you permission." : "Please confirm you are this child's parent or legal guardian, or have their permission.",
+      problems: [],
+    };
   }
   const count = await db.childPhoto.count({ where: { childId } });
   if (count >= MAX_PHOTOS) return { ok: false, message: `You can upload up to ${MAX_PHOTOS} photos. Remove one first.`, problems: [] };
@@ -55,10 +65,10 @@ export async function addPhoto(userId: string, childId: string, file: Buffer, co
     return { ok: false, message: "We couldn't read that file as a photo. Please try a JPG, PNG or HEIC.", problems: [] };
   }
 
-  const check = await getVisionProvider().checkPhoto(photo);
+  const check = await getVisionProvider().checkPhoto(photo, grownUp ? "grownup" : "child");
   await recordInlineSpend(userId, "photo.check", check.usage, { payload: { childId } });
   if (!check.value.ok) {
-    return { ok: false, message: "This photo won't give a good likeness.", problems: check.value.problems.length ? check.value.problems : ["Please try a clearer photo of just your child."] };
+    return { ok: false, message: "This photo won't give a good likeness.", problems: check.value.problems.length ? check.value.problems : [grownUp ? "Please try a clearer photo of just this person." : "Please try a clearer photo of just your child."] };
   }
 
   const row = await db.childPhoto.create({ data: { childId, storageKey: "pending", width: photo.width, height: photo.height, faces: check.value.faces } });
