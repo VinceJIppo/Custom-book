@@ -346,3 +346,14 @@ body {
 body {
   overflow-x: clip;
 }
+
+/* Print layout preview: pages are at real size (wider than a phone), so on
+   screens they shrink to fit. The PDF renderer prints, so this never applies there. */
+@media screen {
+  .print-root > div {
+    max-width: calc(100% - 24px);
+  }
+  .print-root .bk-page[data-mode="print"] {
+    max-width: 100%;
+  }
+}

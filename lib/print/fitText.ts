@@ -36,5 +36,5 @@ export const FIT_TEXT_SOURCE = `
 /** Runs the fit in the current document (client side). */
 export function fitTextIn(root: ParentNode) {
   // eslint-disable-next-line @typescript-eslint/no-implied-eval
-  (new Function(`return ${FIT_TEXT_SOURCE}`)() as (r: ParentNode) => void)(root);
+  (new Function(`return ${FIT_TEXT_SOURCE.trim()}`)() as (r: ParentNode) => void)(root);
 }

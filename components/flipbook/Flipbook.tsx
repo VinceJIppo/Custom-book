@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "
 import type { PageFlip } from "page-flip";
 import { BookPage, CoverBack, CoverFront, InsideCover } from "@/components/book/BookPage";
 import type { BookView } from "@/lib/books/viewTypes";
+import { PhoneReader } from "./PhoneReader";
 
 /**
  * Animated flipbook. React renders every page once into a hidden "source"
@@ -14,7 +15,26 @@ import type { BookView } from "@/lib/books/viewTypes";
  */
 const noopSubscribe = () => () => {};
 
+const PHONE = "(max-width: 767px)";
+function subscribePhone(cb: () => void) {
+  const m = window.matchMedia(PHONE);
+  m.addEventListener("change", cb);
+  return () => m.removeEventListener("change", cb);
+}
+
+/** Phones get a swipeable one-page reader; wider screens get the page-turning book. */
 export function Flipbook({ book }: { book: BookView }) {
+  // null until the browser says which (the server can't know the screen size).
+  const phone = useSyncExternalStore(
+    subscribePhone,
+    () => window.matchMedia(PHONE).matches,
+    () => null,
+  );
+  if (phone === null) return <div className="min-h-96" data-testid="flipbook-loading" />;
+  return phone ? <PhoneReader book={book} /> : <PageTurner book={book} />;
+}
+
+function PageTurner({ book }: { book: BookView }) {
   const sourceRef = useRef<HTMLDivElement>(null);
   const hostRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
