@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "predev": "dotenv -e .env.local -- prisma db push",
     "dev": "concurrently -k -n web,worker -c blue,magenta \"next dev\" \"tsx watch scripts/worker.ts\"",
     "dev:web": "next dev",
     "worker": "tsx scripts/worker.ts",
