@@ -4,6 +4,8 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
+import { isAdminEmail } from "@/lib/admin";
+import { log } from "@/lib/log";
 import { createChild, deleteChildEverything, getChild, updateChild, type SaveResult } from "@/lib/children/service";
 import { createAndStartBook, retryFailedJobs, type CreateBookResult } from "@/lib/books/service";
 import { approveStory } from "@/lib/books/pictures";
@@ -190,9 +192,17 @@ export async function uploadPhotosAction(_prev: PhotoUploadState | null, fd: For
   const files = fd.getAll("photos").filter((f): f is File => f instanceof File && f.size > 0);
   if (!files.length) return { results: [{ name: "", ok: false, message: "Choose at least one photo." }] };
   const results: PhotoUploadState["results"] = [];
+  const admin = isAdminEmail(user.email);
   for (const f of files.slice(0, 3)) {
-    const r = await addPhoto(user.id, childId, Buffer.from(await f.arrayBuffer()), consent);
-    results.push(r.ok ? { name: f.name, ok: true } : { name: f.name, ok: false, message: r.message, problems: r.problems });
+    try {
+      const r = await addPhoto(user.id, childId, Buffer.from(await f.arrayBuffer()), consent);
+      const problems = [...(r.ok ? [] : r.problems), ...(!r.ok && admin && r.detail ? [`(Admin only) ${r.detail}`] : [])];
+      results.push(r.ok ? { name: f.name, ok: true } : { name: f.name, ok: false, message: r.message, problems });
+    } catch (err) {
+      // Never send the parent to the error page over one photo: say what happened and keep the form.
+      log.error("Photo upload failed", { childId, err: String(err) });
+      results.push({ name: f.name, ok: false, message: "Something went wrong saving this photo. Please try again in a few minutes.", problems: admin ? [`(Admin only) ${String(err).slice(0, 300)}`] : [] });
+    }
   }
   revalidatePath(`/children/${childId}/character`);
   return { results };

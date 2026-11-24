@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useActionState, useRef } from "react";
+import { startTransition, useActionState, useRef, useState } from "react";
 import { saveBibleAction, startSheetAction, uploadPhotosAction } from "@/app/actions";
 import { ART_STYLES, ART_STYLE_LABELS } from "@/lib/schemas/theme";
 import type { CharacterBible } from "@/lib/schemas/story";
@@ -18,9 +18,26 @@ function submitKeeping(action: (fd: FormData) => void) {
 export function PhotoUpload({ childId, consentGiven, remaining, grownUp = false }: { childId: string; consentGiven: boolean; remaining: number; grownUp?: boolean }) {
   const [state, action, pending] = useActionState(uploadPhotosAction, null);
   const formRef = useRef<HTMLFormElement>(null);
+  const [tooBig, setTooBig] = useState<string | null>(null);
   if (remaining <= 0) return <p className="text-sm text-[color:var(--muted)]">You have 3 photos, the most we use. Remove one to add another.</p>;
   return (
-    <form ref={formRef} onSubmit={submitKeeping(action)} className="space-y-3" data-testid="photo-upload">
+    <form
+      ref={formRef}
+      onSubmit={(e) => {
+        // The server takes up to 25 MB per upload; bigger uploads fail before we can explain why.
+        const files = Array.from((e.currentTarget.elements.namedItem("photos") as HTMLInputElement | null)?.files ?? []).slice(0, remaining);
+        const mb = files.reduce((n, f) => n + f.size, 0) / 1024 / 1024;
+        if (mb > 24) {
+          e.preventDefault();
+          setTooBig(`These photos add up to ${Math.round(mb)} MB, more than we can take at once (24 MB). Upload them one at a time, or use smaller copies.`);
+          return;
+        }
+        setTooBig(null);
+        submitKeeping(action)(e);
+      }}
+      className="space-y-3"
+      data-testid="photo-upload"
+    >
       <input type="hidden" name="childId" value={childId} />
       <input
         type="file"
@@ -42,6 +59,11 @@ export function PhotoUpload({ childId, consentGiven, remaining, grownUp = false 
       <button disabled={pending} className="btn btn-primary">
         {pending ? "Checking photos..." : `Upload (up to ${remaining})`}
       </button>
+      {tooBig && (
+        <p role="alert" className="rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-900 ring-1 ring-amber-200">
+          {tooBig}
+        </p>
+      )}
       {state?.results.map((r, i) => (
         <div key={i} role="status" className={`rounded-xl px-3 py-2 text-sm ring-1 ${r.ok ? "bg-emerald-50 text-emerald-900 ring-emerald-200" : "bg-amber-50 text-amber-900 ring-amber-200"}`}>
           <b>{r.name || "Photo"}:</b> {r.ok ? "added." : r.message}

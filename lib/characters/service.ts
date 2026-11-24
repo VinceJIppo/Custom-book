@@ -35,7 +35,8 @@ async function ownedChild(userId: string, childId: string) {
   return db.childProfile.findFirst({ where: { id: childId, userId } });
 }
 
-export type PhotoResult = { ok: true; photoId: string } | { ok: false; message: string; problems: string[] };
+/** `detail` is the technical reason, shown only to admins. */
+export type PhotoResult = { ok: true; photoId: string } | { ok: false; message: string; problems: string[]; detail?: string };
 
 /**
  * Adds one photo: requires guardian consent, normalizes it (HEIC, rotation,
@@ -65,7 +66,13 @@ export async function addPhoto(userId: string, childId: string, file: Buffer, co
     return { ok: false, message: "We couldn't read that file as a photo. Please try a JPG, PNG or HEIC.", problems: [] };
   }
 
-  const check = await getVisionProvider().checkPhoto(photo, grownUp ? "grownup" : "child");
+  let check;
+  try {
+    check = await getVisionProvider().checkPhoto(photo, grownUp ? "grownup" : "child");
+  } catch (err) {
+    log.error("Photo check failed", { childId, err: String(err) });
+    return { ok: false, message: "We couldn't check this photo just now. Please try again in a few minutes.", problems: [], detail: `Photo check (vision provider): ${String(err).slice(0, 300)}` };
+  }
   await recordInlineSpend(userId, "photo.check", check.usage, { payload: { childId } });
   if (!check.value.ok) {
     return { ok: false, message: "This photo won't give a good likeness.", problems: check.value.problems.length ? check.value.problems : [grownUp ? "Please try a clearer photo of just this person." : "Please try a clearer photo of just your child."] };
@@ -73,7 +80,13 @@ export async function addPhoto(userId: string, childId: string, file: Buffer, co
 
   const row = await db.childPhoto.create({ data: { childId, storageKey: "pending", width: photo.width, height: photo.height, faces: check.value.faces } });
   const key = keys.photo(userId, childId, row.id);
-  await getStorage().put(key, photo.data, photo.mimeType);
+  try {
+    await getStorage().put(key, photo.data, photo.mimeType);
+  } catch (err) {
+    await db.childPhoto.delete({ where: { id: row.id } }).catch(() => undefined);
+    log.error("Photo could not be stored", { childId, err: String(err) });
+    return { ok: false, message: "We couldn't save this photo just now. Please try again in a few minutes.", problems: [], detail: `Photo storage: ${String(err).slice(0, 300)}` };
+  }
   await db.childPhoto.update({ where: { id: row.id }, data: { storageKey: key } });
   if (!child.guardianConsentAt) await db.childProfile.update({ where: { id: childId }, data: { guardianConsentAt: new Date() } });
   return { ok: true, photoId: row.id };
