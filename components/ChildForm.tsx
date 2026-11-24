@@ -65,12 +65,11 @@ export function ChildForm({ initial }: { initial: ChildFormValues }) {
           <input name="age" type="number" min={1} max={12} required defaultValue={initial.age} className={input} />
         </Field>
         <div>
-          <span className="font-semibold">Pronouns</span>
-          <div className="mt-2 flex gap-2">
+          <span className="font-semibold">Male or female</span>
+          <div className="mt-2 flex gap-2" role="radiogroup" aria-label="Male or female">
             {[
-              ["he", "he / him"],
-              ["she", "she / her"],
-              ["they", "they / them"],
+              ["he", "Male"],
+              ["she", "Female"],
             ].map(([v, l]) => (
               <label key={v} className="flex cursor-pointer items-center gap-2 rounded-md bg-cream px-3 py-2 ring-1 ring-[color:var(--line)] has-[:checked]:bg-sky has-[:checked]:ring-cobalt">
                 <input type="radio" name="pronouns" value={v} defaultChecked={initial.pronouns === v} required className="accent-[color:var(--color-cobalt)]" />

@@ -23,13 +23,13 @@ export default async function ChildPage({ params, searchParams }: { params: Prom
   const facts: Array<[string, string]> = grownUp
     ? [
         ["Who they are", child.relationship ?? ""],
-        ["Pronouns", child.pronouns],
+        ["Male or female", child.pronouns === "he" ? "Male" : child.pronouns === "she" ? "Female" : "Not set"],
         ["About", child.about ?? ""],
         ["Looks", child.look ?? ""],
       ]
     : [
     ["Age", String(child.age)],
-    ["Pronouns", child.pronouns],
+    ["Male or female", child.pronouns === "he" ? "Male" : child.pronouns === "she" ? "Female" : "Not set"],
     ["Colors", fav.colors.join(", ")],
     ["Animals", fav.animals.join(", ")],
     ["Foods", fav.foods.join(", ")],

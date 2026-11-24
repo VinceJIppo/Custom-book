@@ -34,14 +34,20 @@ export function GrownUpForm({ initial }: { initial: GrownUpValues }) {
         {field("firstName", "First name", undefined, { required: true, maxLength: 40, placeholder: "Bina" })}
         {field("nickname", "What the children call them", "optional", { maxLength: 40, placeholder: "Mama" })}
         {field("relationship", "Who they are to the children", undefined, { required: true, maxLength: 40, placeholder: "Mom, Dad, Grandpa, Aunt..." })}
-        <label className="block">
-          <span className="font-semibold">Pronouns</span>
-          <select name="pronouns" defaultValue={initial.pronouns || "she"} className={input}>
-            <option value="she">she / her</option>
-            <option value="he">he / him</option>
-            <option value="they">they / them</option>
-          </select>
-        </label>
+        <div>
+          <span className="font-semibold">Male or female</span>
+          <div className="mt-2 flex gap-2" role="radiogroup" aria-label="Male or female">
+            {[
+              ["he", "Male"],
+              ["she", "Female"],
+            ].map(([v, l]) => (
+              <label key={v} className="flex cursor-pointer items-center gap-2 rounded-md bg-cream px-3 py-2 ring-1 ring-[color:var(--line)] has-[:checked]:bg-sky has-[:checked]:ring-cobalt">
+                <input type="radio" name="pronouns" value={v} defaultChecked={initial.pronouns === v} required className="accent-[color:var(--color-cobalt)]" />
+                {l}
+              </label>
+            ))}
+          </div>
+        </div>
       </div>
       <label className="block">
         <span className="font-semibold">About them</span> <span className="text-sm text-[color:var(--muted)]">optional: their job, what they love, what they&apos;re like</span>
