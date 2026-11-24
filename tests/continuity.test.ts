@@ -7,7 +7,8 @@ import { drainQueue } from "@/lib/jobs/runner";
 import { resetProviders } from "@/lib/providers/registry";
 import { listThemesForUser, syncBuiltInThemes } from "@/lib/themes";
 import { continuityProblems } from "@/lib/books/continuity";
-import { appearanceText, guideFor, guideLines } from "@/lib/books/appearance";
+import { appearanceText, completeGuide, guideFor, guideLines, mentions, withSpecies } from "@/lib/books/appearance";
+import { loadBuiltInThemeFiles } from "@/lib/themes";
 import { buildIllustrationPrompt } from "@/lib/providers/image/prompt";
 import { describeContext, EDITOR_SYSTEM_PROMPT, STORY_SYSTEM_PROMPT } from "@/lib/providers/anthropic/storyPrompts";
 import { MockImageProvider } from "@/lib/providers/image/mock";
@@ -73,13 +74,46 @@ describe("character guide in prompts", () => {
       story: { summary: "", pageText: "", characters: guideLines(guide) },
     } as IllustrationRequest;
     const prompt = buildIllustrationPrompt(req);
-    expect(prompt).toContain("Pip is a small red fox: bushy tail with a white tip, blue scarf");
+    expect(prompt).toContain("Pip is a small red fox on every page (never any other kind of animal or creature): bushy tail with a white tip, blue scarf");
     expect(prompt).toMatch(/never add glasses/);
   });
 
   it("tells the writer and editor that characters never change", () => {
     expect(STORY_SYSTEM_PROMPT).toMatch(/Nobody gains or loses glasses/);
     expect(EDITOR_SYSTEM_PROMPT).toMatch(/animal changes kind/);
+  });
+});
+
+describe("every animal has one stated kind", () => {
+  it("matches names by their distinctive words, not by 'Old' or 'The'", () => {
+    expect(mentions("Old Willa waddles over", "Old Willa")).toBe(true);
+    expect(mentions("Willa smiles", "Old Willa")).toBe(true);
+    expect(mentions("the old oak creaks", "Old Willa")).toBe(false);
+    expect(mentions("the sea is calm", "The Puffer Twins")).toBe(false);
+    expect(mentions("the Puffer Twins puff up", "The Puffer Twins")).toBe(true);
+  });
+
+  it("adds the theme's characters and the pet when the plan left them out", () => {
+    const meadow = loadBuiltInThemeFiles().find((t) => t.id === "quiet-meadow")!;
+    const guide = completeGuide([{ name: "Charlie", species: "a one-year-old girl", look: "pink dress" }], {
+      theme: meadow,
+      child: { petName: "Biscuit", petType: "beagle puppy" } as never,
+      options: { includePet: true } as never,
+    });
+    expect(guide.find((c) => c.name === "Old Willa")?.species).toBe("a tall grey goose");
+    expect(guide.find((c) => c.name === "Bramble")?.species).toBe("a little round hedgehog");
+    expect(guide.find((c) => c.name === "Biscuit")?.species).toMatch(/^a beagle puppy/);
+    // Already listed characters aren't duplicated.
+    expect(completeGuide(guide, { theme: meadow, child: {} as never, options: {} as never })).toHaveLength(guide.length);
+  });
+
+  it("writes each character's kind into the scene's character list", () => {
+    const guide = [
+      { name: "Old Willa", species: "a tall grey goose", look: "half-moon spectacles" },
+      { name: "Bramble", species: "a little round hedgehog", look: "moss scarf" },
+    ];
+    const scene = withSpecies({ characters: ["Charlie", "Old Willa", "Bramble the hedgehog"] }, guide);
+    expect(scene.characters).toEqual(["Charlie", "Old Willa (a tall grey goose)", "Bramble the hedgehog"]);
   });
 });
 
@@ -126,6 +160,10 @@ describe("continuity through a whole book", () => {
     const guide = (book.outline as { characters: Array<{ name: string; species: string }> }).characters;
     expect(guide.find((c) => c.name === "Biscuit")?.species).toBe("a puppy");
     expect(reqs).toHaveLength(13);
+    // The pet and the theme's characters get their kind written into the scene.
+    expect(guide.some((c) => c.name !== "Teddy" && c.name !== "Biscuit")).toBe(true);
+    const named = reqs.flatMap((r) => r.scene.characters).filter((c) => /\(/.test(c));
+    expect(named.length).toBeGreaterThan(0);
     expect(reqs.every((r) => (r.story?.characters ?? []).some((l) => l.startsWith("Teddy is a 5-year-old child")))).toBe(true);
     expect(checks.every((c) => c.continuity.includes("Teddy is a 5-year-old child"))).toBe(true);
     // The writer sees the pet's kind and each person's look.

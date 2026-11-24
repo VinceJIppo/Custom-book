@@ -9,7 +9,7 @@ import {
 } from "../../providers/registry";
 import { getStorage, keys } from "../../storage";
 import { outlineFor, storyContextFor } from "../../books/context";
-import { guideFor, guideLines } from "../../books/appearance";
+import { completeGuide, guideFor, guideLines, withSpecies } from "../../books/appearance";
 import {
   CharacterBibleSchema,
   SceneSchema,
@@ -408,8 +408,9 @@ async function storyFor(
     return parsed.success ? parsed.data : null;
   };
   const scene = sceneOf(page ? page.scene : (book.outline as { coverScene?: unknown } | null)?.coverScene);
+  const guide = bookGuide(book, outline);
   const characters = scene
-    ? guideLines(guideFor(outline, scene.characters, [scene.action, ...(scene.mustShow ?? []), page?.text ?? ""].join(" ")))
+    ? guideLines(guideFor({ characters: guide }, scene.characters, [scene.action, ...(scene.mustShow ?? []), page?.text ?? ""].join(" ")))
     : [];
   if (!page) return { summary, pageText: "", characters };
   const all = await db.page.findMany({
@@ -449,10 +450,28 @@ async function loadPage(job: GenerationJob) {
 }
 
 /** Picture settings for a story page. */
+/** The book's full character guide (plan + theme characters + pet), each with a stated kind. */
+function bookGuide(book: Book, outline?: ReturnType<typeof outlineFor>) {
+  let o = outline;
+  if (o === undefined) {
+    try {
+      o = outlineFor(book);
+    } catch {
+      o = null;
+    }
+  }
+  try {
+    return completeGuide(o?.characters ?? [], storyContextFor(book));
+  } catch {
+    return o?.characters ?? [];
+  }
+}
+
 export async function pageArtArgs(page: Page & { book: Book }, note?: string): Promise<ArtArgs> {
   return {
     book: page.book,
-    scene: SceneSchema.parse(page.scene),
+    // Each character in the scene carries their kind: "Old Willa (a tall grey goose)".
+    scene: withSpecies(SceneSchema.parse(page.scene), bookGuide(page.book)),
     layout: page.layout as Layout,
     textZone: page.layout === "textSpot" ? null : (page.textZone as TextZone),
     label: `Page ${page.storyNumber ?? page.index}`,
@@ -469,7 +488,7 @@ export function coverTargetPx(book: Pick<Book, "trimSize">) {
 
 /** Picture settings for the cover. */
 export async function coverArtArgs(book: Book, note?: string): Promise<ArtArgs> {
-  const scene = SceneSchema.parse((book.outline as { coverScene?: unknown } | null)?.coverScene);
+  const scene = withSpecies(SceneSchema.parse((book.outline as { coverScene?: unknown } | null)?.coverScene), bookGuide(book));
   return {
     book,
     scene: {

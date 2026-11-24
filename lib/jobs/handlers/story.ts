@@ -5,7 +5,7 @@ import { getConfig } from "../../config";
 import { queuePictures } from "../../books/pictures";
 import { getStoryProvider } from "../../providers/registry";
 import { outlineFor, storyContextFor } from "../../books/context";
-import { storyContextWithLooks } from "../../books/appearance";
+import { completeGuide, storyContextWithLooks } from "../../books/appearance";
 import type { JobOutcome } from "../types";
 import { PermanentProviderError, type WithUsage } from "../../providers/types";
 import type { DraftCheckpoint, ManuscriptResult } from "../../providers/story/types";
@@ -27,7 +27,9 @@ export async function outlineHandler(job: GenerationJob): Promise<JobOutcome> {
   if (!existing) {
     const res = await getStoryProvider().generateOutline(ctx);
     usage = res.usage;
-    await db.book.update({ where: { id: book.id }, data: { outline: res.value as unknown as Prisma.InputJsonValue, title: res.value.title } });
+    // Every theme character and the pet get a stated kind of animal, even if the plan left them out.
+    const outline = { ...res.value, characters: completeGuide(res.value.characters, ctx) };
+    await db.book.update({ where: { id: book.id }, data: { outline: outline as unknown as Prisma.InputJsonValue, title: outline.title } });
   }
   await enqueue("book.pages", {}, { userId: book.userId, bookId: book.id });
   return { usage, result: { title: existing?.title ?? null } };
