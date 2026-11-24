@@ -182,7 +182,8 @@ export async function reviewReviseAction(_prev: EditState | null, fd: FormData):
 
 
 export interface PhotoUploadState {
-  results: Array<{ name: string; ok: boolean; message?: string; problems?: string[] }>;
+  /** crop: suggested face box (fractions) when cropping would likely fix the photo. */
+  results: Array<{ name: string; ok: boolean; message?: string; problems?: string[]; crop?: { left: number; top: number; width: number; height: number } }>;
 }
 
 export async function uploadPhotosAction(_prev: PhotoUploadState | null, fd: FormData): Promise<PhotoUploadState> {
@@ -197,7 +198,7 @@ export async function uploadPhotosAction(_prev: PhotoUploadState | null, fd: For
     try {
       const r = await addPhoto(user.id, childId, Buffer.from(await f.arrayBuffer()), consent);
       const problems = [...(r.ok ? [] : r.problems), ...(!r.ok && admin && r.detail ? [`(Admin only) ${r.detail}`] : [])];
-      results.push(r.ok ? { name: f.name, ok: true } : { name: f.name, ok: false, message: r.message, problems });
+      results.push(r.ok ? { name: f.name, ok: true } : { name: f.name, ok: false, message: r.message, problems, crop: r.crop });
     } catch (err) {
       // Never send the parent to the error page over one photo: say what happened and keep the form.
       log.error("Photo upload failed", { childId, err: String(err) });

@@ -8,6 +8,17 @@ export interface PhotoCheck {
   ok: boolean;
   /** Plain-English problems for the parent, e.g. "The face is partly covered." */
   problems: string[];
+  /** Where the main person's face is, as fractions (0 to 1) of the width and height. Used to suggest a crop. */
+  mainFace?: FaceBox | null;
+  /** True when cropping to the main face would likely fix the photo (other faces, or a small face). */
+  cropWouldHelp?: boolean;
+}
+
+export interface FaceBox {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
 }
 
 export interface PageCheckInput {

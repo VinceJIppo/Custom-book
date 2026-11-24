@@ -15,6 +15,7 @@ import { IMAGE_PRICES, PLANNING_IMAGE_PRICE } from "../cost/prices";
 import { dailyUsage } from "../cost/usage";
 import { checkFieldsForProtectedNames } from "../safety/protectedNames";
 import { log } from "../log";
+import type { FaceBox } from "../providers/vision/types";
 
 export const MAX_PHOTOS = 3;
 
@@ -36,7 +37,10 @@ async function ownedChild(userId: string, childId: string) {
 }
 
 /** `detail` is the technical reason, shown only to admins. */
-export type PhotoResult = { ok: true; photoId: string } | { ok: false; message: string; problems: string[]; detail?: string };
+export type PhotoResult =
+  | { ok: true; photoId: string }
+  /** crop: where the main face is (fractions), when cropping to it would likely fix the photo. */
+  | { ok: false; message: string; problems: string[]; detail?: string; crop?: FaceBox };
 
 /**
  * Adds one photo: requires guardian consent, normalizes it (HEIC, rotation,
@@ -75,7 +79,8 @@ export async function addPhoto(userId: string, childId: string, file: Buffer, co
   }
   await recordInlineSpend(userId, "photo.check", check.usage, { payload: { childId } });
   if (!check.value.ok) {
-    return { ok: false, message: "This photo won't give a good likeness.", problems: check.value.problems.length ? check.value.problems : [grownUp ? "Please try a clearer photo of just this person." : "Please try a clearer photo of just your child."] };
+    const crop = check.value.cropWouldHelp && check.value.mainFace ? check.value.mainFace : undefined;
+    return { ok: false, message: crop ? "Let's crop this photo to the main face." : "This photo won't give a good likeness.", crop, problems: check.value.problems.length ? check.value.problems : [grownUp ? "Please try a clearer photo of just this person." : "Please try a clearer photo of just your child."] };
   }
 
   const row = await db.childPhoto.create({ data: { childId, storageKey: "pending", width: photo.width, height: photo.height, faces: check.value.faces } });

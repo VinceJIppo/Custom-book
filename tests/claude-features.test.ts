@@ -55,6 +55,21 @@ describe("Claude vision and moderation (no network)", () => {
     expect((await v.checkPhoto(img)).value.ok).toBe(true);
   });
 
+  it("photo check finds the main face and says when cropping would fix the photo", async () => {
+    const { caller } = scripted([
+      { faces: 3, faceClearlyVisible: true, problems: [], mainFace: { left: 0.3, top: 0.2, width: 0.15, height: 0.2 } },
+      { faces: 1, faceClearlyVisible: true, problems: [], mainFace: { left: 0.4, top: 0.4, width: 0.05, height: 0.06 } },
+      { faces: 1, faceClearlyVisible: true, problems: [], mainFace: { left: 0.3, top: 0.2, width: 0.4, height: 0.5 } },
+    ]);
+    const v = new AnthropicVisionProvider({ ...opts, caller });
+    const crowd = (await v.checkPhoto(img, "grownup")).value;
+    expect(crowd).toMatchObject({ ok: false, cropWouldHelp: true, mainFace: { left: 0.3, top: 0.2 } });
+    expect(crowd.problems[0]).toMatch(/Crop the photo to just this person/);
+    // One small face in a big scene: fine to use, but cropping would help.
+    expect((await v.checkPhoto(img)).value).toMatchObject({ ok: true, cropWouldHelp: true });
+    expect((await v.checkPhoto(img)).value).toMatchObject({ ok: true, cropWouldHelp: false });
+  });
+
   it("moderation uses the word list first, then the model", async () => {
     const { caller, seen } = scripted([{ allowed: false, categories: ["personal data"], friendlyMessage: "Please leave out addresses." }]);
     const m = new AnthropicModerationProvider({ ...opts, caller });
