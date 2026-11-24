@@ -64,6 +64,8 @@ export const ThemeConfigSchema = z
       .array(z.object({ id: z.string().regex(/^[a-z0-9-]+$/), title: z.string().min(2).max(60), idea: z.string().min(20).max(600) }))
       .max(4)
       .optional(),
+    /** Hidden themes aren't offered for new books (books already made with them keep working). */
+    hidden: z.boolean().optional(),
     licensed: z.boolean().default(false),
   })
   .refine((t) => t.ageRange[0] <= t.ageRange[1], { message: "ageRange must be [min, max]", path: ["ageRange"] });

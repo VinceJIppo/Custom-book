@@ -27,7 +27,7 @@ export default async function NewBook({ searchParams }: { searchParams: Promise<
   if (child.kind === "grownup") {
     return <p>Books are made for a child. Start a book from a child&apos;s page and add {child.nickname || child.firstName} to the story there.</p>;
   }
-  const themes = await listThemesForUser(user.id);
+  const themes = (await listThemesForUser(user.id)).filter((t) => !t.config.hidden);
   const samples = await themeSamples(user.id, themes.map((t) => ({ id: t.id, slug: t.slug })));
   const estimates = Object.fromEntries(STORY_LENGTHS.map((n) => [n, estimateFor({ length: n })]));
   const friends = child.friends as string[];

@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 export default async function Themes({ searchParams }: { searchParams: Promise<{ deleted?: string }> }) {
   const user = await requireOnboardedUser();
   const { deleted } = await searchParams;
-  const themes = await listThemesForUser(user.id);
+  const themes = (await listThemesForUser(user.id)).filter((t) => !t.config.hidden);
   const mine = themes.filter((t) => !t.isBuiltIn);
   const builtIn = themes.filter((t) => t.isBuiltIn);
   const samples = await themeSamples(user.id, themes.map((t) => ({ id: t.id, slug: t.slug })));
