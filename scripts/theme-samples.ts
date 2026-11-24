@@ -2,7 +2,7 @@
  * Paints sample pages for the built-in themes, shown on the theme cards.
  * Uses your image provider (Gemini) at 1K, about $0.03 a picture.
  *
- *   npm run theme-samples                    every theme without samples yet (2 pictures each)
+ *   npm run theme-samples                    any missing sample pictures (2 per theme); safe to re-run
  *   npm run theme-samples -- wishing-garden  one theme (replaces its samples)
  *   npm run theme-samples -- --all           every theme (replaces all samples)
  *
@@ -32,18 +32,20 @@ async function main() {
   const themes = loadBuiltInThemeFiles().filter((t) => !arg || arg === "--all" || t.id === arg);
   if (!themes.length) throw new Error(`No built-in theme called ${arg}`);
   let spent = 0;
+  const failed: string[] = [];
   for (const t of themes) {
     const dir = path.join(process.cwd(), "public", "theme-samples", t.id);
-    const has = fs.existsSync(dir) && fs.readdirSync(dir).some((f) => f.endsWith(".jpg"));
-    if (has && !arg) {
-      console.log(`${t.name}: already has samples (skip)`);
-      continue;
-    }
     fs.mkdirSync(dir, { recursive: true });
     const beats = [t.storyBeats[0], t.storyBeats[Math.floor(t.storyBeats.length / 2)]];
     for (const [i, beat] of beats.entries()) {
+      const file = path.join(dir, `${i + 1}.jpg`);
+      // Without a theme name, only missing pictures are drawn (so a re-run finishes what's left).
+      if (!arg && fs.existsSync(file)) {
+        console.log(`${t.name}: sample ${i + 1} already there (skip)`);
+        continue;
+      }
       const friend = t.supportingCast[i % t.supportingCast.length];
-      const r = await image.generateIllustration({
+      const req = {
         characterRef: null,
         bible: null,
         childName: "the child",
@@ -61,12 +63,26 @@ async function main() {
         textZone: null,
         palette: t.artDirection.palette,
         label: `${t.name} sample ${i + 1}`,
-      });
-      spent += r.usage.costUsd;
-      await sharp(r.value.data).resize(720, 720, { fit: "cover" }).jpeg({ quality: 82, mozjpeg: true }).toFile(path.join(dir, `${i + 1}.jpg`));
-      console.log(`${t.name}: sample ${i + 1} saved`);
+      };
+      // Network drops ("terminated", "fetch failed") happen: try up to 3 times, then move on.
+      let done = false;
+      for (let attempt = 1; attempt <= 3 && !done; attempt++) {
+        try {
+          const r = await image.generateIllustration(req);
+          spent += r.usage.costUsd;
+          await sharp(r.value.data).resize(720, 720, { fit: "cover" }).jpeg({ quality: 82, mozjpeg: true }).toFile(file);
+          console.log(`${t.name}: sample ${i + 1} saved`);
+          done = true;
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+          console.log(`${t.name}: sample ${i + 1} didn't work (try ${attempt} of 3): ${msg.slice(0, 160)}`);
+          if (attempt < 3) await new Promise((res) => setTimeout(res, attempt * 5000));
+        }
+      }
+      if (!done) failed.push(`${t.name} sample ${i + 1}`);
     }
   }
+  if (failed.length) console.log(`\nStill missing: ${failed.join(", ")}. Run the same command again to finish them (finished pictures are skipped).`);
   console.log(`Done. About $${spent.toFixed(2)} of image generation.`);
 }
 
