@@ -33,6 +33,7 @@ import type { JobOutcome } from "../types";
 import type { ArtStyle } from "../../schemas/theme";
 import type { CastRef, IllustrationRequest, StoryContextForArt } from "../../providers/image/types";
 import type { WithUsage } from "../../providers/types";
+import { hairLengthText } from "../../schemas/child";
 
 function extFor(mime: string) {
   return mime === "image/svg+xml"
@@ -123,6 +124,7 @@ export async function castRefsFor(
       image,
       bible,
       look: m.look,
+      hairLength: hairLengthText(m.hairLength) || undefined,
     });
   }
   return refs.slice(0, 3);

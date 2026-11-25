@@ -2,6 +2,7 @@ import type { Book } from "@prisma/client";
 import { db } from "../db";
 import { CharacterBibleSchema, type CharacterBible, type CharacterGuide, type Outline } from "../schemas/story";
 import type { StoryContext } from "../providers/story/types";
+import { hairLengthText } from "../schemas/child";
 
 /** A character sheet's fixed traits in one plain line, saying "no glasses" when there are none. */
 export function appearanceText(b: CharacterBible): string {
@@ -22,7 +23,8 @@ export async function loadAppearance(book: Pick<Book, "characterSheetId">, ctx: 
   const people: Record<string, string> = {};
   for (const m of ctx.cast ?? []) {
     const b = await bibleOf(m.characterSheetId);
-    const text = b ? appearanceText(b) : m.look;
+    // A chosen hair length always wins over what a photo or description suggests.
+    const text = [b ? appearanceText(b) : m.look, hairLengthText(m.hairLength)].filter(Boolean).join("; ");
     if (text) people[m.nickname || m.name] = text;
   }
   return { hero: hero ? appearanceText(hero) : undefined, people };

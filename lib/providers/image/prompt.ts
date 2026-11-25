@@ -5,6 +5,7 @@
 import { VIGNETTE_STYLES, type ArtStyle } from "../../schemas/theme";
 import type { CharacterBible, TextZone } from "../../schemas/story";
 import type { IllustrationRequest } from "./types";
+import { HAIR_LENGTHS, type HairLength } from "../../schemas/child";
 
 export const STYLE_DESCRIPTIONS: Record<ArtStyle, string> = {
   "watercolor-storybook":
@@ -59,7 +60,9 @@ function castLines(req: IllustrationRequest): string[] {
   let n = req.characterRef ? 1 : 0;
   const ordinal = (i: number) => ["first", "second", "third", "fourth", "fifth"][i] ?? `#${i + 1}`;
   return (req.cast ?? []).map((c) => {
-    const traits = c.bible ? ` (${describeBible(c.name, c.bible).replace(/^.*?: /, "").replace(/\.$/, "")})` : c.look ? `: ${c.look}` : "";
+    const base = c.bible ? describeBible(c.name, c.bible).replace(/^.*?: /, "").replace(/\.$/, "") : (c.look ?? "");
+    const all = [base, c.hairLength].filter(Boolean).join("; ");
+    const traits = all ? (c.bible ? ` (${all})` : `: ${all}`) : "";
     if (c.image) {
       const line = `The ${ordinal(n)} attached image is the approved character sheet for ${c.name}, ${c.label}. Draw ${c.name} exactly like that sheet${traits}, in the same art style.`;
       n++;
@@ -104,12 +107,15 @@ export function buildIllustrationPrompt(req: IllustrationRequest): string {
   return lines.filter(Boolean).join("\n");
 }
 
-export function buildCharacterSheetPrompt(opts: { style: ArtStyle; outfit?: string; variant: number; subject?: "child" | "grownup" }): string {
+export function buildCharacterSheetPrompt(opts: { style: ArtStyle; outfit?: string; variant: number; subject?: "child" | "grownup"; hairLength?: string }): string {
   if (opts.subject === "grownup") {
     const variety = ["", "Offer a slightly different interpretation (different expression and pose), keeping the likeness.", "Offer a third interpretation with a different, still neutral outfit color, keeping the likeness."][opts.variant % 3];
     return [
       `Create a character turnaround sheet for a children's picture book, in this art style: ${STYLE_DESCRIPTIONS[opts.style]}.`,
       "The attached photos show a real grown-up (a parent or family member). Turn them into a warm, friendly illustrated character who is clearly recognizable as this person: same hair color and style, eye color, skin tone, face shape, glasses, beard or freckles if present, and the same approximate age.",
+      opts.hairLength && opts.hairLength in HAIR_LENGTHS
+        ? `Her hair must be drawn as ${HAIR_LENGTHS[opts.hairLength as HairLength].prompt}, worn down, in all three views, even if a photo shows it a different length or tied up.`
+        : "",
       "Show the same character three times side by side on a plain light background: a front view (head to toe), a three-quarter view, and a close-up portrait of the face. Kind, happy expression.",
       `Outfit: ${opts.outfit || "a simple, neutral everyday outfit"}.`,
       variety,

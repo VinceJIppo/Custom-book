@@ -34,6 +34,8 @@ export interface CastRef {
   image: ImageData | null;
   bible: CharacterBible | null;
   look?: string;
+  /** e.g. "hair length: long hair that falls well past the shoulders"; overrides the sheet and photos. */
+  hairLength?: string;
 }
 
 /** Reference images in the order adapters attach them: the hero's sheet, then each cast member's. */
@@ -60,6 +62,8 @@ export interface CharacterSheetRequest {
   subject?: "child" | "grownup";
   style: ArtStyle;
   outfit?: string;
+  /** A grown-up woman's chosen hair length (key of HAIR_LENGTHS). */
+  hairLength?: string;
   count: number;
 }
 

@@ -1,3 +1,4 @@
+import { HAIR_LENGTHS, type HairLength } from "@/lib/schemas/child";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
@@ -24,6 +25,7 @@ export default async function ChildPage({ params, searchParams }: { params: Prom
     ? [
         ["Who they are", child.relationship ?? ""],
         ["Male or female", child.pronouns === "he" ? "Male" : child.pronouns === "she" ? "Female" : "Not set"],
+        ["Hair length", child.hairLength && child.hairLength in HAIR_LENGTHS ? HAIR_LENGTHS[child.hairLength as HairLength].label : ""],
         ["About", child.about ?? ""],
         ["Looks", child.look ?? ""],
       ]

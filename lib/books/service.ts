@@ -78,6 +78,7 @@ export async function createAndStartBook(userId: string, input: { childId: strin
         age: p.kind === "child" ? p.age : undefined,
         about: p.about ?? undefined,
         look: p.look ?? undefined,
+        hairLength: p.hairLength ?? undefined,
         part: c.part || undefined,
         characterSheetId: sheet?.sheet.id ?? null,
       }),

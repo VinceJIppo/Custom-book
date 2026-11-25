@@ -96,6 +96,7 @@ function grownUpRow(d: GrownUpInput) {
     pronouns: d.pronouns,
     about: d.about ?? null,
     look: d.look ?? null,
+    hairLength: d.pronouns === "she" ? (d.hairLength ?? null) : null,
     age: 0,
     favorites: { colors: [], animals: [], foods: [], activities: [] } as unknown as Prisma.InputJsonValue,
     friends: [] as unknown as Prisma.InputJsonValue,

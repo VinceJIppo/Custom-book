@@ -39,6 +39,7 @@ export async function sheetHandler(job: GenerationJob): Promise<JobOutcome> {
     photos,
     style: sheet.style as ArtStyle,
     outfit: sheet.outfit ?? undefined,
+    hairLength: sheet.child.kind === "grownup" ? (sheet.child.hairLength ?? undefined) : undefined,
     count: getConfig().CHARACTER_SHEET_OPTIONS,
   });
   const imageKeys: string[] = [];

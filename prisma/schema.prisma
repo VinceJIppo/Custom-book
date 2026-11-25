@@ -133,6 +133,8 @@ model ChildProfile {
   about     String?
   /// How they look, for people without a photo character
   look      String?
+  /// Grown-up women: "short" | "shoulder" | "long", so every drawing keeps the same hair length
+  hairLength String?
   /// Children: 1 to 12. Grown-ups: 0 (not used)
   age       Int
   pronouns  String // "he" | "she" | "they"

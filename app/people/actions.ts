@@ -11,7 +11,7 @@ export async function saveGrownUpAction(_prev: SaveResult | null, fd: FormData):
     const s = String(fd.get(k) ?? "").trim();
     return s || undefined;
   };
-  const raw = { firstName: v("firstName"), nickname: v("nickname"), relationship: v("relationship"), pronouns: v("pronouns"), about: v("about"), look: v("look") };
+  const raw = { firstName: v("firstName"), nickname: v("nickname"), relationship: v("relationship"), pronouns: v("pronouns"), about: v("about"), look: v("look"), hairLength: v("hairLength") };
   const id = v("id");
   const res = id ? await updateGrownUp(user.id, id, raw) : await createGrownUp(user.id, raw);
   if (!res.ok) return res;

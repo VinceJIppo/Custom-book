@@ -41,6 +41,20 @@ const shortText = (max: number) =>
     .optional()
     .transform((v) => v || undefined);
 
+/** Hair length choices for grown-up women (labels for the form, words for the artist). */
+export const HAIR_LENGTHS = {
+  short: { label: "Short", hint: "above the shoulders", prompt: "short hair that ends above the shoulders" },
+  shoulder: { label: "Shoulder length", hint: "touches the shoulders", prompt: "shoulder-length hair that just touches the shoulders" },
+  long: { label: "Long", hint: "past the shoulders", prompt: "long hair that falls well past the shoulders" },
+} as const;
+export type HairLength = keyof typeof HAIR_LENGTHS;
+export const HairLengthSchema = z.enum(Object.keys(HAIR_LENGTHS) as [HairLength, ...HairLength[]]);
+
+/** "hair length: long hair that falls well past the shoulders", or "" when not set. */
+export function hairLengthText(v: string | null | undefined): string {
+  return v && v in HAIR_LENGTHS ? `hair length: ${HAIR_LENGTHS[v as HairLength].prompt}` : "";
+}
+
 /** Who a grown-up is to the children, and what the story writer should know about them. */
 export const GrownUpInputSchema = z.object({
   kind: z.literal("grownup"),
@@ -50,6 +64,8 @@ export const GrownUpInputSchema = z.object({
   pronouns: PronounsSchema,
   about: shortText(300),
   look: shortText(240),
+  /** Only for women; ignored otherwise. */
+  hairLength: z.preprocess((v) => (v === "" || v == null ? undefined : v), HairLengthSchema.optional()),
 });
 export type GrownUpInput = z.infer<typeof GrownUpInputSchema>;
 
@@ -81,6 +97,7 @@ export const CastMemberSnapshotSchema = z.object({
   age: z.number().int().optional(),
   about: z.string().optional(),
   look: z.string().optional(),
+  hairLength: HairLengthSchema.optional(),
   /** What the parent wants their part in this story to be. */
   part: z.string().optional(),
   /** Approved character sheet in the book's style, if they have one. */
