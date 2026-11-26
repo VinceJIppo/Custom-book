@@ -5,6 +5,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { isAdminEmail } from "@/lib/admin";
 import { db } from "@/lib/db";
 import { TIER_IDS } from "@/lib/allowance";
+import { grantCredits } from "@/lib/credits";
 
 export async function saveRewardsAction(fd: FormData) {
   const me = await getCurrentUser();
@@ -21,4 +22,19 @@ export async function saveRewardsAction(fd: FormData) {
     },
   });
   redirect("/admin/users?saved=1");
+}
+
+/** Adds credits to a customer (gifts, apologies, testing). The form's one-time key stops a double click adding twice. */
+export async function addCreditsAction(fd: FormData) {
+  const me = await getCurrentUser();
+  if (!isAdminEmail(me.email)) redirect("/");
+  const userId = String(fd.get("userId") ?? "");
+  const amount = Math.round(Number(fd.get("amount") ?? 0) * 100) / 100;
+  const key = String(fd.get("key") ?? "");
+  if (!(amount >= 0.01 && amount <= 500) || !/^[a-z0-9-]{8,64}$/i.test(key)) redirect("/admin/users?error=amount");
+  const note = String(fd.get("note") ?? "").trim().slice(0, 120) || `Added by ${me.email}`;
+  const user = await db.user.findUnique({ where: { id: userId }, select: { email: true } });
+  if (!user) redirect("/admin/users?error=user");
+  await grantCredits(userId, amount, "admin", { sourceKey: `admin:${key}`, note });
+  redirect(`/admin/users?credited=${encodeURIComponent(`$${amount.toFixed(2)} to ${user.email}`)}`);
 }
