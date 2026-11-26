@@ -1,12 +1,13 @@
 import { z } from "zod";
 import { continuityProblems } from "../../books/continuity";
-import type { ArtDirection, ArtInputPage, DraftCheckpoint, ManuscriptOptions, ManuscriptResult, StoryContext, StoryProvider, ThemeDraftRequest } from "../story/types";
+import type { ArtDirection, ArtInputPage, DraftCheckpoint, ManuscriptOptions, ManuscriptResult, StoryContext, StoryProvider, StoryScore, ThemeDraftRequest } from "../story/types";
 import type { Effort } from "./client";
 import {
   CharacterBibleSchema,
   EditorReportSchema,
   OutlineSchema,
   SceneSchema,
+  BlindReadSchema,
   StorySetupSchema,
   type StorySetup,
   StoryLayoutSchema,
@@ -20,7 +21,7 @@ import {
   type StoryPagesResult,
 } from "../../schemas/story";
 import { note } from "../../schemas/story";
-import { cleanDashes, verseProblems } from "../../schemas/storyText";
+import { cleanDashes, verseProblems, verseShape } from "../../schemas/storyText";
 import { ART_STYLES, ThemeConfigSchema, type ThemeConfig } from "../../schemas/theme";
 import { sumUsage, type ImageData, type Usage, type WithUsage } from "../types";
 import { ClaudeJson, imageBlock, type ClaudeOptions } from "./client";
@@ -32,6 +33,11 @@ import {
   THEME_SYSTEM_PROMPT,
   SETUP_SYSTEM_PROMPT,
   setupPrompt,
+  BLIND_READER_SYSTEM_PROMPT,
+  blindReadPrompt,
+  retellingText,
+  fullRewritePrompt,
+  versifyPrompt,
   artDirectionPrompt,
   editorPrompt,
   manuscriptPrompt,
@@ -41,6 +47,7 @@ import {
   themePrompt, chosenStarter } from "./storyPrompts";
 import { findProtectedNames } from "../../safety/protectedNames";
 import { setupProblems } from "../../books/setup";
+import { budgetProblems } from "../../books/budget";
 
 /*
  * Wire schemas sent to the API as structured-output formats. They carry the
@@ -66,6 +73,7 @@ const WireOutline = z.object({
   turningPoint: z.string(),
   resolution: z.string(),
   lessonShown: z.string(),
+  kidSummary: z.array(z.string()),
   setups: z.array(z.object({ item: z.string(), setUpOnPage: z.number().int(), paysOffOnPage: z.number().int() })),
   continuity: z.array(z.object({ fact: z.string(), fromPage: z.number().int(), toPage: z.number().int() })),
   characters: z.array(z.object({ name: z.string(), species: z.string(), look: z.string() })),
@@ -100,6 +108,16 @@ const WireSetup = z.object({
   journeyStartsOnPage: z.number().int(),
   plants: z.array(z.string()),
   openingPages: z.array(WireBeat),
+  pages: z.array(WireBeat),
+});
+const WireBlind = z.object({
+  whatTheHeroWanted: z.string(),
+  whatWentWrong: z.string(),
+  whyItWentWrong: z.string(),
+  tries: z.array(z.object({ what: z.string(), whyItFailed: z.string() })),
+  howItWasSolved: z.string(),
+  howItEnded: z.string(),
+  confusing: z.array(z.object({ page: z.number().int(), question: z.string() })),
 });
 const WireManuscript = z.object({
   pages: z.array(z.object({ pageNumber: z.number().int(), text: z.string() })),
@@ -112,6 +130,8 @@ const ManuscriptSchema = z.object({
   backCoverBlurb: z.string().min(10).max(500),
 });
 type Manuscript = z.infer<typeof ManuscriptSchema>;
+/** A whole-story rewrite or the verse version: an empty dedication or blurb means "keep the current one". */
+const RedraftSchema = ManuscriptSchema.extend({ dedication: z.string().max(300), backCoverBlurb: z.string().max(500) });
 /** Only the pages a rewrite changes; empty dedication/blurb mean "keep". */
 const WirePatch = z.object({
   pages: z.array(z.object({ pageNumber: z.number().int(), text: z.string() })),
@@ -127,6 +147,7 @@ type Patch = z.infer<typeof PatchSchema>;
 const WireEditor = z.object({
   verdict: z.enum(["pass", "revise"]),
   overall: z.string(),
+  retellingMatch: z.number(),
   issues: z.array(z.object({ page: z.number().int(), problem: z.string(), fix: z.string(), severity: z.enum(["major", "minor"]) })),
 });
 const WireArt = z.object({
@@ -241,14 +262,15 @@ export class AnthropicStoryProvider implements StoryProvider {
       label: "outline",
       system: STORY_SYSTEM_PROMPT,
       build: (p) => outlinePrompt(ctx, p),
-      // A chosen story idea already has its plot worked out: planning needs less thinking.
-      effort: chosenStarter(ctx) ? this.lightEffort : undefined,
+      // Every plan gets full thinking: a weak plan can't be fixed by later steps.
       wire: WireOutline,
       schema: OutlineSchema,
       extraCheck: (o) => {
         const problems = numberingProblems(o.pages, n);
         if (!o.worldRule.trim() || !o.problem.trim() || !o.goal.trim()) problems.push("Fill in worldRule, problem and goal: the story needs them to make sense.");
         if (o.attempts.length < 1) problems.push("Plan at least one attempt that fails for a clear reason before the solution.");
+        else problems.push(...budgetProblems(o.attempts.length, n));
+        if (o.kidSummary.length < 4) problems.push("Write kidSummary: the whole story in five to seven very short sentences a five-year-old could say back.");
         const missingLinks = o.pages.filter((pg) => pg.pageNumber > 1 && !pg.causeFromPrevious.trim()).map((pg) => pg.pageNumber);
         if (missingLinks.length) problems.push(`Give causeFromPrevious for pages ${missingLinks.join(", ")}: how each follows from the page before.`);
         const badSetups = o.setups.filter((x) => x.setUpOnPage > x.paysOffOnPage).map((x) => x.item);
@@ -271,7 +293,6 @@ export class AnthropicStoryProvider implements StoryProvider {
       label: "setup",
       system: SETUP_SYSTEM_PROMPT,
       build: (p) => setupPrompt(ctx, outline, p),
-      effort: this.lightEffort,
       wire: WireSetup,
       schema: StorySetupSchema,
       extraCheck: (s) => setupProblems(s, n),
@@ -286,10 +307,15 @@ export class AnthropicStoryProvider implements StoryProvider {
   }
 
   /**
-   * Writes the words in stages, like an author and editor: the whole manuscript,
-   * an editor's review, a targeted rewrite, and (only when the first review found
-   * serious problems) a second review and a final polish. Progress is saved after
-   * every stage so a retry never starts over.
+   * Writes the words in stages, like an author, an editor and a first-time listener:
+   * 1. the whole manuscript, in plain prose even for rhyming books (logic first);
+   * 2. a blind reader who never sees the plan retells it, then the editor compares
+   *    that retelling with the plan, so gaps the editor would fill in still get caught;
+   * 3. after serious problems, the WHOLE story is rewritten (no patched seams), then
+   *    read blind and edited again; minor notes get a light polish;
+   * 4. rhyming voices: the checked prose is turned into verse, which is read blind
+   *    and edited once more.
+   * Progress is saved after every stage so a retry never starts over.
    */
   async writeManuscript(outline: Outline, ctx: StoryContext, opts: ManuscriptOptions = {}): Promise<WithUsage<ManuscriptResult>> {
     const n = ctx.options.length;
@@ -299,11 +325,15 @@ export class AnthropicStoryProvider implements StoryProvider {
       usages.push(out.usage);
       return out.value;
     };
-    const verse = (pages: Array<{ pageNumber: number; text: string }>) => verseProblems(pages, ctx.options.voice, ctx.options.readingLevel);
+    // Rhyming books are written and checked as prose, then put into verse.
+    const inVerse = !!verseShape(ctx.options.voice, ctx.options.readingLevel);
+    const proseCtx: StoryContext = inVerse ? { ...ctx, options: { ...ctx.options, voice: "classic" } } : ctx;
+    const verse = (pages: Array<{ pageNumber: number; text: string }>, c: StoryContext) => verseProblems(pages, c.options.voice, c.options.readingLevel);
     const resume = opts.resume && opts.resume.pages.length === n ? opts.resume : null;
     let manuscript: Manuscript = resume ? { pages: resume.pages, dedication: resume.dedication, backCoverBlurb: resume.backCoverBlurb } : (null as unknown as Manuscript);
     const editorNotes: EditorReport[] = resume ? [...resume.editorNotes] : [];
     const save = async (stage: DraftCheckpoint["stage"]) => opts.save?.({ stage, ...manuscript, editorNotes });
+    const numbering = (m: Manuscript) => numberingProblems(m.pages, n);
 
     if (!resume) {
       await opts.onStage?.("writing");
@@ -312,11 +342,11 @@ export class AnthropicStoryProvider implements StoryProvider {
           this.claude.generate({
             label: "manuscript",
             system: STORY_SYSTEM_PROMPT,
-            build: (p) => manuscriptPrompt(ctx, outline, p),
+            build: (p) => [manuscriptPrompt(proseCtx, outline, p), inVerse ? "Write it in clear, warm storytelling prose (no rhyme): it will be put into verse once the story is checked." : ""].filter(Boolean).join("\n"),
             wire: WireManuscript,
             schema: ManuscriptSchema,
-            extraCheck: (m) => numberingProblems(m.pages, n),
-            softCheck: (m) => verse(m.pages),
+            extraCheck: numbering,
+            softCheck: (m) => verse(m.pages, proseCtx),
             maxTokens: 48000,
           }),
         ),
@@ -324,65 +354,148 @@ export class AnthropicStoryProvider implements StoryProvider {
       await save("written");
     }
 
-    const review = () =>
-      run(
+    const heroName = ctx.child.nickname || ctx.child.firstName;
+    // Plain-code continuity slips (new glasses mid-adventure, a fox called a puppy) always count as major.
+    const withSlips = (r: EditorReport): EditorReport => {
+      const slips = continuityProblems(manuscript.pages, outline, heroName, ctx.appearance?.hero).map((x) => ({ ...x, severity: "major" as const }));
+      return slips.length ? { ...r, verdict: "revise", issues: [...slips, ...r.issues].slice(0, 12) } : r;
+    };
+    /** A first-time listener retells it, then the editor compares that with the plan. */
+    const check = async (c: StoryContext, round: string): Promise<EditorReport> => {
+      const blind = await run(
+        this.claude.generate({
+          label: "blind reader",
+          system: BLIND_READER_SYSTEM_PROMPT,
+          build: () => blindReadPrompt(c, manuscript.pages),
+          wire: WireBlind,
+          schema: BlindReadSchema,
+          maxTokens: 16000,
+          effort: this.lightEffort,
+        }),
+      );
+      const report = await run(
         this.claude.generate({
           label: "editor",
           system: EDITOR_SYSTEM_PROMPT,
-          build: () => editorPrompt(ctx, outline, manuscript.pages),
+          build: () => editorPrompt(c, outline, manuscript.pages, blind),
           wire: WireEditor,
           schema: EditorReportSchema,
           maxTokens: 24000,
           effort: this.lightEffort,
         }),
       );
-    const patch = async (report: EditorReport, mode: "rewrite" | "polish") => {
+      const full = withSlips({ ...report, retelling: retellingText(blind).slice(0, 2000), round });
+      editorNotes.push(full);
+      return full;
+    };
+    const patch = async (report: EditorReport, mode: "rewrite" | "polish", c: StoryContext) => {
       const p = await run(
         this.claude.generate({
           label: mode,
           system: STORY_SYSTEM_PROMPT,
-          build: (problems) => rewritePrompt(ctx, outline, manuscript.pages, report.issues, problems, mode),
+          build: (problems) => rewritePrompt(c, outline, manuscript.pages, report.issues, problems, mode),
           wire: WirePatch,
           schema: PatchSchema,
           extraCheck: (x) => {
             const bad = x.pages.filter((pg) => pg.pageNumber < 1 || pg.pageNumber > n).map((pg) => pg.pageNumber);
             return bad.length ? [`Only pages 1 to ${n} exist (you returned ${bad.join(", ")}).`] : [];
           },
-          softCheck: (x) => verse(applyPatch(manuscript, x).pages),
+          softCheck: (x) => verse(applyPatch(manuscript, x).pages, c),
           maxTokens: 32000,
-          // The first rewrite fixes real story problems; the final polish only touches up.
           effort: mode === "polish" ? this.lightEffort : undefined,
         }),
       );
       manuscript = cleanManuscript(applyPatch(manuscript, p));
     };
+    /** After serious problems the whole story is written again, so fixes flow from page to page. */
+    const rewriteAll = async (report: EditorReport, c: StoryContext) => {
+      const m = await run(
+        this.claude.generate({
+          label: "full rewrite",
+          system: STORY_SYSTEM_PROMPT,
+          build: (problems) => fullRewritePrompt(c, outline, manuscript.pages, report.issues, problems),
+          wire: WireManuscript,
+          schema: RedraftSchema,
+          extraCheck: numbering,
+          softCheck: (x) => verse(x.pages, c),
+          maxTokens: 48000,
+        }),
+      );
+      manuscript = cleanManuscript({ pages: m.pages, dedication: m.dedication || manuscript.dedication, backCoverBlurb: m.backCoverBlurb || manuscript.backCoverBlurb });
+    };
     const needsWork = (r: EditorReport) => r.verdict === "revise" && r.issues.length > 0;
     const hasMajor = (r: EditorReport) => r.issues.some((i) => i.severity !== "minor");
-    const heroName = ctx.child.nickname || ctx.child.firstName;
-    // Plain-code continuity slips (new glasses mid-adventure, a fox called a puppy) always go to the rewrite, as major.
-    const withSlips = (r: EditorReport): EditorReport => {
-      const slips = continuityProblems(manuscript.pages, outline, heroName, ctx.appearance?.hero).map((x) => ({ ...x, severity: "major" as const }));
-      return slips.length ? { ...r, verdict: "revise", issues: [...slips, ...r.issues].slice(0, 12) } : r;
-    };
 
-    const stage = resume?.stage ?? "written";
+    // Older checkpoints: "reviewed" was the old name for after the first rewrite.
+    let stage: DraftCheckpoint["stage"] = resume?.stage === "reviewed" ? "rewritten" : (resume?.stage ?? "written");
     if (stage === "written") {
       await opts.onStage?.("editing");
-      const first = withSlips(await review());
-      editorNotes.push(first);
-      if (needsWork(first)) await patch(first, "rewrite");
-      await save(needsWork(first) && hasMajor(first) ? "rewritten" : "done");
-      if (!(needsWork(first) && hasMajor(first))) return this.finishManuscript(ctx, manuscript, editorNotes, usages);
+      const first = await check(proseCtx, "draft");
+      if (needsWork(first) && hasMajor(first)) {
+        await rewriteAll(first, proseCtx);
+        stage = "rewritten";
+      } else {
+        if (needsWork(first)) await patch(first, "polish", proseCtx);
+        stage = "polished";
+      }
+      await save(stage);
     }
-    if (stage === "written" || stage === "rewritten" || stage === "reviewed") {
-      // Only after serious problems: check the rewrite, then a light final polish.
+    if (stage === "rewritten") {
+      // Every rewrite is read blind and edited again.
       await opts.onStage?.("polishing");
-      const second = withSlips(await review());
-      editorNotes.push(second);
-      if (needsWork(second)) await patch(second, "polish");
+      const second = await check(proseCtx, "rewrite");
+      if (needsWork(second)) await patch(second, hasMajor(second) ? "rewrite" : "polish", proseCtx);
+      stage = "polished";
+      await save(stage);
+    }
+    if (stage === "polished") {
+      if (!inVerse) {
+        await save("done");
+        return this.finishManuscript(ctx, manuscript, editorNotes, usages);
+      }
+      await opts.onStage?.("polishing");
+      const v = await run(
+        this.claude.generate({
+          label: "verse",
+          system: STORY_SYSTEM_PROMPT,
+          build: (problems) => versifyPrompt(ctx, outline, manuscript.pages, problems),
+          wire: WireManuscript,
+          schema: RedraftSchema,
+          extraCheck: numbering,
+          softCheck: (x) => verse(x.pages, ctx),
+          maxTokens: 48000,
+        }),
+      );
+      manuscript = cleanManuscript({ pages: v.pages, dedication: manuscript.dedication, backCoverBlurb: v.backCoverBlurb || manuscript.backCoverBlurb });
+      stage = "versified";
+      await save(stage);
+    }
+    if (stage === "versified") {
+      // The verse is read blind too: rhyme must not have changed what happens.
+      const third = await check(ctx, "verse");
+      if (needsWork(third)) await patch(third, hasMajor(third) ? "rewrite" : "polish", ctx);
       await save("done");
     }
     return this.finishManuscript(ctx, manuscript, editorNotes, usages);
+  }
+
+  /**
+   * Scores finished words for the story scorecard: a fresh blind read, then the
+   * editor's comparison with the plan. Doesn't change anything.
+   */
+  async scoreStory(outline: Outline, pages: Array<{ pageNumber: number; text: string }>, ctx: StoryContext): Promise<WithUsage<StoryScore>> {
+    const blind = await this.claude.generate({ label: "score: blind reader", system: BLIND_READER_SYSTEM_PROMPT, build: () => blindReadPrompt(ctx, pages), wire: WireBlind, schema: BlindReadSchema, maxTokens: 16000, effort: this.lightEffort });
+    const report = await this.claude.generate({ label: "score: editor", system: EDITOR_SYSTEM_PROMPT, build: () => editorPrompt(ctx, outline, pages, blind.value), wire: WireEditor, schema: EditorReportSchema, maxTokens: 24000, effort: this.lightEffort });
+    return {
+      value: {
+        retellingMatch: report.value.retellingMatch ?? 0,
+        confusing: blind.value.confusing.length,
+        majorIssues: report.value.issues.filter((i) => i.severity !== "minor").length,
+        retelling: retellingText(blind.value),
+        issues: report.value.issues,
+      },
+      usage: sumUsage(this.name, [blind.usage, report.usage]),
+    };
   }
 
   private finishManuscript(ctx: StoryContext, m: Manuscript, editorNotes: EditorReport[], usages: Usage[]): WithUsage<ManuscriptResult> {

@@ -111,6 +111,11 @@ export const StorySetupSchema = z.object({
   plants: list(note(200, 3), 5).default([]),
   /** The opening pages, 1 to journeyStartsOnPage - 1. */
   openingPages: z.array(OutlineBeatSchema).min(1).max(10),
+  /**
+   * Every page of the story, re-planned so the opening and the adventure fit
+   * together (nothing stitched). Older plans have only openingPages.
+   */
+  pages: z.array(OutlineBeatSchema).max(30).optional(),
 });
 export type StorySetup = z.infer<typeof StorySetupSchema>;
 
@@ -131,6 +136,12 @@ export const OutlineSchema = z.object({
   attempts: list(z.object({ attempt: note(300, 3), whyItFails: note(300, 3) }), 4).default([]),
   turningPoint: note(400).default(""),
   resolution: note(400).default(""),
+  /**
+   * The whole story in five to seven very short sentences a five-year-old could
+   * say back ("Theo wants... But... because... He tries... So..."). The writer
+   * must show each one on a page, and the blind reader's retelling is checked against it.
+   */
+  kidSummary: list(note(200, 3), 8).default([]),
   /** How the lesson is shown through what happens (empty when there is no lesson). */
   lessonShown: note(300).default(""),
   setups: list(SetupPayoffSchema, 8).default([]),
@@ -168,7 +179,33 @@ export const EditorReportSchema = z.object({
   /** One or two sentences on how the story reads as a whole. */
   overall: note(600),
   issues: list(EditorIssueSchema, 12),
+  /**
+   * 0 to 1: how well a reader who never saw the plan retold the story (1 = every
+   * part of the kid summary came through). Older reports have none.
+   */
+  retellingMatch: z.number().min(0).max(1).optional(),
+  /** What the blind reader understood, in their words (saved for the scorecard and story lab). */
+  retelling: z.string().max(2000).optional(),
+  /** Which draft this report is about: "draft", "rewrite" or "verse". */
+  round: z.string().max(20).optional(),
 });
+
+/**
+ * A reader who never saw the plan retells the story from the words alone, like
+ * a five-year-old after hearing it read aloud. Gaps between this and the plan
+ * are plot holes.
+ */
+export const BlindReadSchema = z.object({
+  whatTheHeroWanted: note(300),
+  whatWentWrong: note(300),
+  whyItWentWrong: note(300),
+  tries: list(z.object({ what: note(200, 2), whyItFailed: note(200) }), 4),
+  howItWasSolved: note(300),
+  howItEnded: note(300),
+  /** Places a listener would be lost: "Why did Pip run away?", with the page. */
+  confusing: list(z.object({ page: z.number().int().min(0), question: note(240, 3) }), 10),
+});
+export type BlindRead = z.infer<typeof BlindReadSchema>;
 export type EditorReport = z.infer<typeof EditorReportSchema>;
 
 export const StoryPagesResultSchema = z.object({

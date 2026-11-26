@@ -1,7 +1,8 @@
 import { READING_LEVEL_RULES } from "../../schemas/book";
 import { voiceFor } from "../../schemas/voices";
 import { verseShape } from "../../schemas/storyText";
-import type { Outline } from "../../schemas/story";
+import type { BlindRead, Outline } from "../../schemas/story";
+import { budgetText } from "../../books/budget";
 import type { StoryContext, ThemeDraftRequest } from "../story/types";
 import { ART_STYLES } from "../../schemas/theme";
 import { retryNote } from "./client";
@@ -41,7 +42,7 @@ Personal details
 - The theme's story beats are inspiration, not a checklist: use the ones that serve this story's chain of cause and effect.
 
 Real family and friends in the story
-- When otherPeopleInTheStory is given, these are real people the child loves. Portray them warmly and respectfully, use the name the child calls them, and give each one a real part that matters to the plot.
+- When otherPeopleInTheStory is given, these are real people the child loves. Portray them warmly and respectfully and use the name the child calls them. Within the story budget, give them a real part that matters to the plot; anyone beyond the budget appears warmly in a cameo.
 - Follow each person's theirPartInThisStory closely: it is the parent's wish for the book. A secret (for example "Mom is secretly a superhero and the child doesn't know") is a gift to the reader: keep it hidden from the child character until the moment the parent planned (or keep it a fun secret the reader shares), and plant small clues along the way.
 - storyCentersOn says whose story it is. If it is a grown-up, the child still has an important, active part, and the story should help the child see that grown-up in a new, admiring light.
 - whatThisStoryIsAbout comes first: build the plot around it and use the theme for the setting, supporting cast and mood. If it describes a real job or a real life situation (a hospital stay, a move, a new sibling), keep the facts true, simple and reassuring for the child's age.
@@ -51,6 +52,10 @@ Characters stay the same from page to page
 - Nobody gains or loses glasses, a hat, an outfit or something they carry in the middle of the story unless a page shows it happening and why (finding a hat, taking off a coat at home). Characters out on an adventure cannot change clothes or fetch things from home.
 - The real people's looks (heroAppearance and each person's appearance) come from their character sheets. Never contradict them in the words: if the hero has no glasses, never mention glasses on the hero; if they wear glasses, they wear them on every page.
 - Do not introduce new physical details about a character late in the book. If a detail matters to the plot, set it up on the first page where that character appears.
+
+Silly worlds still make sense
+- A world can be upside down, magical or ridiculous, but inside it everything follows its own rules, and every character does things for a reason a child can see. Funny sounds and made-up words are fine; a made-up reason for the plot is not.
+- Simple beats crowded: one problem, one goal, a few characters who each matter. If a character or detail doesn't change what happens, leave it out.
 
 Pictures follow the words
 - Every page is one clear moment an illustrator can draw.
@@ -62,7 +67,18 @@ Punctuation
 Safety and originality
 - Age-appropriate vocabulary for the reading level. Cartoon peril only. Nothing frightening, violent, romantic, or unsafe. No weapons. Everything stays G-rated.
 - Use only the theme's original characters plus the child, pet and friend. Never mention or allude to trademarked or copyrighted characters, franchises, brands, real authors or celebrities.
-- Follow every content rule listed in the theme.`;
+- Follow every content rule listed in the theme.
+
+What "makes sense" looks like (a short example in plain prose; never copy its plot, names or words):
+Page 1: Every morning, Nell fed the ducks at the pond with her grandpa. The littlest duck, Dot, always waddled right up to her shoes.
+Page 2: One morning, Dot wasn't there. "She's stuck on the island," said Grandpa. "The water's too deep for her little legs today."
+Page 3: Grandpa's knee was sore, so he couldn't wade out. Nell looked at the island. "Then I'll find a way," she said.
+Page 4: Nell tried throwing bread to the island, but the wind blew it back. Dot needed to come home, not just eat.
+Page 5: Then Nell remembered the flat stones Grandpa had shown her, the ones that stayed dry even when the pond was high.
+Page 6: She laid the stones one by one, a little path across the water. Dot peeped. She hopped from stone to stone.
+Page 7: Dot waddled right up to Nell's shoes. Grandpa laughed. "You built her a bridge!"
+Page 8: The next morning, the ducks were waiting, and so was the little stone path.
+Why it works: we meet Nell's world and what she loves first; the problem has a reason (deep water); Grandpa can't help and says why; the first try fails for a clear reason; the solution uses something set up earlier (the stones); the ending echoes the opening.`;
 
 export const EDITOR_SYSTEM_PROMPT = `You are a demanding, kind picture-book editor. You read a draft the way a parent reading aloud and a five-year-old listener would experience it, and you find every place the story stops making sense.
 
@@ -191,9 +207,12 @@ export function outlinePrompt(ctx: StoryContext, problems?: string[]): string {
     voiceBlock(ctx),
     "",
     starter
-      ? `The parent chose this story idea. Build the spine on it: keep its problem, the reason the first tries fail, and how the hero solves it, but tell it with this child as the hero and give every person in otherPeopleInTheStory a real part. Adapt names, details and the number of pages to this book.\nStory idea "${starter.title}": ${starter.idea}\n`
+      ? `The parent chose this story idea. Build the spine on it: keep its problem, the reason the first tries fail, and how the hero solves it, but tell it with this child as the hero and give the people in otherPeopleInTheStory parts within the story budget. Adapt names, details and the number of pages to this book.\nStory idea "${starter.title}": ${starter.idea}\n`
       : "",
+    budgetText(n),
+    "",
     `Plan the story spine before any words are written. The book has exactly ${n} story pages.`,
+    "- kidSummary: first, the whole story in five to seven very short sentences a five-year-old could say back, in order, using \"wants\", \"but\", \"because\" and \"so\" (for example: \"Nell loves feeding the ducks. But one day Dot is stuck on the island, because the water is too deep. Grandpa can't wade out. Nell throws bread, but the wind blows it back. So she builds a stone path, and Dot comes home.\"). If you can't say it this simply, the story is too complicated: simplify it before planning the pages.",
     "- title: short, includes the child's name or nickname, suits the voice. premise: one line.",
     "- worldRule: how the magic or situation in this world works, in one or two plain sentences, including why the obvious quick fix will not work.",
     "- problem: what goes wrong and WHY, in kid logic. goal: what the hero wants because of it.",
@@ -243,6 +262,7 @@ export function setupPrompt(ctx: StoryContext, outline: Outline, problems?: stri
     `- journeyStartsOnPage: ${k + 1}.`,
     "- plants: one to three opening details that pay off later in the spine (name the later page if you can).",
     `- openingPages: exactly pages 1 to ${k}, with beat, summary, causeFromPrevious (empty for page 1), characters and visualState. Page 1 is the hero's everyday world (never the disruption).${k >= 4 ? " Spend the first two pages on the everyday world and the want." : ""} The disruption comes on page ${Math.max(2, k - 1)} at the latest, and page ${k} ends with the hero's decision.`,
+    `- pages: EVERY page, 1 to ${n}, as the writer should follow them: pages 1 to ${k} exactly as in openingPages, then the rest of the spine's pages adjusted so they follow naturally from your opening (keep their events and order, fix any link that no longer fits, and drop anything the opening already covered). Each page needs causeFromPrevious except page 1.`,
     retryNote(problems),
   ]
     .filter(Boolean)
@@ -262,6 +282,10 @@ export function manuscriptPrompt(ctx: StoryContext, outline: Outline, problems?:
     "",
     `Write the whole story now, as one continuous manuscript split into exactly ${n} pages. Write only the words a reader will read aloud; no picture instructions.`,
     `- Respect the reading level exactly: ${readingRule(ctx)}`,
+    outline.kidSummary.length
+      ? "- Every sentence of kidSummary must happen clearly in the words, on a page a listener can point to: a child who only hears the story (never sees the plan or the pictures) must be able to say it back. Say the reasons out loud in the words (\"because...\", \"so...\"); never leave them only in the plan."
+      : "",
+    budgetText(n),
     "- The story comes first and the voice second: if a rhyme would force nonsense or a filler word, choose a near-rhyme or a plain line instead.",
     "- Make every page follow from the one before, state the world's rule before it matters, and set up everything before it is used, exactly as the spine plans.",
     outline.setup
@@ -280,21 +304,124 @@ export function manuscriptPrompt(ctx: StoryContext, outline: Outline, problems?:
     .join("\n");
 }
 
+/** The blind reader: hears only the words, never the plan, and retells the story. */
+export const BLIND_READER_SYSTEM_PROMPT = `You are a bright five-year-old's grown-up, listening to a picture book read aloud for the very first time. You have NOT seen any plan, pictures or notes: only the words below. Retell the story honestly, exactly as you understood it from the words, then list every moment where a child listening would be lost.
+
+Be strict and literal:
+- If a reason is never said in the words, you don't know it. Write "not said" rather than guessing.
+- If a character appears without being introduced, or does something for no reason you can see, that is confusing.
+- If something is used (an object, an ability, a rule) that was never mentioned before, that is confusing.
+- If a page doesn't follow from the one before, ask what you'd ask out loud ("Wait, where did the boat come from?").
+Keep each answer short and plain.`;
+
+export function blindReadPrompt(ctx: StoryContext, pages: Array<{ pageNumber: number; text: string }>): string {
+  return [
+    `A picture book for a ${ctx.child.age}-year-old, read aloud. The words, page by page:`,
+    "",
+    manuscriptText(pages),
+    "",
+    "Retell it: whatTheHeroWanted, whatWentWrong, whyItWentWrong, the tries that didn't work and why, howItWasSolved and howItEnded, each in one short sentence (\"not said\" when the words never say). Then confusing: every moment a listening child would be lost, with the page (0 for the whole book) and the question they'd ask. An empty list only if nothing at all is unclear.",
+  ].join("\n");
+}
+
+/** The retelling as plain text, for the editor and the story lab. */
+export function retellingText(r: BlindRead): string {
+  const tries = r.tries.map((t) => `${t.what} (failed: ${t.whyItFailed || "not said"})`).join("; ");
+  return [
+    `Wanted: ${r.whatTheHeroWanted}`,
+    `What went wrong: ${r.whatWentWrong} Why: ${r.whyItWentWrong}`,
+    tries ? `Tries: ${tries}` : "Tries: none",
+    `Solved: ${r.howItWasSolved}`,
+    `Ending: ${r.howItEnded}`,
+    r.confusing.length ? `Confusing: ${r.confusing.map((c) => `${c.page ? `page ${c.page}` : "book"}: ${c.question}`).join(" | ")}` : "Confusing: nothing",
+  ].join("\n");
+}
+
+/** Writes the whole manuscript again after serious problems, so fixes don't leave seams between pages. */
+export function fullRewritePrompt(
+  ctx: StoryContext,
+  outline: Outline,
+  pages: Array<{ pageNumber: number; text: string }>,
+  issues: Array<{ page: number; problem: string; fix: string }>,
+  problems?: string[],
+): string {
+  return [
+    "Here are the details for this book:",
+    describeContext(ctx),
+    "",
+    "The story spine:",
+    JSON.stringify(outline, null, 2),
+    "",
+    voiceBlock(ctx),
+    "",
+    "Your draft:",
+    manuscriptText(pages),
+    "",
+    "The editor and a first-time listener found these problems:",
+    issues.map((i) => `- ${i.page ? `Page ${i.page}` : "Whole book"}: ${i.problem} Fix: ${i.fix}`).join("\n"),
+    "",
+    `Write the whole story again, all ${ctx.options.length} pages, fixing every problem. Keep what already works (good lines, the voice, the ending), but make the story flow as one piece from page 1 to the end: every page follows from the one before, every reason is said in the words, and every sentence of kidSummary happens on a page.`,
+    `- Respect the reading level exactly: ${readingRule(ctx)}`,
+    budgetText(ctx.options.length),
+    ctx.options.dedication ? `- dedication: use exactly ${JSON.stringify(ctx.options.dedication)}` : "- dedication: keep the current one unless it no longer fits.",
+    "- backCoverBlurb: keep the current one unless the story changed.",
+    "Before answering, read it aloud in your head as if you had never seen the plan, and fix anything a child would not follow.",
+    retryNote(problems),
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+/** Turns a finished prose story into verse in the book's voice, keeping every plot fact. */
+export function versifyPrompt(ctx: StoryContext, outline: Outline, pages: Array<{ pageNumber: number; text: string }>, problems?: string[]): string {
+  return [
+    "Here are the details for this book:",
+    describeContext(ctx),
+    "",
+    voiceBlock(ctx),
+    "",
+    "Here is the finished story in plain prose. Its logic has been checked: a child can follow it.",
+    manuscriptText(pages),
+    "",
+    "The story in a few sentences (every one must still come through):",
+    outline.kidSummary.map((s) => `- ${s}`).join("\n") || "(see the story above)",
+    "",
+    `Now turn it into verse in the voice above, page for page (exactly ${ctx.options.length} pages, same page breaks).`,
+    "- Keep every event, every reason (\"because\", \"so\", \"but\") and every character introduction. The rhyme serves the story: if a rhyme would change what happens, drop a fact or add a reason that isn't there, use a near-rhyme or a plain line instead.",
+    "- No filler words picked for the sound, no twisted word order, no new characters, objects or events.",
+    `- Respect the reading level: ${readingRule(ctx)}`,
+    "- Return an empty dedication and backCoverBlurb to keep the current ones, or a short verse version of the blurb.",
+    retryNote(problems),
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
 function manuscriptText(pages: Array<{ pageNumber: number; text: string }>): string {
   return pages.map((p) => `Page ${p.pageNumber}:\n${p.text}`).join("\n\n");
 }
 
-export function editorPrompt(ctx: StoryContext, outline: Outline, pages: Array<{ pageNumber: number; text: string }>): string {
+export function editorPrompt(ctx: StoryContext, outline: Outline, pages: Array<{ pageNumber: number; text: string }>, blind?: BlindRead): string {
   return [
     `This is a draft picture book for a ${ctx.child.age}-year-old (${readingRule(ctx)}), in the "${voiceFor(ctx.options).label}" voice.`,
     "The author's plan:",
-    JSON.stringify({ worldRule: outline.worldRule, problem: outline.problem, goal: outline.goal, attempts: outline.attempts, turningPoint: outline.turningPoint, resolution: outline.resolution, lessonShown: outline.lessonShown, setups: outline.setups, continuity: outline.continuity, characters: outline.characters }, null, 2),
+    JSON.stringify({ kidSummary: outline.kidSummary, setup: outline.setup ? { homeWorld: outline.setup.homeWorld, heroWant: outline.setup.heroWant, incitingIncident: outline.setup.incitingIncident, whyItMatters: outline.setup.whyItMatters, whyTheHero: outline.setup.whyTheHero, decision: outline.setup.decision } : undefined, worldRule: outline.worldRule, problem: outline.problem, goal: outline.goal, attempts: outline.attempts, turningPoint: outline.turningPoint, resolution: outline.resolution, lessonShown: outline.lessonShown, setups: outline.setups, continuity: outline.continuity, characters: outline.characters }, null, 2),
     ctx.appearance?.hero ? `How ${ctx.child.nickname || ctx.child.firstName} looks (from the character sheet; the words must never contradict it): ${ctx.appearance.hero}` : "",
     "",
     "The draft:",
     manuscriptText(pages),
     "",
-    "Review the draft against your checklist and return your verdict, a one or two sentence overall read, and the issues.",
+    blind
+      ? [
+          "",
+          "A reader who has NEVER seen the plan heard the draft read aloud and retold it like this:",
+          retellingText(blind),
+          "",
+          "You know the plan, so you will fill gaps the listener can't: trust the listener. Compare their retelling with kidSummary and the plan. Every part of kidSummary they missed or got wrong, every reason they say is \"not said\", and every confusing moment they list is a \"major\" issue on the page where the words need to say more (unless their question is answered plainly in the words and they simply misread it).",
+          "retellingMatch: 0 to 1, how much of kidSummary came through in their retelling (1 = all of it, clearly).",
+        ].join("\n")
+      : "retellingMatch: 1 if a child would retell kidSummary from the words alone, lower if not.",
+    "Review the draft against your checklist and return your verdict, a one or two sentence overall read, retellingMatch, and the issues.",
   ].filter(Boolean).join("\n");
 }
 

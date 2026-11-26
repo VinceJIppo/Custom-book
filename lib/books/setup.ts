@@ -32,13 +32,29 @@ export function setupProblems(setup: StorySetup, storyPages: number): string[] {
   if (nums.join(",") !== want.join(",")) problems.push(`openingPages must be exactly pages ${want.join(", ")} in order (got ${nums.join(", ") || "none"}).`);
   const missing = setup.openingPages.filter((p) => p.pageNumber > 1 && !p.causeFromPrevious.trim()).map((p) => p.pageNumber);
   if (missing.length) problems.push(`Give causeFromPrevious for opening pages ${missing.join(", ")}.`);
+  // The setup agent re-plans every page so the opening and the adventure fit together.
+  if (setup.pages) {
+    const all = setup.pages.map((p) => p.pageNumber);
+    const every = Array.from({ length: storyPages }, (_, i) => i + 1);
+    if (all.join(",") !== every.join(",")) problems.push(`pages must be every page, 1 to ${storyPages}, in order (got ${all.length}).`);
+    const noLink = setup.pages.filter((p) => p.pageNumber > 1 && !p.causeFromPrevious.trim()).map((p) => p.pageNumber);
+    if (noLink.length) problems.push(`Give causeFromPrevious for pages ${noLink.join(", ")}.`);
+    const opening = setup.pages.slice(0, k).map((p) => `${p.pageNumber}:${p.summary}`).join("|");
+    const planned = setup.openingPages.map((p) => `${p.pageNumber}:${p.summary}`).join("|");
+    if (opening !== planned) problems.push(`pages 1 to ${k} must be the same as openingPages.`);
+  }
   // The disruption shouldn't be on page 1: the reader meets the hero's world first.
   if (/^\s*one day/i.test(setup.openingPages[0]?.summary ?? "")) problems.push("Page 1 shows the hero's everyday world; save the \"One day...\" disruption for a later opening page.");
   return problems;
 }
 
-/** The spine with the planned opening: pages 1..k replaced by the setup's opening pages, the rest kept. */
+/**
+ * The spine with the planned opening. When the setup agent re-planned every page
+ * (newer plans), those pages replace the spine's; otherwise pages 1..k are
+ * replaced and the rest kept.
+ */
 export function applySetup(outline: Outline, setup: StorySetup): Outline {
+  if (setup.pages?.length === outline.pages.length) return { ...outline, setup, pages: setup.pages };
   const k = setup.openingPages.length;
   const later: OutlineBeat[] = outline.pages.filter((p) => p.pageNumber > k);
   // The first adventure page now follows from the hero's decision.

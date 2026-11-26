@@ -492,6 +492,7 @@ export class MockStoryProvider implements StoryProvider {
         turningPoint: "",
         resolution: "",
         lessonShown: "",
+        kidSummary: [],
         setups: [],
         continuity: [],
         characters: [

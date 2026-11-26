@@ -158,12 +158,18 @@ A story is written like a real picture book, in stages (`lib/providers/anthropic
    "One day..." disruption and its cause, why it matters to this hero, why they (not a grown-up)
    act, and their decision to go, plus details planted for later. Its pages replace the spine's
    first pages; the adventure starts right after. Plans that don't fit are sent back.
-2. **Manuscript:** the whole book in one go, so it reads as one story.
-3. **Editor review:** a separate pass reads it like a parent and a five-year-old would, listing
-   anything confusing (unexplained rules, objects from nowhere, actions that don't fit, like
-   cheese for a drippy nose) and verse that is too long, off the beat or forced. If it finds
-   problems, only the flagged pages are **rewritten**, the book is reviewed again, and a **final
-   polish** fixes any notes left from the second review.
+   The plan also has a **kid summary** (the story in five to seven sentences a five-year-old
+   could say back) and stays inside a **story budget** for its length (`lib/books/budget.ts`: for
+   12 pages, two named helpers, two real people with real parts, one failed try).
+2. **Manuscript:** the whole book in one go, so it reads as one story. Rhyming books are written
+   in plain prose first, so the logic is settled before any rhyme.
+3. **Blind reader, then editor:** a reader who never sees the plan retells the story from the
+   words alone, listing every moment a listening child would be lost. The editor then compares
+   that retelling with the plan (so gaps it would fill in from the plan still get caught) and
+   scores how much came through (`retellingMatch`). After serious problems the **whole story is
+   rewritten** (no page-by-page patching), read blind and edited again; wording notes get a light
+   **polish**. Rhyming books are then **put into verse** from the checked prose, and the verse is
+   read blind and edited once more.
 
    Printed words never contain long dashes, and rhyming verse has a word limit per line (8 for
    ages 2 to 4, 10 for ages 4 to 6; `lib/schemas/storyText.ts`). Over-long lines get one redraft.
@@ -173,7 +179,19 @@ A story is written like a real picture book, in stages (`lib/providers/anthropic
    what the pages before and after show. A picture may not show an object or character before the
    page whose words introduce it.
 
-The editor's notes and the summary are saved on the book. About $0.80 to $1.10 of Claude per book (most of it is the model thinking).
+The editor's notes (with each blind retelling and match score) and the summary are saved on the book. Run the story scorecard for current time and cost per book.
+
+### Story scorecard: measure whether stories make sense
+
+```bash
+npm run story-scorecard                                   # 10 stories, mixed themes and voices
+npm run story-scorecard -- --label before --count 10
+npm run story-scorecard -- --label after --compare story-lab/scorecard-before.json
+```
+
+Writes stories exactly as the app does, then scores each finished story with a fresh blind read:
+retelling match, confusing moments and major issues, plus time and cost. `--compare` shows the
+change against an earlier run. Output in `story-lab/` (Markdown to read, JSON to compare).
 
 ### Story Lab: tune stories without making a book
 

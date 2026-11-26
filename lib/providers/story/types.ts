@@ -25,7 +25,8 @@ export interface ManuscriptResult {
 /** Progress saved between the stages of writing a manuscript. */
 export interface DraftCheckpoint {
   /** The last stage that finished. */
-  stage: "written" | "reviewed" | "rewritten" | "done";
+  /** "reviewed" is from older checkpoints (treated like "rewritten"). "polished": prose checked; "versified": rhyming version written. */
+  stage: "written" | "reviewed" | "rewritten" | "polished" | "versified" | "done";
   pages: Array<{ pageNumber: number; text: string }>;
   dedication: string;
   backCoverBlurb: string;
@@ -60,6 +61,18 @@ export interface ThemeDraftRequest {
   childAge?: number;
 }
 
+/** How well a finished story comes across to a first-time listener (the story scorecard). */
+export interface StoryScore {
+  /** 0 to 1: how much of the plan's kid summary a listener who never saw the plan retold. */
+  retellingMatch: number;
+  /** Moments a listening child would be lost. */
+  confusing: number;
+  /** The editor's serious issues. */
+  majorIssues: number;
+  retelling: string;
+  issues: EditorReport["issues"];
+}
+
 export interface StoryProvider {
   readonly name: string;
   generateOutline(ctx: StoryContext): Promise<WithUsage<Outline>>;
@@ -76,6 +89,8 @@ export interface StoryProvider {
   writeManuscript(outline: Outline, ctx: StoryContext, opts?: ManuscriptOptions): Promise<WithUsage<ManuscriptResult>>;
   /** Picture plans (scenes, layouts, cover, summary) for the words as they now stand. */
   directArt(outline: Outline, pages: ArtInputPage[], ctx: StoryContext): Promise<WithUsage<ArtDirection>>;
+  /** Scorecard only: a fresh blind read and edit of finished words (the offline writer has none). */
+  scoreStory?(outline: Outline, pages: Array<{ pageNumber: number; text: string }>, ctx: StoryContext): Promise<WithUsage<StoryScore>>;
   describeCharacter(sheet: ImageData): Promise<WithUsage<CharacterBible>>;
   /** Custom Theme Builder: draft a full original theme config from a description. */
   draftTheme(req: ThemeDraftRequest): Promise<WithUsage<ThemeConfig>>;
