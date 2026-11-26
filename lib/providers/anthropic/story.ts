@@ -7,6 +7,8 @@ import {
   EditorReportSchema,
   OutlineSchema,
   SceneSchema,
+  StorySetupSchema,
+  type StorySetup,
   StoryLayoutSchema,
   TextZoneSchema,
   validateStoryPages,
@@ -28,6 +30,8 @@ import {
   EDITOR_SYSTEM_PROMPT,
   STORY_SYSTEM_PROMPT,
   THEME_SYSTEM_PROMPT,
+  SETUP_SYSTEM_PROMPT,
+  setupPrompt,
   artDirectionPrompt,
   editorPrompt,
   manuscriptPrompt,
@@ -36,6 +40,7 @@ import {
   rewritePrompt,
   themePrompt, chosenStarter } from "./storyPrompts";
 import { findProtectedNames } from "../../safety/protectedNames";
+import { setupProblems } from "../../books/setup";
 
 /*
  * Wire schemas sent to the API as structured-output formats. They carry the
@@ -75,6 +80,26 @@ const WireOutline = z.object({
       visualState: z.string(),
     }),
   ),
+});
+const WireBeat = z.object({
+  pageNumber: z.number().int(),
+  beat: z.string(),
+  summary: z.string(),
+  causeFromPrevious: z.string(),
+  characters: z.array(z.string()),
+  visualState: z.string(),
+});
+const WireSetup = z.object({
+  homeWorld: z.string(),
+  heroWant: z.string(),
+  innerNeed: z.string(),
+  incitingIncident: z.string(),
+  whyItMatters: z.string(),
+  whyTheHero: z.string(),
+  decision: z.string(),
+  journeyStartsOnPage: z.number().int(),
+  plants: z.array(z.string()),
+  openingPages: z.array(WireBeat),
 });
 const WireManuscript = z.object({
   pages: z.array(z.object({ pageNumber: z.number().int(), text: z.string() })),
@@ -233,6 +258,25 @@ export class AnthropicStoryProvider implements StoryProvider {
       maxTokens: 48000,
     });
     return { ...res, value: { ...res.value, title: cleanDashes(res.value.title) } };
+  }
+
+  /**
+   * The setup agent: plans the opening pages (the hero's everyday world, the
+   * "One day..." disruption, why it matters to them and their decision to go) so
+   * the journey has a reason before the adventure starts.
+   */
+  async planSetup(outline: Outline, ctx: StoryContext): Promise<WithUsage<StorySetup>> {
+    const n = ctx.options.length;
+    return this.claude.generate({
+      label: "setup",
+      system: SETUP_SYSTEM_PROMPT,
+      build: (p) => setupPrompt(ctx, outline, p),
+      effort: this.lightEffort,
+      wire: WireSetup,
+      schema: StorySetupSchema,
+      extraCheck: (s) => setupProblems(s, n),
+      maxTokens: 16000,
+    });
   }
 
   /** Editing steps think a little less than planning and writing: same quality, much faster. */

@@ -7,7 +7,8 @@ import { getStoryProvider } from "../../providers/registry";
 import { outlineFor, storyContextFor } from "../../books/context";
 import { completeGuide, storyContextWithLooks } from "../../books/appearance";
 import type { JobOutcome } from "../types";
-import { PermanentProviderError, type WithUsage } from "../../providers/types";
+import { PermanentProviderError, sumUsage, type Usage, type WithUsage } from "../../providers/types";
+import { applySetup } from "../../books/setup";
 import type { DraftCheckpoint, ManuscriptResult } from "../../providers/story/types";
 import type { StoryPagesResult } from "../../schemas/story";
 import { notifyStoryReady } from "../../books/notify";
@@ -22,17 +23,26 @@ async function loadBook(job: GenerationJob) {
 export async function outlineHandler(job: GenerationJob): Promise<JobOutcome> {
   const book = await loadBook(job);
   const ctx = await storyContextWithLooks(book, storyContextFor(book));
-  const existing = outlineFor(book);
-  let usage;
-  if (!existing) {
-    const res = await getStoryProvider().generateOutline(ctx);
-    usage = res.usage;
+  let outline = outlineFor(book);
+  const provider = getStoryProvider();
+  const usages: Usage[] = [];
+  if (!outline) {
+    const res = await provider.generateOutline(ctx);
+    usages.push(res.usage);
     // Every theme character and the pet get a stated kind of animal, even if the plan left them out.
-    const outline = { ...res.value, characters: completeGuide(res.value.characters, ctx) };
+    outline = { ...res.value, characters: completeGuide(res.value.characters, ctx) };
+    // Saved before the setup step, so a retry doesn't plan the spine again.
     await db.book.update({ where: { id: book.id }, data: { outline: outline as unknown as Prisma.InputJsonValue, title: outline.title } });
   }
+  if (!outline.setup) {
+    // The setup agent plans the opening: the hero's world, what goes wrong, and why they set off.
+    const res = await provider.planSetup(outline, ctx);
+    usages.push(res.usage);
+    outline = applySetup(outline, res.value);
+    await db.book.update({ where: { id: book.id }, data: { outline: outline as unknown as Prisma.InputJsonValue } });
+  }
   await enqueue("book.pages", {}, { userId: book.userId, bookId: book.id });
-  return { usage, result: { title: existing?.title ?? null } };
+  return { usage: usages.length ? sumUsage(usages[0].provider, usages) : undefined, result: { title: outline.title } };
 }
 
 /** Merges fields into the book's stored outline JSON (progress and drafts live there while writing). */

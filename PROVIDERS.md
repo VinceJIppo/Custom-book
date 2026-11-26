@@ -7,7 +7,7 @@ imports outside each vendor's folder (`lib/providers/anthropic`, `gemini`, `open
 
 | Interface | Implementations | Used for |
 |---|---|---|
-| StoryProvider | Mock, Anthropic (Claude) | Story spine, manuscript, editor review and rewrite, art direction, text rewrites, Character Bible, Custom Theme drafts |
+| StoryProvider | Mock, Anthropic (Claude) | Story spine, setup agent (the opening), manuscript, editor review and rewrite, art direction, text rewrites, Character Bible, Custom Theme drafts |
 | ImageProvider | Mock, **Gemini** (default), OpenAI | Character sheets, page art, picture edits |
 | Upscaler | Mock, Sharp (local) | Exact print pixels at 300 ppi |
 | VisionProvider | Mock, Anthropic (Claude) | One-face photo check; page check (likeness to the character, and words versus picture) |

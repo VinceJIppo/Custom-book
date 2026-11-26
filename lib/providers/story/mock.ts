@@ -1,6 +1,7 @@
 import type { ArtDirection, ArtInputPage, ManuscriptOptions, ManuscriptResult, StoryContext, StoryProvider, ThemeDraftRequest } from "./types";
 import type { ThemeConfig } from "../../schemas/theme";
-import type { CharacterBible, Outline, Scene, StoryLayout, StoryPage, StoryPagesResult, TextZone } from "../../schemas/story";
+import type { CharacterBible, Outline, Scene, StoryLayout, StoryPage, StoryPagesResult, StorySetup, TextZone } from "../../schemas/story";
+import { setupPageCount } from "../../books/setup";
 import { READING_LEVEL_RULES } from "../../schemas/book";
 import { voiceFor } from "../../schemas/voices";
 import type { ImageData, WithUsage } from "../types";
@@ -440,6 +441,28 @@ function mockUsage(): WithUsage<never>["usage"] {
 
 export class MockStoryProvider implements StoryProvider {
   readonly name = "mock";
+
+  /** Offline setup plan: the template's first pages, labelled as the opening. */
+  async planSetup(outline: Outline, ctx: StoryContext): Promise<WithUsage<StorySetup>> {
+    const v = buildVars(ctx);
+    const k = setupPageCount(ctx.options.length);
+    const openingPages = outline.pages.slice(0, k).map((p, i) => ({ ...p, causeFromPrevious: i === 0 ? "" : p.causeFromPrevious || "Follows from the page before (offline template)." }));
+    return {
+      value: {
+        homeWorld: `${v.name} at home near ${v.setting}, ${v.activity} as usual.`,
+        heroWant: `${v.name} loves ${v.activity}.`,
+        innerNeed: "",
+        incitingIncident: `One day, something goes wrong in ${v.setting}.`,
+        whyItMatters: `It spoils the thing ${v.name} loves most.`,
+        whyTheHero: `${v.leader} asks ${v.name} for help, because ${v.name} knows the way.`,
+        decision: `${v.name} decides to help.`,
+        journeyStartsOnPage: k + 1,
+        plants: [],
+        openingPages,
+      },
+      usage: { provider: "mock", costUsd: 0 },
+    };
+  }
 
   async generateOutline(ctx: StoryContext): Promise<WithUsage<Outline>> {
     const v = buildVars(ctx);

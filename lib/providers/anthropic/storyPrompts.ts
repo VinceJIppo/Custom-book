@@ -5,6 +5,7 @@ import type { Outline } from "../../schemas/story";
 import type { StoryContext, ThemeDraftRequest } from "../story/types";
 import { ART_STYLES } from "../../schemas/theme";
 import { retryNote } from "./client";
+import { setupPageCount } from "../../books/setup";
 
 /**
  * Prompt text for the Claude story adapter. Stories are made in steps, like a
@@ -15,6 +16,12 @@ import { retryNote } from "./client";
 export const STORY_SYSTEM_PROMPT = `You write personalized picture books for young children. A parent gives you their child's details and a theme; you write a story where the child is the hero.
 
 A picture book is a STORY, not a list of fun moments. Every book you write must pass these craft rules:
+
+The opening (before the adventure)
+- Never start in the middle of the action. The first pages show the hero at home in their everyday world: where they are, who they're with, and something they love or want, so the reader cares before anything goes wrong.
+- Then a clear "One day..." moment disrupts that world, with a cause a child can follow.
+- Before the hero sets off, the reader knows why it matters to THEM (what they'd lose, who is counting on them) and why they, not a grown-up, have to act. The hero chooses to go; they are not just swept along.
+- When the spine has a setup plan, follow it for the opening pages: they introduce the hero's world, the disruption and the decision exactly as planned, and plant its details for later.
 
 Cause and effect
 - Each page happens BECAUSE of the page before it ("so...", "but...", "because..."), never just "and then...". If a page could be removed or moved without anyone noticing, it is not part of the story.
@@ -60,6 +67,7 @@ Safety and originality
 export const EDITOR_SYSTEM_PROMPT = `You are a demanding, kind picture-book editor. You read a draft the way a parent reading aloud and a five-year-old listener would experience it, and you find every place the story stops making sense.
 
 Check, in order of importance:
+0. Does the opening set the story up? Before the adventure begins, a listener should know who the hero is and what their everyday world is like, what they love or want, what happened to disrupt it, why it matters to the hero personally, and why the hero (not a grown-up) chooses to go. A story that starts mid-adventure, or whose hero sets off with no reason the listener understands, is a "major" issue on the page where the setup is missing.
 1. Can a five-year-old retell it: what went wrong, why, what the hero did about it, and how it ended?
 2. Does every page follow from the one before? Flag any page that could be cut or moved without anyone noticing, and any jump the reader can't follow.
 3. Are the world's rules stated before they matter, and never broken? If an obvious action (pulling a rope, asking for help) would solve the problem, does the story explain why it doesn't?
@@ -201,6 +209,46 @@ export function outlinePrompt(ctx: StoryContext, problems?: string[]): string {
     .join("\n");
 }
 
+/** The setup agent: plans how the story begins so the journey has a reason. */
+export const SETUP_SYSTEM_PROMPT = `You are a picture-book story consultant who specializes in openings. Parents have told us our stories jump into the adventure too fast: the reader doesn't know the hero yet, or why the hero sets off. Your job is to plan the opening pages so the journey has a clear, personal reason.
+
+How great picture books begin:
+- Meet the hero in their everyday world first: a specific place, a routine, the people or animals around them, and something they love or want. Concrete and visual, never a list of facts ("Every morning, Ava raced her paper boats down the garden stream" beats "Ava was five and liked boats").
+- Then "One day..." something disrupts that world. Show its cause in kid logic.
+- Make it personal: the problem touches what the hero loves or someone the hero cares about. Say why it matters to them.
+- Give the hero, not a grown-up, the reason to act: the grown-ups can't, aren't there, or the hero has the one thing that helps. Rule out the easy fix in a sentence.
+- The hero decides to go. A short line of dialogue or a brave choice is better than being swept along.
+- Plant one or two small details in the opening (a skill, an object, a promise) that pay off later.
+- Keep it brisk: each opening page is one clear moment an illustrator can draw. The opening sets up the story; it never stalls it.
+- Keep the real people warm and true to what the parent wrote, the theme's world and characters, and the reading level. Characters keep the species and looks in the spine's character list.`;
+
+export function setupPrompt(ctx: StoryContext, outline: Outline, problems?: string[]): string {
+  const n = ctx.options.length;
+  const k = setupPageCount(n);
+  const { setup: _old, ...spine } = outline;
+  void _old;
+  return [
+    "Here are the details for this book:",
+    describeContext(ctx),
+    "",
+    "Here is the story spine the writer will follow:",
+    JSON.stringify(spine, null, 2),
+    "",
+    `The book has ${n} story pages. Plan the opening: pages 1 to ${k}. The adventure itself starts on page ${k + 1}, and from page ${k + 1} on the spine's pages stay as planned, so your page ${k} must lead straight into page ${k + 1}'s beat.`,
+    "If the spine's first pages already jump into the adventure, move that action later in your plan's intent and give the reader the setup first. If those first pages hold an event the later pages rely on, keep it in your opening.",
+    "- homeWorld: the hero's everyday world before anything goes wrong (place, routine, who is around).",
+    "- heroWant: what the hero loves or wants, shown in the opening. innerNeed: what they grow in (tie it to the lesson if there is one; empty if none).",
+    "- incitingIncident: the \"One day...\" event and its cause. whyItMatters: why it matters to this hero personally. whyTheHero: why the hero (not a grown-up) acts, and why the easy fix won't work.",
+    "- decision: the moment the hero chooses to go.",
+    `- journeyStartsOnPage: ${k + 1}.`,
+    "- plants: one to three opening details that pay off later in the spine (name the later page if you can).",
+    `- openingPages: exactly pages 1 to ${k}, with beat, summary, causeFromPrevious (empty for page 1), characters and visualState. Page 1 is the hero's everyday world (never the disruption).${k >= 4 ? " Spend the first two pages on the everyday world and the want." : ""} The disruption comes on page ${Math.max(2, k - 1)} at the latest, and page ${k} ends with the hero's decision.`,
+    retryNote(problems),
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
 export function manuscriptPrompt(ctx: StoryContext, outline: Outline, problems?: string[]): string {
   const n = ctx.options.length;
   return [
@@ -216,6 +264,9 @@ export function manuscriptPrompt(ctx: StoryContext, outline: Outline, problems?:
     `- Respect the reading level exactly: ${readingRule(ctx)}`,
     "- The story comes first and the voice second: if a rhyme would force nonsense or a filler word, choose a near-rhyme or a plain line instead.",
     "- Make every page follow from the one before, state the world's rule before it matters, and set up everything before it is used, exactly as the spine plans.",
+    outline.setup
+      ? `- Pages 1 to ${outline.setup.journeyStartsOnPage - 1} are the opening, planned in setup: show the hero's everyday world and what they love, then the disruption, why it matters to them and their decision to go, before the adventure starts on page ${outline.setup.journeyStartsOnPage}. Plant setup.plants on those pages.`
+      : "- Open on the hero's everyday world and what they love before anything goes wrong; make clear why they set off before the adventure begins.",
     "- Keep lasting visual changes in the words on every page until they end, so the pictures can show them.",
     "- Keep every character exactly as the spine's characters list describes them: same kind of animal, same colors, same clothes and accessories on every page. Never mention a feature (like glasses or a hat) a character doesn't have.",
     ctx.options.dedication

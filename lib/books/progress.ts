@@ -60,7 +60,7 @@ export async function getBookProgress(bookId: string, expectedStoryPages: number
     const at = Math.max(0, order.indexOf(stage));
     const st = (i: number): StepState => (text === "failed" || outline === "failed") && at === i ? "failed" : at > i || book.status === "story_review" ? "done" : at === i ? "working" : "waiting";
     const steps = [
-      { id: "outline", label: "Planning the story", state: outline === "done" ? "done" : outline === "failed" ? "failed" : "working", detail: outline === "done" ? undefined : "about a minute" },
+      { id: "outline", label: "Planning the story and how it begins", state: outline === "done" ? "done" : outline === "failed" ? "failed" : "working", detail: outline === "done" ? undefined : "about a minute" },
       { id: "pages", label: "Writing every page", state: outline !== "done" ? "waiting" : st(1), detail: at === 1 ? "about a minute" : undefined },
       { id: "edit", label: "Our editor reads it and fixes anything unclear", state: outline !== "done" ? "waiting" : at >= 2 ? (book.status === "story_review" ? "done" : st(Math.min(at, 3))) : "waiting", detail: at >= 2 && book.status !== "story_review" ? "under a minute" : undefined },
       { id: "ready", label: "Ready for you to read", state: book.status === "story_review" ? "done" : "waiting" },

@@ -1,7 +1,7 @@
 import type { CastMemberSnapshot, ChildSnapshot } from "../../schemas/child";
 import type { BookOptions } from "../../schemas/book";
 import type { ThemeConfig } from "../../schemas/theme";
-import type { CharacterBible, EditorReport, Outline, Scene, StoryLayout, StoryPagesResult, TextZone } from "../../schemas/story";
+import type { CharacterBible, EditorReport, Outline, Scene, StoryLayout, StoryPagesResult, StorySetup, TextZone } from "../../schemas/story";
 import type { ImageData, WithUsage } from "../types";
 
 export interface StoryContext {
@@ -63,6 +63,8 @@ export interface ThemeDraftRequest {
 export interface StoryProvider {
   readonly name: string;
   generateOutline(ctx: StoryContext): Promise<WithUsage<Outline>>;
+  /** The setup agent: plans the opening pages so the hero has a clear reason to set off. */
+  planSetup(outline: Outline, ctx: StoryContext): Promise<WithUsage<StorySetup>>;
   generatePages(outline: Outline, ctx: StoryContext, opts?: ManuscriptOptions): Promise<WithUsage<StoryPagesResult>>;
   reviseText(page: { text: string; scene: Scene | null }, instruction: string, ctx: StoryContext): Promise<WithUsage<{ text: string }>>;
   /** Rewrites some pages of a finished manuscript from the parent's note, keeping them in step with the rest. Returns only changed pages. */

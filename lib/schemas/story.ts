@@ -85,6 +85,36 @@ export const CharacterGuideSchema = z.object({
 export type CharacterGuide = z.infer<typeof CharacterGuideSchema>;
 
 /**
+ * How the story begins, planned by the setup agent after the spine: the hero's
+ * everyday world, what they want, the "One day..." event that disrupts it, why
+ * it matters to them, and the moment they decide to act. Pages 1 to
+ * journeyStartsOnPage - 1 tell this; the adventure starts on journeyStartsOnPage.
+ */
+export const StorySetupSchema = z.object({
+  /** Who the hero is and their everyday world before anything goes wrong (place, routine, people). */
+  homeWorld: note(500, 10),
+  /** What the hero loves or wants, shown in the opening so the problem means something. */
+  heroWant: note(300, 5),
+  /** What the hero will grow in or learn (empty when there's nothing to grow). */
+  innerNeed: note(300).default(""),
+  /** The "One day..." event that disrupts the everyday world, and what caused it. */
+  incitingIncident: note(400, 10),
+  /** Why this matters to THIS hero: what they'd lose, who is counting on them. */
+  whyItMatters: note(400, 10),
+  /** Why the hero (not a grown-up) has to go, and why the easy fix won't work. */
+  whyTheHero: note(400, 10),
+  /** The moment the hero chooses to act, in their own words or actions. */
+  decision: note(300, 5),
+  /** The first page of the adventure itself. */
+  journeyStartsOnPage: z.number().int().min(2),
+  /** Details shown in the opening that matter later (an object, a skill, a promise). */
+  plants: list(note(200, 3), 5).default([]),
+  /** The opening pages, 1 to journeyStartsOnPage - 1. */
+  openingPages: z.array(OutlineBeatSchema).min(1).max(10),
+});
+export type StorySetup = z.infer<typeof StorySetupSchema>;
+
+/**
  * The story spine: decided before any page is written so the story has a
  * cause-and-effect arc. New fields default so books made before this still parse.
  */
@@ -109,6 +139,8 @@ export const OutlineSchema = z.object({
   characters: list(CharacterGuideSchema, 10).default([]),
   endingEcho: note(300).default(""),
   pages: z.array(OutlineBeatSchema).min(4).max(30),
+  /** How the story begins (added by the setup agent; books made before it have none). */
+  setup: StorySetupSchema.optional(),
 });
 export type Outline = z.infer<typeof OutlineSchema>;
 

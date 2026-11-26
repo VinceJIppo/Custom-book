@@ -45,6 +45,7 @@ async function main() {
   });
   const { loadBuiltInThemeFiles } = await import("../lib/themes");
   const { getStoryProvider } = await import("../lib/providers/registry");
+  const { applySetup } = await import("../lib/books/setup");
   const { BookOptionsSchema, readingLevelForAge } = await import("../lib/schemas/book");
   const { VOICES } = await import("../lib/schemas/voices");
   const { verseProblems } = await import("../lib/schemas/storyText");
@@ -86,7 +87,10 @@ async function main() {
   for (let run = 1; run <= Number(values.runs); run++) {
     const t0 = Date.now();
     process.stdout.write(`Run ${run}: planning the story spine ... `);
-    const outline = await story.generateOutline(ctx);
+    const spine = await story.generateOutline(ctx);
+    process.stdout.write("setting up the opening ... ");
+    const setup = await story.planSetup(spine.value, ctx);
+    const outline = { value: applySetup(spine.value, setup.value), usage: { ...spine.usage, costUsd: spine.usage.costUsd + setup.usage.costUsd } };
     process.stdout.write("writing, editing and directing the art ... ");
     const book = await story.generatePages(outline.value, ctx);
     const cost = outline.usage.costUsd + book.usage.costUsd;
@@ -108,6 +112,7 @@ async function main() {
       `- **Premise:** ${o.premise}`,
       `- **World rule:** ${o.worldRule || "(none)"}`,
       `- **Problem:** ${o.problem || "(none)"}`,
+      ...(o.setup ? [`- **Opening (pages 1 to ${o.setup.journeyStartsOnPage - 1}):** ${o.setup.homeWorld} Wants: ${o.setup.heroWant} Then: ${o.setup.incitingIncident} Why it matters: ${o.setup.whyItMatters} Why the hero goes: ${o.setup.whyTheHero} Decision: ${o.setup.decision}`] : []),
       `- **Goal:** ${o.goal || "(none)"}`,
       ...o.attempts.map((a, i) => `- **Attempt ${i + 1}:** ${a.attempt} *Fails because:* ${a.whyItFails}`),
       `- **Turning point:** ${o.turningPoint || "(none)"}`,

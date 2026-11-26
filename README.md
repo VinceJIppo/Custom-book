@@ -153,6 +153,11 @@ A story is written like a real picture book, in stages (`lib/providers/anthropic
    lesson shown through a choice, setups with the page they pay off on, and continuity facts
    (for example "the whole town stays upside down until page 11"). Every page says how it follows
    from the one before. Outlines missing these are sent back.
+   **Setup agent** (`planSetup`, `lib/books/setup.ts`): plans the opening, about a quarter of the
+   story (12 pages: 3; 16: 4; 24: 6). The hero's everyday world and what they love, the
+   "One day..." disruption and its cause, why it matters to this hero, why they (not a grown-up)
+   act, and their decision to go, plus details planted for later. Its pages replace the spine's
+   first pages; the adventure starts right after. Plans that don't fit are sent back.
 2. **Manuscript:** the whole book in one go, so it reads as one story.
 3. **Editor review:** a separate pass reads it like a parent and a five-year-old would, listing
    anything confusing (unexplained rules, objects from nowhere, actions that don't fit, like

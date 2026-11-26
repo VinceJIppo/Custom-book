@@ -159,6 +159,8 @@ describe("continuity through a whole book", () => {
     expect(book.status).toBe("ready");
     const guide = (book.outline as { characters: Array<{ name: string; species: string }> }).characters;
     expect(guide.find((c) => c.name === "Biscuit")?.species).toBe("a puppy");
+    // The setup agent planned the opening before the words were written.
+    expect((book.outline as { setup?: { journeyStartsOnPage: number } }).setup?.journeyStartsOnPage).toBe(4);
     expect(reqs).toHaveLength(13);
     // The pet and the theme's characters get their kind written into the scene.
     expect(guide.some((c) => c.name !== "Teddy" && c.name !== "Biscuit")).toBe(true);
