@@ -21,8 +21,9 @@ export function CreditBadge({ initial }: { initial: number }) {
     };
   }, [path]);
   return (
-    <Link href="/credits" className="hover:text-cobalt" data-testid="credit-balance">
-      Credits <span className={`ml-1 rounded-full px-2 py-0.5 text-sm font-semibold ${balance < 1 ? "bg-coral text-white" : "bg-mint/25 text-olive"}`}>${balance.toFixed(2)}</span>
+    <Link href="/credits" className="ss-wavy inline-flex items-center gap-2" data-testid="credit-balance">
+      Credits{" "}
+      <span className={`rounded-full px-2.5 py-0.5 text-sm font-semibold ${balance < 1 ? "bg-persimmon text-on-persimmon" : "bg-paper text-ink"}`}>${balance.toFixed(2)}</span>
     </Link>
   );
 }
