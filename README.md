@@ -35,27 +35,32 @@ See [PROVIDERS.md](PROVIDERS.md) for exactly what is sent where and what it cost
 
 ## The flow
 
-1. Add a child (name, age, favorites, pet, friends, lesson).
-2. **Photos & character:** upload 1 to 3 photos (JPG, PNG or HEIC). Location data is stripped and
-   each photo is checked for one clear face. Pick an art style; we draw 3 character options.
-   Approve one (originals are deleted by default), then correct the Character Bible if needed.
-3. **New book:** pick a built-in or custom theme, a **story voice**, and options. The story is
-   planned, written, edited and art-directed (see "How stories are written"). Every page is drawn
-   from the approved character with the whole-story summary, then checked twice: does the hero
-   match the character, and does the picture show what the words say? A page that fails is redrawn
-   once with the specific fix, and flagged for the parent if it still fails.
-4. **Read** in the flipbook. **Edit pages:** change text (or ask for a rewrite), change or redraw
-   one picture with a note, swap layout, reorder, restore any earlier version.
-5. **Themes:** describe what your child loves and get an editable original theme; duplicate any theme.
-6. **Print files:** choose hardcover or softcover. We render the interior and wraparound cover PDFs,
-   run preflight (sizes, bleed, safe area, text fit, image resolution, fonts, transparency, page
-   count, cover size, spine), and offer downloads. Then "Validate with Lulu" sends the files to Lulu.
-7. **Order a printed copy:** pick the print files, enter any address (gift orders welcome) and see
-   one total per shipping speed with delivery dates. Pay at checkout (Stripe in test mode, or an
-   offline test checkout with no keys). After payment the app freezes a copy of the exact PDFs and
-   creates the print job. Status updates (with the printer, printing, shipped with tracking,
-   delivered, or rejected with the reason and a fix path) arrive by webhook, with polling as a
-   fallback. **Orders** lists your orders; **/admin/orders** lists everyone's with the printer status.
+Every new book uses one **house theme** (The Wishing Garden) and one **house art style**
+(hand-painted whimsy), so each person's character is drawn **once** and used in every book
+(`HOUSE_THEME_ID` and `HOUSE_STYLE` in `lib/schemas/theme.ts`). Other themes are hidden; books
+made earlier keep their theme and style.
+
+1. **Add a child:** name, age, boy or girl. Favorite things, pet, friends and a lesson are
+   optional (folded under "More about them").
+2. **Photos:** the next screen. Upload 1 to 3 photos (JPG, PNG or HEIC; crop around the face if
+   there are other people). Location data is stripped and each photo is checked for one clear
+   face. **Drawing starts by itself** as soon as a photo is added; pick your favorite of 3. The
+   character details can be fixed under "Fix a detail". Grown-ups work the same way.
+3. **New book, two questions:** pick one of **six ready-made stories** (each has its own voice),
+   then who else is in it. An optional "personal touch" holds a dedication and anything to
+   include. Everything else is set: 16 pages, the reading level for the child's age, the pet and
+   best friend when the profile has them, pictures right away. Admins can open "All options".
+4. **Read the story** before any pictures: tap Edit on a page, or "Change something" for a
+   rewrite. "Looks good, draw the pictures" (or tick "draw overnight" for about half the cost).
+   Pictures are checked against the character and the words, and redrawn once if needed.
+5. **Read the book** (page-turning on computers, swipe on phones). **Edit pages** stays available.
+6. **Order:** hardcover only. The print files are made automatically when the book is finished
+   (`AUTO_PRINT_FILES`) and the print checks fix what they can, so **Order** goes straight to the
+   address, shipping and payment. The Print files page is for admins.
+
+After payment the app freezes a copy of the exact PDFs and creates the print job. Status updates
+arrive by webhook, with polling as a fallback. **Orders** lists your orders; **/admin/orders**
+lists everyone's with the printer status.
 
 ## Going online
 

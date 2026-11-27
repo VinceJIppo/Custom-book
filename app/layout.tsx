@@ -23,6 +23,7 @@ import "@fontsource/figtree/500.css";
 import "@fontsource/figtree/600.css";
 import "./globals.css";
 import { authMode, getOptionalUser } from "@/lib/auth";
+import { isAdminEmail } from "@/lib/admin";
 import { signOutAction } from "./signin/actions";
 
 export const metadata: Metadata = {
@@ -36,6 +37,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const user = await getOptionalUser();
   const credits = user ? await getCredits(user.id).catch(() => null) : null;
   const signIn = authMode() === "email";
+  // Parents don't pick themes any more (one house theme); the Themes pages stay for admins.
+  const admin = !!user && isAdminEmail(user.email);
   return (
     <html lang="en">
       <body className="flex min-h-screen flex-col font-sans text-[15px] antialiased">
@@ -50,12 +53,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <header className="bg-white">
           <div className="mx-auto grid max-w-6xl grid-cols-[1fr_auto_1fr] items-center gap-4 px-5 pt-5 sm:px-10">
             <div className="hidden items-center gap-6 text-sm text-[color:var(--muted)] sm:flex">
-              {user && (
-                <>
-                  <Link href="/themes" className="hover:text-navy">
-                    Themes
-                  </Link>
-                </>
+              {admin && (
+                <Link href="/themes" className="hover:text-navy">
+                  Themes
+                </Link>
               )}
             </div>
             <Link href="/" className="col-start-2 text-center font-display text-[2rem] leading-none text-navy" aria-label="StoryStar home">
@@ -90,9 +91,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <Link href="/people/new" className="hover:text-cobalt">
                 Add a grown-up
               </Link>
-              <Link href="/themes" className="hover:text-cobalt sm:hidden">
-                Themes
-              </Link>
+              {admin && (
+                <Link href="/themes" className="hover:text-cobalt sm:hidden">
+                  Themes
+                </Link>
+              )}
               <Link href="/examples" className="hover:text-cobalt">
                 Examples
               </Link>
@@ -126,9 +129,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 <Link href="/people/new" className="block hover:underline">
                   Add a grown-up
                 </Link>
-                <Link href="/themes" className="block hover:underline">
-                  Themes
-                </Link>
+                {admin && (
+                  <Link href="/themes" className="block hover:underline">
+                    Themes
+                  </Link>
+                )}
               </div>
               <div className="space-y-2">
                 <p className="font-display text-lg">Your orders</p>

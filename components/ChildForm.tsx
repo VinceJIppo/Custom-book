@@ -81,7 +81,14 @@ export function ChildForm({ initial }: { initial: ChildFormValues }) {
         </div>
       </fieldset>
 
-      <fieldset className="grid gap-4 rounded-xl bg-white p-5 ring-1 ring-[color:var(--line)] sm:grid-cols-2">
+      <details
+        open={!!initial.id || Object.keys(errors).some((k) => !["firstName", "nickname", "age", "pronouns"].includes(k))}
+        className="group space-y-4 rounded-xl bg-white p-5 ring-1 ring-[color:var(--line)]"
+      >
+        <summary className="cursor-pointer font-display text-lg font-medium">
+          More about them <span className="font-sans text-sm font-normal text-[color:var(--muted)]">optional: favorite things, a pet, friends, a lesson</span>
+        </summary>
+      <fieldset className="mt-4 grid gap-4 sm:grid-cols-2">
         <legend className="px-1 font-display text-lg font-medium">Favorite things</legend>
         <p className="text-sm text-[color:var(--muted)] sm:col-span-2">Separate with commas. These get woven into the story.</p>
         <Field label="Colors" error={errors["favorites.colors"]}>
@@ -98,7 +105,7 @@ export function ChildForm({ initial }: { initial: ChildFormValues }) {
         </Field>
       </fieldset>
 
-      <fieldset className="grid gap-4 rounded-xl bg-white p-5 ring-1 ring-[color:var(--line)] sm:grid-cols-2">
+      <fieldset className="grid gap-4 sm:grid-cols-2">
         <legend className="px-1 font-display text-lg font-medium">Pets, friends and a lesson</legend>
         <Field label="Pet's name" hint="optional" error={errors.petName}>
           <input name="petName" defaultValue={initial.petName} className={input} />
@@ -122,9 +129,10 @@ export function ChildForm({ initial }: { initial: ChildFormValues }) {
           <input name="lessonOther" defaultValue={isPresetLesson ? "" : initial.lesson} placeholder="If something else, describe it" className={`${input} mt-2`} />
         </Field>
       </fieldset>
+      </details>
 
       <button disabled={pending} className="btn btn-primary btn-lg">
-        {pending ? "Saving..." : initial.id ? "Save changes" : "Save child"}
+        {pending ? "Saving..." : initial.id ? "Save changes" : "Next: add photos"}
       </button>
     </form>
   );

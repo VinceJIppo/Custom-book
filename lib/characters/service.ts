@@ -9,7 +9,7 @@ import { getStorage, keys } from "../storage";
 import { enqueue } from "../jobs/queue";
 import { normalizePhoto, PhotoProblem } from "../images/process";
 import { getVisionProvider, imageProviderChoice } from "../providers/registry";
-import { ArtStyleSchema, type ArtStyle } from "../schemas/theme";
+import { ArtStyleSchema, HOUSE_STYLE, type ArtStyle } from "../schemas/theme";
 import { CharacterBibleSchema, type CharacterBible } from "../schemas/story";
 import { IMAGE_PRICES, PLANNING_IMAGE_PRICE } from "../cost/prices";
 import { dailyUsage } from "../cost/usage";
@@ -122,6 +122,11 @@ export async function roundsUsed(childId: string, style: ArtStyle) {
 }
 
 export type StartSheetResult = { ok: true; sheetId: string } | { ok: false; message: string };
+
+/** True when this person has a character in the house style, or one is being drawn or waiting to be picked. */
+export async function hasHouseCharacter(childId: string) {
+  return (await db.characterSheet.count({ where: { childId, style: HOUSE_STYLE, status: { in: ["generating", "draft", "approved"] } } })) > 0;
+}
 
 export async function startCharacterSheet(userId: string, childId: string, input: { style: string; outfit?: string }): Promise<StartSheetResult> {
   const child = await ownedChild(userId, childId);

@@ -34,7 +34,7 @@ export default async function BookPageRoute({ params, searchParams }: { params: 
       <Link href={`/children/${book.childId}`} className="text-sm font-semibold text-cobalt">
         ← {book.child.nickname || book.child.firstName}
       </Link>
-      <BookLive bookId={book.id} initial={{ status: book.status, title: book.title, progress, view }} />
+      <BookLive bookId={book.id} initial={{ status: book.status, title: book.title, progress, view }} admin={isAdminEmail(user.email)} />
       {creditUse > 0 && (
         <p className="text-sm text-[color:var(--muted)]" data-testid="book-credit-use">
           This book has used ${creditUse.toFixed(2)} of credits so far. <Link href="/credits" className="underline">See your credits</Link>

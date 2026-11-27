@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { VOICE_IDS } from "./voices";
 
 export const ART_STYLES = [
   "watercolor-storybook",
@@ -23,6 +24,13 @@ export const ART_STYLE_LABELS: Record<ArtStyle, string> = {
   "gentle-ink-wash": "Gentle ink & wash",
   "painted-whimsy": "Hand-painted whimsy",
 };
+
+/**
+ * Every new book and character uses the house theme and art style, so a person's
+ * character is drawn once and used in every book. Books made earlier keep theirs.
+ */
+export const HOUSE_THEME_ID = "wishing-garden";
+export const HOUSE_STYLE: ArtStyle = "painted-whimsy";
 
 /** Styles whose pages use the quiet "vignette" look: serif text on white, small pictures that fade into the page. */
 export const VIGNETTE_STYLES: ReadonlySet<string> = new Set(["gentle-ink-wash", "painted-whimsy"]);
@@ -61,8 +69,18 @@ export const ThemeConfigSchema = z
      * written fresh around the child and everyone in it.
      */
     starters: z
-      .array(z.object({ id: z.string().regex(/^[a-z0-9-]+$/), title: z.string().min(2).max(60), idea: z.string().min(20).max(600) }))
-      .max(4)
+      .array(
+        z.object({
+          id: z.string().regex(/^[a-z0-9-]+$/),
+          title: z.string().min(2).max(60),
+          idea: z.string().min(20).max(600),
+          /** One or two sentences for the parent's story card (no spoilers). */
+          summary: z.string().min(10).max(200).optional(),
+          /** The voice this story is told in (the parent doesn't choose one). */
+          voice: z.enum(VOICE_IDS).optional(),
+        }),
+      )
+      .max(8)
       .optional(),
     /** Hidden themes aren't offered for new books (books already made with them keep working). */
     hidden: z.boolean().optional(),

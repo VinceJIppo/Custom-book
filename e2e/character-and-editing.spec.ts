@@ -19,26 +19,25 @@ test("photo -> character options -> approve -> book -> edit one page", async ({ 
   await page.locator("input[name=firstName]").fill(name);
   await page.locator("input[name=age]").fill("5");
   await page.locator("input[value=she]").check();
-  await page.getByRole("button", { name: "Save child" }).click();
-  await expect(page.getByRole("heading", { level: 1, name })).toBeVisible();
-
-  await page.getByRole("link", { name: "Photos & character" }).click();
+  // Saving goes straight on to the photos.
+  await page.getByRole("button", { name: "Next: add photos" }).click();
+  await expect(page.getByRole("heading", { level: 1, name: `Photos of ${name}` })).toBeVisible();
   const photo = await sharp({ create: { width: 800, height: 1000, channels: 3, background: "#d8b894" } }).jpeg().toBuffer();
   await page.locator("input[name=photos]").setInputFiles({ name: "kid.jpg", mimeType: "image/jpeg", buffer: photo });
   await page.locator("input[name=consent]").check();
   await page.getByRole("button", { name: /Upload/ }).click();
   await expect(page.getByRole("status").filter({ hasText: "added." })).toBeVisible();
 
+  // Drawing starts on its own once there's a photo (no style to pick).
+  await expect(page.getByTestId("drawing-started")).toBeVisible();
   await page.reload();
-  await page.locator("select[name=style]").selectOption("crayon");
-  await page.getByTestId("start-sheet").click();
   await page.getByTestId("approve-0").click({ timeout: 30_000 });
-  await expect(page.getByTestId("bible-form")).toBeVisible({ timeout: 30_000 });
+  await page.getByText("Fix a detail").click({ timeout: 30_000 });
+  await expect(page.getByTestId("bible-form")).toBeVisible();
   await expect(page.locator('img[alt="Uploaded photo"]')).toHaveCount(0); // originals deleted by default
 
   await page.getByRole("link", { name: new RegExp(`Make a book with ${name}`) }).click();
-  await page.getByTestId("theme-space-explorer").click();
-  await page.locator("select[name=style]").selectOption("crayon");
+  await page.getByTestId("story-sunflower-clock").click();
   await page.getByTestId("create-book").click();
   await expect(page.getByTestId("edit-pages")).toBeVisible({ timeout: 60_000 });
 

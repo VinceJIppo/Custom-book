@@ -20,7 +20,7 @@ const ICON: Record<StepState, string> = { waiting: "○", working: "◐", done: 
 const COLOR: Record<StepState, string> = { waiting: "text-neutral-400", working: "text-amber-500 animate-pulse", done: "text-emerald-600", failed: "text-red-600" };
 
 /** Polls the book's status while it is being generated, then shows the flipbook. */
-export function BookLive({ bookId, initial }: { bookId: string; initial: LiveState }) {
+export function BookLive({ bookId, initial, admin = false }: { bookId: string; initial: LiveState; admin?: boolean }) {
   const [state, setState] = useState(initial);
   const generating = state.status === "generating";
   const router = useRouter();
@@ -70,9 +70,11 @@ export function BookLive({ bookId, initial }: { bookId: string; initial: LiveSta
             <Link href={`/books/${bookId}/edit`} className="btn btn-secondary" data-testid="edit-pages">
               Edit pages
             </Link>
-            <Link href={`/books/${bookId}/print`} className="btn btn-secondary" data-testid="print-files">
-              Print files
-            </Link>
+            {admin && (
+              <Link href={`/books/${bookId}/print`} className="btn btn-secondary" data-testid="print-files">
+                Print files
+              </Link>
+            )}
             <RedrawCover bookId={bookId} />
             <Link href={`/books/${bookId}/order`} className="btn btn-order order-first w-full sm:order-none sm:w-auto" data-testid="order-book">
               <svg aria-hidden viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

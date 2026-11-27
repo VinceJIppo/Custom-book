@@ -14,7 +14,8 @@ import { rewritePageRange, rewriteWholeStory, undoRewrite } from "@/lib/books/re
 import { acceptFlagged, changeLayout, movePage, requestNewArt, requestNewCover, restoreVersion, reviseTextWithAI, updatePageText } from "@/lib/books/pages";
 import { deleteCustomTheme, draftCustomTheme, duplicateTheme, saveCustomTheme } from "@/lib/customThemes";
 import { startExport, startValidation } from "@/lib/books/export";
-import { addPhoto, approveSheetOption, deleteCharacterSheet, deletePhoto, saveBible, setDeleteOriginals, startCharacterSheet } from "@/lib/characters/service";
+import { HOUSE_STYLE } from "@/lib/schemas/theme";
+import { addPhoto, approveSheetOption, hasHouseCharacter, deleteCharacterSheet, deletePhoto, saveBible, setDeleteOriginals, startCharacterSheet } from "@/lib/characters/service";
 
 export async function confirmAdultAction(formData: FormData) {
   if (formData.get("adult") !== "on") redirect("/welcome?error=1");
@@ -60,7 +61,8 @@ export async function saveChildAction(_prev: SaveResult | null, fd: FormData): P
   const res = id ? await updateChild(user.id, id, raw) : await createChild(user.id, raw);
   if (!res.ok) return res;
   revalidatePath("/");
-  redirect(`/children/${res.id}`);
+  // A new child goes straight on to their photos and character.
+  redirect(id ? `/children/${res.id}` : `/children/${res.id}/character?new=1`);
 }
 
 export async function deleteChildAction(fd: FormData) {
@@ -182,6 +184,10 @@ export async function reviewReviseAction(_prev: EditState | null, fd: FormData):
 
 
 export interface PhotoUploadState {
+  /** Set when the upload also started drawing the character. */
+  drawing?: boolean;
+  /** Why drawing didn't start on its own (for example, credits). */
+  drawNote?: string;
   /** crop: suggested face box (fractions) when cropping would likely fix the photo. */
   results: Array<{ name: string; ok: boolean; message?: string; problems?: string[]; crop?: { left: number; top: number; width: number; height: number } }>;
 }
@@ -205,8 +211,16 @@ export async function uploadPhotosAction(_prev: PhotoUploadState | null, fd: For
       results.push({ name: f.name, ok: false, message: "Something went wrong saving this photo. Please try again in a few minutes.", problems: admin ? [`(Admin only) ${String(err).slice(0, 300)}`] : [] });
     }
   }
+  // The character is drawn as soon as there's a photo: no extra step.
+  let drawing = false;
+  let drawNote: string | undefined;
+  if (results.some((r) => r.ok) && !(await hasHouseCharacter(childId))) {
+    const started = await startCharacterSheet(user.id, childId, { style: HOUSE_STYLE });
+    drawing = started.ok;
+    if (!started.ok) drawNote = started.message;
+  }
   revalidatePath(`/children/${childId}/character`);
-  return { results };
+  return { results, drawing, drawNote };
 }
 
 export async function deletePhotoAction(fd: FormData) {

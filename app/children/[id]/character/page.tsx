@@ -5,7 +5,7 @@ import { requireOnboardedUser } from "@/lib/session";
 import { getStorage } from "@/lib/storage";
 import { getConfig } from "@/lib/config";
 import { MAX_PHOTOS, photoTips, sheetOptionCost } from "@/lib/characters/service";
-import { ART_STYLES, ART_STYLE_LABELS, type ArtStyle } from "@/lib/schemas/theme";
+import { ART_STYLE_LABELS, HOUSE_STYLE, type ArtStyle } from "@/lib/schemas/theme";
 import { CharacterBibleSchema } from "@/lib/schemas/story";
 import { activeProviderNames } from "@/lib/providers/registry";
 import { approveSheetAction, deletePhotoAction, setDeleteOriginalsAction } from "@/app/actions";
@@ -20,7 +20,7 @@ function Img({ src, alt, className }: { src: string; alt: string; className?: st
   return <img src={src} alt={alt} className={className} />;
 }
 
-export default async function CharacterPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ approved?: string; deleted?: string; characterDeleted?: string; deleteError?: string }> }) {
+export default async function CharacterPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ approved?: string; deleted?: string; characterDeleted?: string; deleteError?: string; new?: string }> }) {
   const user = await requireOnboardedUser();
   const { id } = await params;
   const sp = await searchParams;
@@ -46,7 +46,9 @@ export default async function CharacterPage({ params, searchParams }: { params: 
         return { ...s, urls, bible: bible?.success ? bible.data : null };
       }),
   );
-  const approved = sheets.filter((s) => s.status === "approved");
+  // Every new book uses the house style; characters in other styles only serve books made earlier.
+  const approved = sheets.filter((s) => s.status === "approved" && s.style === HOUSE_STYLE);
+  const older = sheets.filter((s) => s.status === "approved" && s.style !== HOUSE_STYLE);
   const drafts = sheets.filter((s) => s.status === "draft" || s.status === "generating" || s.status === "failed").slice(0, 3);
   const busy = sheets.some((s) => s.status === "generating" || (s.status === "approved" && s.bibleStatus === "pending"));
   const rounds: Record<string, number> = {};
@@ -60,9 +62,12 @@ export default async function CharacterPage({ params, searchParams }: { params: 
         <Link href={`/children/${child.id}`} className="text-sm font-semibold text-cobalt">
           ← {name}
         </Link>
-        <h1 className="mt-1 font-display text-3xl font-medium">{name}&apos;s character</h1>
+        {sp.new && <p className="mt-2 text-sm font-semibold uppercase tracking-wider text-[color:var(--muted)]">Step 2 of 2</p>}
+        <h1 className="mt-1 font-display text-3xl font-medium">{sp.new ? `Photos of ${name}` : `${name}'s character`}</h1>
         <p className="mt-1 text-[color:var(--muted)]">
-          {grownUp
+          {sp.new
+            ? `Add 1 to 3 photos. We start drawing ${name} as soon as they're added, and you pick your favorite. You only do this once: ${name} looks the same in every book.`
+            : grownUp
             ? `We turn a few photos of ${name} into an illustrated character, then draw that same character whenever ${name} appears in a child\u2019s book.`
             : "We turn a few photos into an illustrated character, then draw that same character on every page."}
           {providers.image === "mock" && " Image provider: mock (placeholder art). Add GEMINI_API_KEY to draw real characters."}
@@ -126,11 +131,12 @@ export default async function CharacterPage({ params, searchParams }: { params: 
         <div className="mt-3">
           <StartSheetForm
             childId={child.id}
-            defaultStyle={(drafts[0]?.style as ArtStyle) ?? ART_STYLES[0]}
+            style={HOUSE_STYLE}
             cost={sheetOptionCost()}
-            rounds={rounds}
+            used={rounds[HOUSE_STYLE] ?? 0}
             maxRounds={cfg.CHARACTER_SHEET_MAX_ROUNDS}
             disabled={photos.length === 0}
+            again={drafts.length > 0 || approved.length > 0}
           />
           {photos.length === 0 && <p className="mt-2 text-sm text-[color:var(--muted)]">Add a photo first.</p>}
         </div>
@@ -170,7 +176,7 @@ export default async function CharacterPage({ params, searchParams }: { params: 
       </section>
 
       <section className="rounded-xl bg-white p-5 ring-1 ring-[color:var(--line)]">
-        <h2 className="font-display text-xl font-medium">3. Approved characters</h2>
+        <h2 className="font-display text-xl font-medium">3. {name}&apos;s character</h2>
         {approved.length === 0 && <p className="mt-2 text-[color:var(--muted)]">None yet. Pick an option above.</p>}
         <div className="mt-3 space-y-8">
           {approved.map((s) => (
@@ -188,21 +194,37 @@ export default async function CharacterPage({ params, searchParams }: { params: 
                 </div>
               </div>
               <div>
-                <p className="font-semibold">Character details</p>
-                <p className="mb-3 text-sm text-[color:var(--muted)]">Every page is drawn with these. Fix anything that&apos;s not quite right.</p>
-                {s.bibleStatus === "pending" && <p className="animate-pulse text-[color:var(--muted)]">Describing the character...</p>}
-                {s.bibleStatus === "failed" && <p className="text-red-700">We couldn&apos;t describe this character automatically. Fill the details in below.</p>}
+                <p className="font-semibold">Ready for every book ✓</p>
+                {s.bibleStatus === "pending" && <p className="animate-pulse text-sm text-[color:var(--muted)]">Noting the details we keep the same on every page...</p>}
+                {s.bibleStatus === "failed" && <p className="text-sm text-red-700">We couldn&apos;t note the details automatically. Please fill them in below.</p>}
                 {(s.bible || s.bibleStatus === "failed") && (
-                  <BibleForm
-                    childId={child.id}
-                    sheetId={s.id}
-                    bible={s.bible ?? { hair: "", eyes: "", skinTone: "", faceShape: "", glasses: "none", freckles: "none", signatureOutfit: "", otherDetails: "" }}
-                  />
+                  <details open={s.bibleStatus === "failed"} className="mt-2">
+                    <summary className="cursor-pointer text-sm font-semibold text-cobalt">Fix a detail (hair, glasses, outfit...)</summary>
+                    <p className="my-2 text-sm text-[color:var(--muted)]">Every page is drawn with these. Change anything that&apos;s not quite right.</p>
+                    <BibleForm
+                      childId={child.id}
+                      sheetId={s.id}
+                      bible={s.bible ?? { hair: "", eyes: "", skinTone: "", faceShape: "", glasses: "none", freckles: "none", signatureOutfit: "", otherDetails: "" }}
+                    />
+                  </details>
                 )}
               </div>
             </div>
           ))}
         </div>
+        {older.length > 0 && (
+          <details className="mt-6 text-sm">
+            <summary className="cursor-pointer text-[color:var(--muted)]">Characters in other styles ({older.length}), used only by books made earlier</summary>
+            <ul className="mt-2 space-y-1">
+              {older.map((s) => (
+                <li key={s.id} className="flex flex-wrap items-center gap-2">
+                  {ART_STYLE_LABELS[s.style as ArtStyle]}
+                  <DeleteCharacterButton childId={child.id} sheetId={s.id} label="Delete" confirmText={`Delete ${name}'s ${ART_STYLE_LABELS[s.style as ArtStyle]} character? Books already made keep their pictures.`} />
+                </li>
+              ))}
+            </ul>
+          </details>
+        )}
         {approved.length > 0 && (
           <Link href={grownUp ? "/books/new" : `/books/new?childId=${child.id}`} className="btn btn-sky mt-6">
             {grownUp ? `Add ${name} to a child\u2019s book →` : `Make a book with ${name} →`}

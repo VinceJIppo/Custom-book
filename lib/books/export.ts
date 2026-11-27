@@ -12,11 +12,40 @@ import type { PreflightReport } from "../print/preflight";
 
 export type ExportResult = { ok: true; exportId: string } | { ok: false; message: string };
 
-export async function productsForBook(trimSize: string): Promise<ProductSpec[]> {
+/** Bindings parents can order. Softcover stays in the catalog (and for admins) but isn't offered. */
+export const OFFERED_BINDINGS: readonly string[] = ["hardcover"];
+
+/** Products for a book's size. offeredOnly: only what parents can order (hardcover). */
+export async function productsForBook(trimSize: string, opts: { offeredOnly?: boolean } = {}): Promise<ProductSpec[]> {
   const router = getPrintRouter();
   const all: ProductSpec[] = [];
-  for (const p of await router.allProducts()) if (p.trimSize === trimSize) all.push(p);
+  for (const p of await router.allProducts()) if (p.trimSize === trimSize && (!opts.offeredOnly || OFFERED_BINDINGS.includes(p.binding))) all.push(p);
   return all;
+}
+
+export type PrintFilesState = { state: "ready" } | { state: "making" } | { state: "failed"; message: string };
+
+/**
+ * Parents never make print files themselves: when a book is finished (and again
+ * whenever it changes), this makes the hardcover files in the background. The
+ * print checks fix what they can on their own.
+ */
+export async function ensurePrintFiles(userId: string, bookId: string): Promise<PrintFilesState> {
+  const book = await db.book.findFirst({ where: { id: bookId, userId }, include: { pages: true } });
+  if (!book || book.status !== "ready" || !book.pages.length) return { state: "failed", message: "The book isn't finished yet." };
+  const product = (await productsForBook(book.trimSize, { offeredOnly: true }))[0];
+  if (!product) return { state: "failed", message: "This book's size can't be printed as a hardcover." };
+  const currentKey = (await buildBookView(book, { pageRules: product.pageRules })).contentKey;
+  const exports = await db.bookExport.findMany({ where: { bookId, productId: product.id }, orderBy: { createdAt: "desc" }, take: 5 });
+  if (exports.some((e) => e.status === "rendering")) return { state: "making" };
+  const current = exports.find((e) => e.contentKey === currentKey);
+  if (current?.status === "ready" && current.preflightOk && current.validationStatus !== "failed") return { state: "ready" };
+  if (current?.status === "ready" && !current.preflightOk) return { state: "failed", message: "A page still needs a fix before it can print. Open Edit pages, or ask us for help." };
+  // The latest try for this version failed: try once more, then ask for help.
+  const failedTries = exports.filter((e) => e.contentKey === currentKey && e.status === "failed").length;
+  if (failedTries >= 2) return { state: "failed", message: current?.error ?? "We couldn't prepare the book for printing. Please try again later." };
+  const started = await startExport(userId, bookId, product.id);
+  return started.ok ? { state: "making" } : { state: "failed", message: started.message };
 }
 
 export async function startExport(userId: string, bookId: string, productId: string): Promise<ExportResult> {

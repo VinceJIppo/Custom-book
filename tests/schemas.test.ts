@@ -13,8 +13,9 @@ describe("built-in themes", () => {
       ["construction-crew", "dinosaur-valley", "dragon-knight", "ocean-deep", "quiet-meadow", "space-explorer", "superhero-squad", "topsy-turvy-town", "wishing-garden"].sort(),
     );
   });
-  it("hides Space Explorer, Superhero Squad and Dragon Knight from new books", () => {
-    expect(themes.filter((t) => t.hidden).map((t) => t.id).sort()).toEqual(["dragon-knight", "space-explorer", "superhero-squad"]);
+  it("offers only the house theme (The Wishing Garden) for new books; the rest stay for books already made", () => {
+    expect(themes.filter((t) => !t.hidden).map((t) => t.id)).toEqual(["wishing-garden"]);
+    expect(themes.length).toBeGreaterThan(1);
   });
   it("contain no protected characters, franchises or real authors", async () => {
     const { findProtectedNames } = await import("@/lib/safety/protectedNames");

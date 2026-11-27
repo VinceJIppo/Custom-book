@@ -3,7 +3,11 @@ import { notFound } from "next/navigation";
 import { requireOnboardedUser } from "@/lib/session";
 import { getChild, listPeople } from "@/lib/children/service";
 import { listThemesForUser } from "@/lib/themes";
-import { themeSamples } from "@/lib/themeSamples";
+import { storyPictures, themeSamples } from "@/lib/themeSamples";
+import { isAdminEmail } from "@/lib/admin";
+import { HOUSE_STYLE, HOUSE_THEME_ID } from "@/lib/schemas/theme";
+import { VOICES } from "@/lib/schemas/voices";
+import { SimpleBookForm } from "@/components/SimpleBookForm";
 import { estimateFor } from "@/lib/books/service";
 import { readingLevelForAge, STORY_LENGTHS } from "@/lib/schemas/book";
 import { activeProviderNames } from "@/lib/providers/registry";
@@ -12,9 +16,9 @@ import { BookWizard } from "@/components/BookWizard";
 
 export const dynamic = "force-dynamic";
 
-export default async function NewBook({ searchParams }: { searchParams: Promise<{ childId?: string }> }) {
+export default async function NewBook({ searchParams }: { searchParams: Promise<{ childId?: string; advanced?: string }> }) {
   const user = await requireOnboardedUser();
-  const { childId } = await searchParams;
+  const { childId, advanced } = await searchParams;
   if (!childId) {
     const kids = (await listPeople(user.id)).filter((p) => p.kind !== "grownup");
     return (
@@ -44,7 +48,52 @@ export default async function NewBook({ searchParams }: { searchParams: Promise<
   if (child.kind === "grownup") {
     return <p>Books are made for a child. Start a book from a child&apos;s page and add {child.nickname || child.firstName} to the story there.</p>;
   }
-  const themes = (await listThemesForUser(user.id)).filter((t) => !t.config.hidden);
+  const people = await Promise.all(
+    (await listPeople(user.id))
+      .filter((p) => p.id !== child.id)
+      .map(async (p) => ({
+        id: p.id,
+        name: p.nickname || p.firstName,
+        label: p.kind === "grownup" ? (p.relationship ?? "grown-up") : `child, ${p.age}`,
+        kind: p.kind === "grownup" ? ("grownup" as const) : ("child" as const),
+        approvedStyles: await approvedStyles(p.id),
+        hasLook: !!p.look,
+      })),
+  );
+  const friendList = child.friends as string[];
+
+  // Parents pick one of the house theme's ready-made stories; admins can open the full options.
+  if (!(advanced && isAdminEmail(user.email))) {
+    const house = (await listThemesForUser(user.id)).find((t) => t.slug === HOUSE_THEME_ID);
+    if (!house) notFound();
+    const starters = house.config.starters ?? [];
+    const fallback = (await themeSamples(user.id, [{ id: house.id, slug: house.slug }]))[house.id] ?? [];
+    const pictures = storyPictures(house.slug, starters.map((s) => s.id), fallback);
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h1 className="font-display text-3xl font-medium">A new book for {child.nickname || child.firstName}</h1>
+          {isAdminEmail(user.email) && (
+            <Link href={`/books/new?childId=${child.id}&advanced=1`} className="text-sm text-[color:var(--muted)] underline">
+              All options (admin)
+            </Link>
+          )}
+        </div>
+        <SimpleBookForm
+          child={{ id: child.id, name: child.nickname || child.firstName, petName: child.petName, friend: friendList[0] ?? null }}
+          themeId={house.id}
+          style={HOUSE_STYLE}
+          readingLevel={readingLevelForAge(child.age)}
+          stories={starters.map((s) => ({ id: s.id, title: s.title, summary: s.summary ?? s.idea.slice(0, 140), voice: s.voice ?? "classic", voiceLabel: VOICES[s.voice ?? "classic"].label, picture: pictures[s.id] }))}
+          people={people}
+          needsCharacter={activeProviderNames().image !== "mock"}
+          heroReady={(await approvedStyles(child.id)).includes(HOUSE_STYLE)}
+        />
+      </div>
+    );
+  }
+
+  const themes = await listThemesForUser(user.id);
   const samples = await themeSamples(user.id, themes.map((t) => ({ id: t.id, slug: t.slug })));
   const estimates = Object.fromEntries(STORY_LENGTHS.map((n) => [n, estimateFor({ length: n })]));
   const friends = child.friends as string[];
@@ -71,18 +120,7 @@ export default async function NewBook({ searchParams }: { searchParams: Promise<
         storyProvider={activeProviderNames().story}
         approvedStyles={await approvedStyles(child.id)}
         needsCharacter={activeProviderNames().image !== "mock"}
-        people={await Promise.all(
-          (await listPeople(user.id))
-            .filter((p) => p.id !== child.id)
-            .map(async (p) => ({
-              id: p.id,
-              name: p.nickname || p.firstName,
-              label: p.kind === "grownup" ? (p.relationship ?? "grown-up") : `child, ${p.age}`,
-              kind: p.kind === "grownup" ? ("grownup" as const) : ("child" as const),
-              approvedStyles: await approvedStyles(p.id),
-              hasLook: !!p.look,
-            })),
-        )}
+        people={people}
       />
     </div>
   );

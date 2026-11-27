@@ -12,15 +12,19 @@ test("create a profile, pick a theme, and read a 16-page book in the flipbook", 
   await page.locator("input[name=firstName]").fill(name);
   await page.locator("input[name=age]").fill("6");
   await page.locator("input[value=she]").check();
+  await page.getByText("More about them").click();
   await page.locator("input[name=colors]").fill("teal");
   await page.locator("input[name=animals]").fill("sea turtles");
   await page.locator("input[name=activities]").fill("swimming");
-  await page.getByRole("button", { name: "Save child" }).click();
+  await page.getByRole("button", { name: "Next: add photos" }).click();
+  await expect(page.getByRole("heading", { level: 1, name: new RegExp(`Photos of`) })).toBeVisible();
+  await page.getByRole("link", { name: /^← / }).click();
   await expect(page.getByRole("heading", { level: 1, name })).toBeVisible();
 
   await page.getByRole("link", { name: "New book" }).click();
-  await page.getByTestId("theme-ocean-deep").click();
-  await expect(page.getByTestId("estimate")).toHaveText("$0.00");
+  // One house theme: pick one of the six stories (the first is chosen already).
+  await expect(page.getByTestId("simple-book-form").locator('[data-testid^="story-"]')).toHaveCount(6);
+  await page.getByTestId("story-teacup-pond").click();
   await page.getByTestId("create-book").click();
 
   await expect(page).toHaveURL(/\/books\/\w+$/);
@@ -48,9 +52,10 @@ test("protected characters get a friendly message, not a book", async ({ page })
   }
   await page.locator("input[name=firstName]").fill("Rowan");
   await page.locator("input[name=age]").fill("4");
-  await page.locator("input[value=they]").check();
+  await page.locator("input[value=he]").check();
+  await page.getByText("More about them").click();
   await page.locator("input[name=activities]").fill("watching Paw Patrol");
-  await page.getByRole("button", { name: "Save child" }).click();
+  await page.getByRole("button", { name: "Next: add photos" }).click();
   await expect(page.getByRole("alert").filter({ hasText: "Paw Patrol" })).toContainText("trademarked");
   // What the parent typed is kept so they can fix it.
   await expect(page.locator("input[name=firstName]")).toHaveValue("Rowan");

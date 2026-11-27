@@ -21,6 +21,8 @@ export default defineConfig({
       CREDITS_ENABLED: "false",
       PICTURE_CHECK: "redraw",
       BATCH_POLL_SECONDS: "0",
+      // Print files are made on their own in tests that need them (tests/order-flow.test.ts).
+      AUTO_PRINT_FILES: "false",
     },
   },
 });

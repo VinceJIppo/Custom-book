@@ -4,6 +4,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireOnboardedUser } from "@/lib/session";
 import { orderableExports } from "@/lib/orders/service";
+import { ensurePrintFiles } from "@/lib/books/export";
+import { AutoRefresh } from "@/components/AutoRefresh";
 import { COUNTRIES } from "@/lib/orders/address";
 import { activeProviderNames } from "@/lib/providers/registry";
 import { OrderForm } from "@/components/OrderForm";
@@ -13,8 +15,15 @@ export const dynamic = "force-dynamic";
 export default async function OrderBook({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ cancelled?: string }> }) {
   const user = await requireOnboardedUser();
   const credits = await getCredits(user.id);
-  const { book, exports } = await orderableExports(user.id, (await params).id);
+  const bookId = (await params).id;
+  const found = await orderableExports(user.id, bookId);
+  const book = found.book;
+  let exports = found.exports;
   if (!book) notFound();
+  // Hardcover only; the print files are made automatically if they aren't ready yet.
+  exports = exports.filter((x) => x.product.binding === "hardcover");
+  const files = exports.length ? null : await ensurePrintFiles(user.id, bookId);
+  if (files?.state === "ready") exports = (await orderableExports(user.id, bookId)).exports.filter((x) => x.product.binding === "hardcover");
   const sp = await searchParams;
   const providers = activeProviderNames();
   return (
@@ -31,11 +40,18 @@ export default async function OrderBook({ params, searchParams }: { params: Prom
       {sp.cancelled && <p className="rounded-xl bg-sky px-4 py-3 text-navy">Checkout was cancelled. Nothing was charged; you can try again below.</p>}
       {exports.length === 0 ? (
         <section className="rounded-xl bg-white p-5 ring-1 ring-[color:var(--line)]" data-testid="needs-print-files">
-          <p className="font-semibold">First, make the print files.</p>
-          <p className="text-[color:var(--muted)]">We only print files that passed the print checks and match the book as it is now.</p>
-          <Link href={`/books/${book.id}/print`} className="btn btn-primary mt-3">
-            Make print files
-          </Link>
+          <AutoRefresh active={files?.state === "making"} everyMs={3000} />
+          {files?.state === "failed" ? (
+            <>
+              <p className="font-semibold">We couldn&apos;t get the book ready to print yet.</p>
+              <p className="text-[color:var(--muted)]">{files.message}</p>
+            </>
+          ) : (
+            <>
+              <p className="animate-pulse font-semibold">Getting your book ready for the printer...</p>
+              <p className="text-[color:var(--muted)]">This takes about a minute. The page updates on its own.</p>
+            </>
+          )}
         </section>
       ) : (
         <OrderForm

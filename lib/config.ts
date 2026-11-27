@@ -79,6 +79,8 @@ const EnvSchema = z.object({
   PICTURE_CHECK: z.enum(["flag", "redraw"]).default("flag"),
   /** Parents read and approve the story before any pictures are drawn (and paid for). */
   STORY_REVIEW: bool.default(true),
+  /** Make the hardcover print files as soon as a book is finished, so parents can order straight away. */
+  AUTO_PRINT_FILES: bool.default(true),
   /** How often to check on an overnight (batch) picture job, in seconds. */
   BATCH_POLL_SECONDS: z.coerce.number().int().min(0).default(300),
   MODERATION_PROVIDER: z.enum(["auto", "mock", "anthropic"]).default("auto"),

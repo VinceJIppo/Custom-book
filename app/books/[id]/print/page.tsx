@@ -1,3 +1,4 @@
+import { isAdminEmail } from "@/lib/admin";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireOnboardedUser } from "@/lib/session";
@@ -25,7 +26,7 @@ export default async function PrintFiles({ params, searchParams }: { params: Pro
   const book = await getBookForUser(user.id, (await params).id);
   if (!book) notFound();
   const sp = await searchParams;
-  const products = await productsForBook(book.trimSize);
+  const products = await productsForBook(book.trimSize, { offeredOnly: !isAdminEmail(user.email) });
   const exports = await listExports(user.id, book.id);
   const storage = getStorage();
   const currentKey = book.pages.length ? (await buildBookView(book)).contentKey : "";

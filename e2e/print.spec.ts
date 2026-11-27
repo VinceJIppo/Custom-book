@@ -13,10 +13,10 @@ test("make print files, check them, then order a printed copy and follow its sta
   await page.locator("input[name=firstName]").fill(name);
   await page.locator("input[name=age]").fill("4");
   await page.locator("input[value=she]").check();
-  await page.getByRole("button", { name: "Save child" }).click();
+  await page.getByRole("button", { name: "Next: add photos" }).click();
+  await expect(page.getByRole("heading", { level: 1, name: new RegExp(`Photos of`) })).toBeVisible();
+  await page.getByRole("link", { name: /^← / }).click();
   await page.getByRole("link", { name: "New book" }).click();
-  await page.getByTestId("theme-dinosaur-valley").click();
-  await page.locator("select[name=length]").selectOption("12");
   await page.getByTestId("create-book").click();
   await page.getByTestId("print-files").click({ timeout: 60_000 });
 

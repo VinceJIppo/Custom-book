@@ -16,5 +16,6 @@ export async function saveGrownUpAction(_prev: SaveResult | null, fd: FormData):
   const res = id ? await updateGrownUp(user.id, id, raw) : await createGrownUp(user.id, raw);
   if (!res.ok) return res;
   revalidatePath("/");
-  redirect(`/children/${res.id}`);
+  // A new person goes straight on to their photos and character.
+  redirect(fd.get("id") ? `/children/${res.id}` : `/children/${res.id}/character?new=1`);
 }

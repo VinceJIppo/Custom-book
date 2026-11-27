@@ -32,9 +32,19 @@ function PageCard({ bookId, page }: { bookId: string; page: ReviewPage }) {
   const [saved, save, saving] = useActionState(reviewTextAction, null);
   const [revised, revise, revising] = useActionState(reviewReviseAction, null);
   const [asking, setAsking] = useState(false);
+  const [editing, setEditing] = useState(false);
   return (
     <li className="rounded-xl bg-white p-4 ring-1 ring-[color:var(--line)]" data-testid={`review-page-${page.storyNumber}`}>
-      <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--muted)]">Page {page.storyNumber}</p>
+      <div className="flex items-baseline justify-between gap-3">
+        <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--muted)]">Page {page.storyNumber}</p>
+        {!editing && (
+          <button type="button" className="text-sm font-semibold text-cobalt underline" onClick={() => setEditing(true)} data-testid={`edit-page-${page.storyNumber}`}>
+            Edit
+          </button>
+        )}
+      </div>
+      {!editing && <p className="mt-2 whitespace-pre-line font-display text-lg">{page.text}</p>}
+      {editing && (
       <form onSubmit={submitWith(save)} className="mt-2 space-y-2" key={page.text}>
         <input type="hidden" name="bookId" value={bookId} />
         <input type="hidden" name="pageId" value={page.id} />
@@ -52,7 +62,8 @@ function PageCard({ bookId, page }: { bookId: string; page: ReviewPage }) {
           <Status state={saved} />
         </div>
       </form>
-      {asking && (
+      )}
+      {editing && asking && (
         <form onSubmit={submitWith(revise)} className="mt-2 flex flex-col gap-2 sm:flex-row">
           <input type="hidden" name="bookId" value={bookId} />
           <input type="hidden" name="pageId" value={page.id} />
@@ -78,8 +89,9 @@ function ChangeStory({ bookId, pageCount }: { bookId: string; pageCount: number 
   const numbers = Array.from({ length: pageCount }, (_, i) => i + 1);
   const undoTag = state?.ok ? state.undoTag : undefined;
   return (
-    <section className="space-y-3 rounded-xl bg-sky p-5 ring-1 ring-[color:var(--line)]" data-testid="change-story">
-      <h2 className="font-display text-xl font-medium">Change the story</h2>
+    <details className="space-y-3 rounded-xl bg-sky p-5 ring-1 ring-[color:var(--line)]" data-testid="change-story">
+      <summary className="cursor-pointer font-display text-xl font-medium">Change something</summary>
+      <p className="mt-2 text-sm text-[color:var(--muted)]">Tell us what to change and on which pages, or ask for a fresh version of the whole story.</p>
       <form onSubmit={submitWith(change)} className="space-y-3">
         <input type="hidden" name="bookId" value={bookId} />
         <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-5">
@@ -146,7 +158,7 @@ function ChangeStory({ bookId, pageCount }: { bookId: string; pageCount: number 
         </form>
       )}
       <p className="text-xs text-[color:var(--muted)]">Each rewrite uses one of your AI rewrites. Nothing is drawn until you approve the story.</p>
-    </section>
+    </details>
   );
 }
 
@@ -162,18 +174,18 @@ export function StoryReview({ bookId, title, dedication, pages, speed, error }: 
           {title}
         </h1>
         <p className="mt-2 max-w-2xl text-[color:var(--muted)]">
-          Read it through and change any words you like. Nothing has been drawn yet, so changes are free. When it reads right, approve it and we&apos;ll paint the pictures to match.
+          Read it through. Tap Edit on any page to change the words, or use Change something below. When it reads right, we&apos;ll paint the pictures to match.
         </p>
         {dedication && <p className="mt-2 italic text-[color:var(--muted)]">Dedication: {dedication}</p>}
       </div>
-
-      <ChangeStory bookId={bookId} pageCount={pages.length} />
 
       <ol className="space-y-3">
         {pages.map((p) => (
           <PageCard key={p.id} bookId={bookId} page={p} />
         ))}
       </ol>
+
+      <ChangeStory bookId={bookId} pageCount={pages.length} />
 
       <form action={approveStoryAction} onSubmit={() => setApproving(true)} className="sticky bottom-3 space-y-3 rounded-xl bg-white p-5 shadow-lg ring-1 ring-[color:var(--line)]">
         <input type="hidden" name="bookId" value={bookId} />
@@ -182,24 +194,19 @@ export function StoryReview({ bookId, title, dedication, pages, speed, error }: 
             {error}
           </p>
         )}
-        <fieldset className="flex flex-col gap-2 sm:flex-row sm:gap-6">
-          <legend className="sr-only">When should we draw the pictures?</legend>
-          <label className="flex items-center gap-2">
-            <input type="radio" name="pictureSpeed" value="now" checked={choice === "now"} onChange={() => setChoice("now")} />
+        <input type="hidden" name="pictureSpeed" value={choice} />
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <button disabled={approving} className="btn btn-primary btn-lg w-full sm:w-auto" data-testid="approve-story">
+            {approving ? "Starting the pictures..." : "Looks good, draw the pictures"}
+          </button>
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" checked={choice === "overnight"} onChange={(e) => setChoice(e.currentTarget.checked ? "overnight" : "now")} data-testid="review-speed-overnight" />
             <span>
-              <span className="font-semibold">Right away</span> <span className="text-sm text-[color:var(--muted)]">about 10 to 20 minutes</span>
+              No rush: draw overnight for about half the cost <span className="text-[color:var(--muted)]">(ready within a day)</span>
             </span>
           </label>
-          <label className="flex items-center gap-2">
-            <input type="radio" name="pictureSpeed" value="overnight" checked={choice === "overnight"} onChange={() => setChoice("overnight")} data-testid="review-speed-overnight" />
-            <span>
-              <span className="font-semibold">Overnight</span> <span className="text-sm text-[color:var(--muted)]">about half the cost, within a day</span>
-            </span>
-          </label>
-        </fieldset>
-        <button disabled={approving} className="btn btn-primary btn-lg w-full sm:w-auto" data-testid="approve-story">
-          {approving ? "Starting the pictures..." : "The story looks good. Draw the pictures"}
-        </button>
+        </div>
+        <p className="text-xs text-[color:var(--muted)]">{choice === "now" ? "Pictures take about 10 to 20 minutes." : "We'll email you when the book is ready."}</p>
       </form>
     </div>
   );

@@ -15,6 +15,16 @@ export async function maybeFinalizeBook(bookId: string) {
   if (res.count === 1) {
     const { notifyBookReady } = await import("../../books/notify");
     await notifyBookReady(bookId);
+    // Print files are made in the background so "Order" is ready when the parent is.
+    try {
+      const { getConfig } = await import("../../config");
+      if (!getConfig().AUTO_PRINT_FILES) return true;
+      const owner = await db.book.findUnique({ where: { id: bookId }, select: { userId: true } });
+      const { ensurePrintFiles } = await import("../../books/export");
+      if (owner) await ensurePrintFiles(owner.userId, bookId);
+    } catch {
+      // Never fail the book over this: the order page tries again.
+    }
   }
   return res.count === 1;
 }

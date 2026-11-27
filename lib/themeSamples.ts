@@ -34,3 +34,19 @@ export async function themeSamples(userId: string, themes: Array<{ id: string; s
   }
   return out;
 }
+
+/**
+ * One picture per ready-made story for the story cards:
+ * public/theme-samples/<slug>/stories/<storyId>.jpg (made with `npm run theme-samples`),
+ * otherwise the theme's sample pictures in turn.
+ */
+export function storyPictures(slug: string, storyIds: string[], fallback: string[] = []): Record<string, string | null> {
+  const dir = path.join(SAMPLE_DIR, slug, "stories");
+  const ok = /^[a-z0-9-]+$/.test(slug);
+  return Object.fromEntries(
+    storyIds.map((id, i) => {
+      const file = ok && /^[a-z0-9-]+$/.test(id) ? path.join(dir, `${id}.jpg`) : "";
+      return [id, file && fs.existsSync(file) ? `/theme-samples/${slug}/stories/${id}.jpg` : (fallback[i % Math.max(1, fallback.length)] ?? null)];
+    }),
+  );
+}

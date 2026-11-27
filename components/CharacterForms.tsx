@@ -2,7 +2,6 @@
 
 import { startTransition, useActionState, useRef, useState } from "react";
 import { saveBibleAction, startSheetAction, uploadPhotosAction } from "@/app/actions";
-import { ART_STYLES, ART_STYLE_LABELS } from "@/lib/schemas/theme";
 import type { CharacterBible } from "@/lib/schemas/story";
 import { cropToJpeg, headAndShoulders, openPhoto, PhotoCropper, type Box } from "./PhotoCropper";
 
@@ -158,7 +157,7 @@ export function PhotoUpload({ childId, consentGiven, remaining, grownUp = false 
       )}
       {!consentGiven && (
         <label className="flex items-start gap-3 text-sm">
-          <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.currentTarget.checked)} className="mt-0.5 size-5 accent-[color:var(--color-cobalt)]" />
+          <input type="checkbox" name="consent" checked={consent} onChange={(e) => setConsent(e.currentTarget.checked)} className="mt-0.5 size-5 accent-[color:var(--color-cobalt)]" />
           <span>
             {grownUp
               ? "These are photos of me, or this person has given me permission to upload them."
@@ -174,6 +173,12 @@ export function PhotoUpload({ childId, consentGiven, remaining, grownUp = false 
           {note}
         </p>
       )}
+      {state?.drawing && (
+        <p role="status" className="rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-900 ring-1 ring-emerald-200" data-testid="drawing-started">
+          Photos added. We&apos;re drawing 3 options now (about a minute); pick your favorite below.
+        </p>
+      )}
+      {state?.drawNote && <p role="alert" className="rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-900 ring-1 ring-amber-200">{state.drawNote}</p>}
       {state?.results.map((r, i) => {
         const original = sent[r.name];
         const canCrop = !r.ok && r.crop && original?.bitmap;
@@ -208,29 +213,23 @@ export function PhotoUpload({ childId, consentGiven, remaining, grownUp = false 
   );
 }
 
-export function StartSheetForm({ childId, defaultStyle, cost, rounds, maxRounds, disabled }: { childId: string; defaultStyle: string; cost: number; rounds: Record<string, number>; maxRounds: number; disabled: boolean }) {
+/** Draws (more) options in the house style. Every book uses this one style, so a character is made once. */
+export function StartSheetForm({ childId, style, cost, used, maxRounds, disabled, again }: { childId: string; style: string; cost: number; used: number; maxRounds: number; disabled: boolean; again: boolean }) {
   const [state, action, pending] = useActionState(startSheetAction, null);
   return (
-    <form onSubmit={submitKeeping(action)} className="grid gap-4 sm:grid-cols-2">
+    <form onSubmit={submitKeeping(action)} className="space-y-3">
       <input type="hidden" name="childId" value={childId} />
-      <label className="block">
-        <span className="font-semibold">Art style</span>
-        <select name="style" defaultValue={defaultStyle} className={input}>
-          {ART_STYLES.map((s) => (
-            <option key={s} value={s}>
-              {ART_STYLE_LABELS[s]} ({rounds[s] ?? 0} of {maxRounds} sets used)
-            </option>
-          ))}
-        </select>
-      </label>
-      <label className="block">
-        <span className="font-semibold">Outfit</span> <span className="text-sm text-[color:var(--muted)]">optional</span>
+      <input type="hidden" name="style" value={style} />
+      <details className="text-sm">
+        <summary className="cursor-pointer font-semibold">Choose an outfit (optional)</summary>
         <input name="outfit" maxLength={160} placeholder="e.g. yellow raincoat and red boots" className={input} />
-      </label>
-      <div className="flex flex-col gap-2 sm:col-span-2 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm text-[color:var(--muted)]">We draw 3 options. About ${cost.toFixed(2)} per set.</p>
-        <button disabled={pending || disabled} data-testid="start-sheet" className="btn btn-primary">
-          {pending ? "Starting..." : "Draw character options"}
+      </details>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-sm text-[color:var(--muted)]">
+          We draw 3 options (about ${cost.toFixed(2)}). {used} of {maxRounds} sets used.
+        </p>
+        <button disabled={pending || disabled || used >= maxRounds} data-testid="start-sheet" className={again ? "btn btn-secondary" : "btn btn-primary"}>
+          {pending ? "Starting..." : again ? "Draw new options" : "Draw character options"}
         </button>
       </div>
       {state?.message && (

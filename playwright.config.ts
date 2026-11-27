@@ -19,6 +19,7 @@ export default defineConfig({
     timeout: 120_000,
     // Tests make many books; lift the daily caps for the server Playwright starts.
     // (A dev server you started yourself keeps the caps from .env.local.)
-    env: { DAILY_BOOK_CAP: "1000", DAILY_COST_CAP_USD: "1000", STORY_REVIEW: "false" },
+    // AUTO_PRINT_FILES off: the print test makes the files itself (automatic ones have a unit test).
+    env: { DAILY_BOOK_CAP: "1000", DAILY_COST_CAP_USD: "1000", STORY_REVIEW: "false", AUTO_PRINT_FILES: "false" },
   },
 });
