@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="en" data-theme="daytime">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>StoryStar: picture books where your child is the star</title>
+<meta name="description" content="Upload one photo and your child becomes the hero of a hardcover storybook.">
+<link rel="icon" href="../assets/logos/storystar-mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../tokens/tokens.css">
+<link rel="stylesheet" href="../components/storystar.css">
+<!--
+  StoryStar reference homepage, Direction 1 (Star ceiling).
+  This is the approved design as plain HTML + CSS. Port its structure, classes and copy into the real site.
+  Bracketed text like [PRICE] is a placeholder for a real fact. The spread illustration is a placeholder for real art.
+-->
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="ss-s" viewBox="-12.5 -12.5 25 25"><path d="M0.06,-10.12 L3.19,-4.30 L9.77,-3.06 L4.71,1.53 L6.11,8.47 L0.05,5.41 L-5.81,8.10 L-4.97,1.60 L-9.07,-2.88 L-2.95,-4.15Z"/></symbol></svg>
+
+<header class="ss-header ss-scallop-hem" id="top">
+  <div class="ss-container ss-header__bar">
+    <a class="ss-header__logo" href="/" aria-label="StoryStar home"><img src="../assets/logos/storystar-wordmark-cream.svg" alt="storystar" width="190" height="42"></a>
+    <nav class="ss-nav" id="main-nav" aria-label="Main">
+      <a class="ss-wavy" href="#worlds">Story worlds</a>
+      <a class="ss-wavy" href="#how">How it works</a>
+      <a class="ss-wavy" href="#gifts">Gifts</a>
+      <a class="ss-wavy" href="#peek">Peek inside</a>
+    </nav>
+    <button type="button" class="ss-iconbtn ss-theme-toggle" aria-label="Switch to bedtime theme"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="ss-icon-moon"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true" class="ss-icon-sun"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg></button>
+    <button type="button" class="ss-iconbtn ss-iconbtn--bare ss-menu-btn" aria-label="Open menu" aria-expanded="false" aria-controls="main-nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h10"/></svg></button>
+    <a class="ss-btn ss-btn--primary ss-btn--sm ss-header__cta" href="#start">Start a book</a>
+  </div>
+  <div class="ss-starband" aria-hidden="true"><svg class="ss-star st-butter" viewBox="0 0 25 25" aria-hidden="true" style="left:2%;top:22px;width:22px;height:22px;transform:rotate(-12deg)"><use href="#ss-s" width="25" height="25"/></svg><svg class="ss-star st-cream" viewBox="0 0 25 25" aria-hidden="true" style="left:9%;top:58px;width:13px;height:13px;transform:rotate(14deg)"><use href="#ss-s" width="25" height="25"/></svg><svg class="ss-star st-cream" viewBox="0 0 25 25" aria-hidden="true" style="left:15%;top:16px;width:15px;height:15px;transform:rotate(-20deg)"><use href="#ss-s" width="25" height="25"/></svg><svg class="ss-star st-butter" viewBox="0 0 25 25" aria-hidden="true" style="left:21%;top:50px;width:24px;height:24px;transform:rotate(18deg)"><use href="#ss-s" width="25" height="25"/></svg><svg class="ss-star st-ballet" viewBox="0 0 25 25" aria-hidden="true" style="left:28%;top:24px;width:12px;height:12px;transform:rotate(-8deg)"><use href="#ss-s" width="25" height="25"/></svg><svg class="ss-star st-cream" viewBox="0 0 25 25" aria-hidden="true" style="left:34%;top:62px;width:16px;height:16px;transform:rotate(22deg)"><use href="#ss-s" width="25" height="25"/></svg><svg class="ss-star st-butter" viewBox="0 0 25 25" aria-hidden="true" style="left:41%;top:18px;width:21px;height:21px;transform:rotate(-6deg)"><use href="#ss-s" width="25" height="25"/></svg><svg class="ss-star st-cream" viewBox="0 0 25 25" aria-hidden="true" style="left:47%;top:56px;width:12px;height:12px;transform:rotate(30deg)"><use href="#ss-s" width="25" height="25"/></svg><svg class="ss-star st-cream" viewBox="0 0 25 25" aria-hidden="true" style="left:54%;top:26px;width:15px;height:15px;transform:rotate(-16deg)"><use href="#ss-s" width="25" height="25"/></svg><svg class="ss-star st-butter" viewBox="0 0 25 25" aria-hidden="true" style="left:60%;top:54px;width:22px;height:22px;transform:rotate(10deg)"><use href="#ss-s" width="25" height="25"/></svg><svg class="ss-star st-ballet" viewBox="0 0 25 25" aria-hidden="true" style="left:67%;top:16px;width:13px;height:13px;transform:rotate(24deg)"><use href="#ss-s" width="25" height="25"/></svg><svg class="ss-star st-cream" viewBox="0 0 25 25" aria-hidden="true" style="left:73%;top:60px;width:15px;height:15px;transform:rotate(-10deg)"><use href="#ss-s" width="25" height="25"/></svg><svg class="ss-star st-butter" viewBox="0 0 25 25" aria-hidden="true" style="left:79%;top:22px;width:23px;height:23px;transform:rotate(16deg)"><use href="#ss-s" width="25" height="25"/></svg><svg class="ss-star st-cream" viewBox="0 0 25 25" aria-hidden="true" style="left:86%;top:54px;width:12px;height:12px;transform:rotate(-24deg)"><use href="#ss-s" width="25" height="25"/></svg><svg class="ss-star st-cream" viewBox="0 0 25 25" aria-hidden="true" style="left:92%;top:20px;width:16px;height:16px;transform:rotate(8deg)"><use href="#ss-s" width="25" height="25"/></svg><svg class="ss-star st-butter" viewBox="0 0 25 25" aria-hidden="true" style="left:97%;top:56px;width:20px;height:20px;transform:rotate(-14deg)"><use href="#ss-s" width="25" height="25"/></svg><span class="ss-dot bg-butter" style="left:5%;top:40px;width:4px;height:4px"></span><span class="ss-dot bg-cream" style="left:12%;top:30px;width:3px;height:3px"></span><span class="ss-dot bg-butter" style="left:18%;top:72px;width:3px;height:3px"></span><span class="ss-dot bg-cream" style="left:25%;top:40px;width:3px;height:3px"></span><span class="ss-dot bg-butter" style="left:31%;top:80px;width:4px;height:4px"></span><span class="ss-dot bg-cream" style="left:38%;top:44px;width:3px;height:3px"></span><span class="ss-dot bg-butter" style="left:44%;top:76px;width:3px;height:3px"></span><span class="ss-dot bg-cream" style="left:51%;top:44px;width:4px;height:4px"></span><span class="ss-dot bg-cream" style="left:57%;top:80px;width:3px;height:3px"></span><span class="ss-dot bg-butter" style="left:64%;top:42px;width:3px;height:3px"></span><span class="ss-dot bg-cream" style="left:70%;top:82px;width:3px;height:3px"></span><span class="ss-dot bg-cream" style="left:76%;top:44px;width:4px;height:4px"></span><span class="ss-dot bg-butter" style="left:83%;top:80px;width:3px;height:3px"></span><span class="ss-dot bg-cream" style="left:89%;top:44px;width:3px;height:3px"></span><span class="ss-dot bg-butter" style="left:95%;top:80px;width:3px;height:3px"></span></div>
+</header>
+
+<main>
+  <section class="ss-container ss-hero">
+    <div class="ss-hero__copy">
+      <p class="ss-eyebrow">Personalized picture books</p>
+      <h1 class="ss-h1">every child, the star</h1>
+      <p class="ss-lede">Upload one photo and your child becomes the hero of a hardcover storybook, the one they will ask for again tonight.</p>
+      <div class="ss-hero__actions">
+        <a class="ss-btn ss-btn--primary" href="#start"><svg class="ss-star" viewBox="0 0 25 25" aria-hidden="true"><use href="#ss-s" width="25" height="25"/></svg>Make their book</a>
+        <a class="ss-link" href="#peek">See a sample page</a>
+      </div>
+      <ul class="ss-facts">
+        <li><svg class="ss-star" viewBox="0 0 25 25" aria-hidden="true"><use href="#ss-s" width="25" height="25"/></svg>Hardcover, 32 pages</li>
+        <li><svg class="ss-star" viewBox="0 0 25 25" aria-hidden="true"><use href="#ss-s" width="25" height="25"/></svg>From [YOUR PRICE]</li>
+        <li><svg class="ss-star" viewBox="0 0 25 25" aria-hidden="true"><use href="#ss-s" width="25" height="25"/></svg>Ships in [X] days</li>
+      </ul>
+    </div>
+    <div class="ss-hero__art">
+      <div class="ss-cover" style="--cover:#2e4c9e;--cover-fg:#fffdf8;--cover-name:#f2c64b">
+        <svg class="ss-cover__sky" viewBox="0 0 240 130" preserveAspectRatio="xMidYMin slice" aria-hidden="true"><use href="#ss-s" x="20.0" y="64.0" width="20.0" height="20.0" fill="#f2c64b" stroke="#f2c64b" stroke-width="2.2" stroke-linejoin="round" transform="rotate(-12 30 74)"/><use href="#ss-s" x="89.1" y="15.1" width="13.8" height="13.8" fill="#fffdf8" stroke="#fffdf8" stroke-width="2.2" stroke-linejoin="round" transform="rotate(14 96 22)"/><use href="#ss-s" x="140.0" y="38.0" width="20.0" height="20.0" fill="#f2c64b" stroke="#f2c64b" stroke-width="2.2" stroke-linejoin="round" transform="rotate(22 150 48)"/><use href="#ss-s" x="198.5" y="18.5" width="15.0" height="15.0" fill="#fffdf8" stroke="#fffdf8" stroke-width="2.2" stroke-linejoin="round" transform="rotate(-10 206 26)"/><use href="#ss-s" x="63.8" y="77.8" width="12.5" height="12.5" fill="#fffdf8" stroke="#fffdf8" stroke-width="2.2" stroke-linejoin="round" transform="rotate(8 70 84)"/><use href="#ss-s" x="179.9" y="87.9" width="16.2" height="16.2" fill="#f3c6cd" stroke="#f3c6cd" stroke-width="2.2" stroke-linejoin="round" transform="rotate(-18 188 96)"/><use href="#ss-s" x="116.4" y="102.4" width="11.2" height="11.2" fill="#fffdf8" stroke="#fffdf8" stroke-width="2.2" stroke-linejoin="round" transform="rotate(30 122 108)"/><circle cx="62" cy="52" r="1.8" fill="#f2c64b"/><circle cx="126" cy="30" r="1.6" fill="#fffdf8"/><circle cx="176" cy="72" r="1.8" fill="#fffdf8"/><circle cx="30" cy="110" r="1.6" fill="#f2c64b"/><circle cx="222" cy="64" r="1.6" fill="#f2c64b"/></svg>
+        <span class="ss-ribbon ss-ribbon--new"><svg class="ss-star" viewBox="0 0 25 25" aria-hidden="true"><use href="#ss-s" width="25" height="25"/></svg>New story</span>
+        <span class="ss-cover__starring">Starring</span>
+        <span class="ss-cover__name">Hazel</span>
+        <span class="ss-cover__title">The Moon Picnic</span>
+      </div>
+      <div class="ss-frame">
+        <div class="ss-frame__photo"><div class="ss-frame__placeholder" role="img" aria-label="Placeholder for your child's photo"><span>Your child's photo</span></div></div>
+      </div>
+      <svg class="ss-star ss-trail" viewBox="0 0 25 25" aria-hidden="true" style="left:44%;top:64%;width:12px;height:12px;color:var(--persimmon);transform:rotate(-10deg)"><use href="#ss-s" width="25" height="25"/></svg><svg class="ss-star ss-trail" viewBox="0 0 25 25" aria-hidden="true" style="left:50%;top:58%;width:9px;height:9px;color:var(--buttercup);transform:rotate(18deg)"><use href="#ss-s" width="25" height="25"/></svg><svg class="ss-star ss-trail" viewBox="0 0 25 25" aria-hidden="true" style="left:55%;top:52%;width:14px;height:14px;color:var(--persimmon);transform:rotate(6deg)"><use href="#ss-s" width="25" height="25"/></svg><svg class="ss-star ss-trail" viewBox="0 0 25 25" aria-hidden="true" style="left:40%;top:72%;width:8px;height:8px;color:var(--buttercup);transform:rotate(-20deg)"><use href="#ss-s" width="25" height="25"/></svg>
+    </div>
+  </section>
+
+  <section class="ss-band-raised" id="how">
+    <div class="ss-container ss-section">
+      <p class="ss-eyebrow">How it works</p>
+      <h2 class="ss-h2" style="max-width:640px">From one photo to a book on their nightstand</h2>
+      <ol class="ss-steps">
+        <li class="ss-step">
+          <div class="ss-step__badge"><svg class="ss-star" viewBox="0 0 25 25" aria-hidden="true" style="transform:rotate(-10deg)"><use href="#ss-s" width="25" height="25"/></svg><span>1</span></div>
+          <h3 class="ss-h3">Add a photo</h3>
+          <p>One clear, smiling face in good light. A phone photo is perfect.</p>
+        </li>
+        <li class="ss-step">
+          <div class="ss-step__badge"><svg class="ss-star" viewBox="0 0 25 25" aria-hidden="true" style="transform:rotate(8deg)"><use href="#ss-s" width="25" height="25"/></svg><span>2</span></div>
+          <h3 class="ss-h3">Pick a story world</h3>
+          <p>Moon picnics, garden parties, a parade of very polite dinosaurs.</p>
+        </li>
+        <li class="ss-step">
+          <div class="ss-step__badge"><svg class="ss-star" viewBox="0 0 25 25" aria-hidden="true" style="transform:rotate(-4deg)"><use href="#ss-s" width="25" height="25"/></svg><span>3</span></div>
+          <h3 class="ss-h3">Write a dedication</h3>
+          <p>A few lines for the first page, signed however you like.</p>
+        </li>
+        <li class="ss-step">
+          <div class="ss-step__badge"><svg class="ss-star" viewBox="0 0 25 25" aria-hidden="true" style="transform:rotate(12deg)"><use href="#ss-s" width="25" height="25"/></svg><span>4</span></div>
+          <h3 class="ss-h3">Unwrap it together</h3>
+          <p>A hardcover book in a keepsake box, tied with a ribbon.</p>
+        </li>
+      </ol>
+    </div>
+    <div class="ss-ticking" aria-hidden="true"></div>
+  </section>
+
+  <section class="ss-container ss-section" id="worlds">
+    <div class="ss-section__head">
+      <div>
+        <p class="ss-eyebrow">Story worlds</p>
+        <h2 class="ss-h2">Pick where the story goes</h2>
+      </div>
+      <a class="ss-link" href="#">See all story worlds</a>
+    </div>
+    <div class="ss-chips" role="group" aria-label="Filter story worlds"><button type="button" class="ss-chip" aria-pressed="true"><svg class="ss-star" viewBox="0 0 25 25" aria-hidden="true"><use href="#ss-s" width="25" height="25"/></svg>Moon picnic</button><button type="button" class="ss-chip" aria-pressed="false"><svg class="ss-star" viewBox="0 0 25 25" aria-hidden="true"><use href="#ss-s" width="25" height="25"/></svg>Under the sea</button><button type="button" class="ss-chip" aria-pressed="false"><svg class="ss-star" viewBox="0 0 25 25" aria-hidden="true"><use href="#ss-s" width="25" height="25"/></svg>Garden party</button><button type="button" class="ss-chip" aria-pressed="false"><svg class="ss-star" viewBox="0 0 25 25" aria-hidden="true"><use href="#ss-s" width="25" height="25"/></svg>Dinosaur parade</button><button type="button" class="ss-chip" aria-pressed="false"><svg class="ss-star" viewBox="0 0 25 25" aria-hidden="true"><use href="#ss-s" width="25" height="25"/></svg>All worlds</button></div>
+    <div class="ss-books">
+        <article class="ss-book">
+          <div class="ss-cover ss-cover--card" style="--cover:#2e4c9e;--cover-fg:#fffdf8;--cover-name:#f2c64b">
+            <svg class="ss-cover__sky" viewBox="0 0 240 130" preserveAspectRatio="xMidYMin slice" aria-hidden="true"><use href="#ss-s" x="20.0" y="64.0" width="20.0" height="20.0" fill="#f2c64b" stroke="#f2c64b" stroke-width="2.2" stroke-linejoin="round" transform="rotate(-12 30 74)"/><use href="#ss-s" x="89.1" y="15.1" width="13.8" height="13.8" fill="#fffdf8" stroke="#fffdf8" stroke-width="2.2" stroke-linejoin="round" transform="rotate(14 96 22)"/><use href="#ss-s" x="140.0" y="38.0" width="20.0" height="20.0" fill="#f2c64b" stroke="#f2c64b" stroke-width="2.2" stroke-linejoin="round" transform="rotate(22 150 48)"/><use href="#ss-s" x="198.5" y="18.5" width="15.0" height="15.0" fill="#fffdf8" stroke="#fffdf8" stroke-width="2.2" stroke-linejoin="round" transform="rotate(-10 206 26)"/><use href="#ss-s" x="63.8" y="77.8" width="12.5" height="12.5" fill="#fffdf8" stroke="#fffdf8" stroke-width="2.2" stroke-linejoin="round" transform="rotate(8 70 84)"/><use href="#ss-s" x="179.9" y="87.9" width="16.2" height="16.2" fill="#f3c6cd" stroke="#f3c6cd" stroke-width="2.2" stroke-linejoin="round" transform="rotate(-18 188 96)"/><use href="#ss-s" x="116.4" y="102.4" width="11.2" height="11.2" fill="#fffdf8" stroke="#fffdf8" stroke-width="2.2" stroke-linejoin="round" transform="rotate(30 122 108)"/><circle cx="62" cy="52" r="1.8" fill="#f2c64b"/><circle cx="126" cy="30" r="1.6" fill="#fffdf8"/><circle cx="176" cy="72" r="1.8" fill="#fffdf8"/><circle cx="30" cy="110" r="1.6" fill="#f2c64b"/><circle cx="222" cy="64" r="1.6" fill="#f2c64b"/></svg>
+            <span class="ss-ribbon ss-ribbon--new"><svg class="ss-star" viewBox="0 0 25 25" aria-hidden="true"><use href="#ss-s" width="25" height="25"/></svg>New story</span>
+            <span class="ss-cover__starring">Starring</span>
+            <span class="ss-cover__name">Hazel</span>
+            <span class="ss-cover__title">The Moon Picnic</span>
+          </div>
+          <div class="ss-book__meta"><h3 class="ss-book__title">The Moon Picnic</h3><span class="ss-book__price">[PRICE]</span></div>
+          <p class="ss-book__detail">Hardcover, 32 pages. A picnic, a blanket, the moon.</p>
+          <a class="ss-btn ss-btn--secondary ss-btn--sm" href="#">Choose this story</a>
+        </article>
+        <article class="ss-book">
+          <div class="ss-cover ss-cover--card" style="--cover:#1e2a4f;--cover-fg:#fffdf8;--cover-name:#f3c6cd">
+            <svg class="ss-cover__sky" viewBox="0 0 240 130" preserveAspectRatio="xMidYMin slice" aria-hidden="true"><use href="#ss-s" x="20.0" y="64.0" width="20.0" height="20.0" fill="#f2c64b" stroke="#f2c64b" stroke-width="2.2" stroke-linejoin="round" transform="rotate(-12 30 74)"/><use href="#ss-s" x="89.1" y="15.1" width="13.8" height="13.8" fill="#fffdf8" stroke="#fffdf8" stroke-width="2.2" stroke-linejoin="round" transform="rotate(14 96 22)"/><use href="#ss-s" x="140.0" y="38.0" width="20.0" height="20.0" fill="#f2c64b" stroke="#f2c64b" stroke-width="2.2" stroke-linejoin="round" transform="rotate(22 150 48)"/><use href="#ss-s" x="198.5" y="18.5" width="15.0" height="15.0" fill="#fffdf8" stroke="#fffdf8" stroke-width="2.2" stroke-linejoin="round" transform="rotate(-10 206 26)"/><use href="#ss-s" x="63.8" y="77.8" width="12.5" height="12.5" fill="#fffdf8" stroke="#fffdf8" stroke-width="2.2" stroke-linejoin="round" transform="rotate(8 70 84)"/><use href="#ss-s" x="179.9" y="87.9" width="16.2" height="16.2" fill="#f3c6cd" stroke="#f3c6cd" stroke-width="2.2" stroke-linejoin="round" transform="rotate(-18 188 96)"/><use href="#ss-s" x="116.4" y="102.4" width="11.2" height="11.2" fill="#fffdf8" stroke="#fffdf8" stroke-width="2.2" stroke-linejoin="round" transform="rotate(30 122 108)"/><circle cx="62" cy="52" r="1.8" fill="#f2c64b"/><circle cx="126" cy="30" r="1.6" fill="#fffdf8"/><circle cx="176" cy="72" r="1.8" fill="#fffdf8"/><circle cx="30" cy="110" r="1.6" fill="#f2c64b"/><circle cx="222" cy="64" r="1.6" fill="#f2c64b"/></svg>
+            
+            <span class="ss-cover__starring">Starring</span>
+            <span class="ss-cover__name">Milo</span>
+            <span class="ss-cover__title">Under the Sea</span>
+          </div>
+          <div class="ss-book__meta"><h3 class="ss-book__title">Under the Sea</h3><span class="ss-book__price">[PRICE]</span></div>
+          <p class="ss-book__detail">Hardcover, 32 pages. A whale with excellent manners.</p>
+          <a class="ss-btn ss-btn--secondary ss-btn--sm" href="#">Choose this story</a>
+        </article>
+        <article class="ss-book">
+          <div class="ss-cover ss-cover--card" style="--cover:#7fa07c;--cover-fg:#16204a;--cover-name:#16204a">
+            <svg class="ss-cover__sky" viewBox="0 0 240 130" preserveAspectRatio="xMidYMin slice" aria-hidden="true"><use href="#ss-s" x="20.0" y="64.0" width="20.0" height="20.0" fill="#f2c64b" stroke="#f2c64b" stroke-width="2.2" stroke-linejoin="round" transform="rotate(-12 30 74)"/><use href="#ss-s" x="89.1" y="15.1" width="13.8" height="13.8" fill="#fffdf8" stroke="#fffdf8" stroke-width="2.2" stroke-linejoin="round" transform="rotate(14 96 22)"/><use href="#ss-s" x="140.0" y="38.0" width="20.0" height="20.0" fill="#f2c64b" stroke="#f2c64b" stroke-width="2.2" stroke-linejoin="round" transform="rotate(22 150 48)"/><use href="#ss-s" x="198.5" y="18.5" width="15.0" height="15.0" fill="#fffdf8" stroke="#fffdf8" stroke-width="2.2" stroke-linejoin="round" transform="rotate(-10 206 26)"/><use href="#ss-s" x="63.8" y="77.8" width="12.5" height="12.5" fill="#fffdf8" stroke="#fffdf8" stroke-width="2.2" stroke-linejoin="round" transform="rotate(8 70 84)"/><use href="#ss-s" x="179.9" y="87.9" width="16.2" height="16.2" fill="#f3c6cd" stroke="#f3c6cd" stroke-width="2.2" stroke-linejoin="round" transform="rotate(-18 188 96)"/><use href="#ss-s" x="116.4" y="102.4" width="11.2" height="11.2" fill="#fffdf8" stroke="#fffdf8" stroke-width="2.2" stroke-linejoin="round" transform="rotate(30 122 108)"/><circle cx="62" cy="52" r="1.8" fill="#f2c64b"/><circle cx="126" cy="30" r="1.6" fill="#fffdf8"/><circle cx="176" cy="72" r="1.8" fill="#fffdf8"/><circle cx="30" cy="110" r="1.6" fill="#f2c64b"/><circle cx="222" cy="64" r="1.6" fill="#f2c64b"/></svg>
+            <span class="ss-ribbon ss-ribbon--best">Most loved</span>
+            <span class="ss-cover__starring">Starring</span>
+            <span class="ss-cover__name">June</span>
+            <span class="ss-cover__title">The Garden Party</span>
+          </div>
+          <div class="ss-book__meta"><h3 class="ss-book__title">The Garden Party</h3><span class="ss-book__price">[PRICE]</span></div>
+          <p class="ss-book__detail">Hardcover, 32 pages. Tea for two, and a hedgehog.</p>
+          <a class="ss-btn ss-btn--secondary ss-btn--sm" href="#">Choose this story</a>
+        </article>
+        <article class="ss-book">
+          <div class="ss-cover ss-cover--card" style="--cover:#c03f27;--cover-fg:#fffdf8;--cover-name:#fffdf8">
+            <svg class="ss-cover__sky" viewBox="0 0 240 130" preserveAspectRatio="xMidYMin slice" aria-hidden="true"><use href="#ss-s" x="20.0" y="64.0" width="20.0" height="20.0" fill="#f2c64b" stroke="#f2c64b" stroke-width="2.2" stroke-linejoin="round" transform="rotate(-12 30 74)"/><use href="#ss-s" x="89.1" y="15.1" width="13.8" height="13.8" fill="#fffdf8" stroke="#fffdf8" stroke-width="2.2" stroke-linejoin="round" transform="rotate(14 96 22)"/><use href="#ss-s" x="140.0" y="38.0" width="20.0" height="20.0" fill="#f2c64b" stroke="#f2c64b" stroke-width="2.2" stroke-linejoin="round" transform="rotate(22 150 48)"/><use href="#ss-s" x="198.5" y="18.5" width="15.0" height="15.0" fill="#fffdf8" stroke="#fffdf8" stroke-width="2.2" stroke-linejoin="round" transform="rotate(-10 206 26)"/><use href="#ss-s" x="63.8" y="77.8" width="12.5" height="12.5" fill="#fffdf8" stroke="#fffdf8" stroke-width="2.2" stroke-linejoin="round" transform="rotate(8 70 84)"/><use href="#ss-s" x="179.9" y="87.9" width="16.2" height="16.2" fill="#f3c6cd" stroke="#f3c6cd" stroke-width="2.2" stroke-linejoin="round" transform="rotate(-18 188 96)"/><use href="#ss-s" x="116.4" y="102.4" width="11.2" height="11.2" fill="#fffdf8" stroke="#fffdf8" stroke-width="2.2" stroke-linejoin="round" transform="rotate(30 122 108)"/><circle cx="62" cy="52" r="1.8" fill="#f2c64b"/><circle cx="126" cy="30" r="1.6" fill="#fffdf8"/><circle cx="176" cy="72" r="1.8" fill="#fffdf8"/><circle cx="30" cy="110" r="1.6" fill="#f2c64b"/><circle cx="222" cy="64" r="1.6" fill="#f2c64b"/></svg>
+            <span class="ss-ribbon">Gift ready</span>
+            <span class="ss-cover__starring">Starring</span>
+            <span class="ss-cover__name">Arlo</span>
+            <span class="ss-cover__title">The Dinosaur Parade</span>
+          </div>
+          <div class="ss-book__meta"><h3 class="ss-book__title">The Dinosaur Parade</h3><span class="ss-book__price">[PRICE]</span></div>
+          <p class="ss-book__detail">Hardcover, 32 pages. Very polite, very large.</p>
+          <a class="ss-btn ss-btn--secondary ss-btn--sm" href="#">Choose this story</a>
+        </article>
+    </div>
+  </section>
+
+  <section class="ss-band-sunk" id="peek">
+    <div class="ss-container ss-section ss-peek">
+      <div class="ss-peek__copy">
+        <p class="ss-eyebrow">Peek inside</p>
+        <h2 class="ss-h2" style="margin-bottom:16px">Their name, their face, on every page</h2>
+        <p class="ss-muted" style="margin:0 0 28px">Watercolor pictures, a story written to be read aloud, and a hero who looks a lot like the one on your lap.</p>
+        <a class="ss-btn ss-btn--secondary" href="#">Flip through a sample book</a>
+      </div>
+      <div class="ss-spread">
+        <div class="ss-spread__art" role="img" aria-label="Illustration placeholder: Hazel's picnic under the moon">
+          <span style="position:absolute;right:16%;top:12%;width:26%;aspect-ratio:1;border-radius:99px;background:#f5d267"></span>
+          <span style="position:absolute;left:-10%;right:-10%;bottom:-24%;height:52%;border-radius:50%;background:#7fa07c"></span>
+          <span style="position:absolute;left:22%;bottom:14%;width:44%;height:14%;transform:skewX(-12deg);border-radius:3px;background:repeating-linear-gradient(90deg,#fffdf8 0 10px,#c03f27 10px 16px)"></span>
+          <svg class="ss-star " viewBox="0 0 25 25" aria-hidden="true" style="position:absolute;left:10%;top:10%;width:16px;height:16px;color:#f6efe2;transform:rotate(-12deg)"><use href="#ss-s" width="25" height="25"/></svg><svg class="ss-star " viewBox="0 0 25 25" aria-hidden="true" style="position:absolute;left:30%;top:22%;width:10px;height:10px;color:#f5d267;transform:rotate(16deg)"><use href="#ss-s" width="25" height="25"/></svg><svg class="ss-star " viewBox="0 0 25 25" aria-hidden="true" style="position:absolute;left:48%;top:8%;width:12px;height:12px;color:#f6efe2;transform:rotate(22deg)"><use href="#ss-s" width="25" height="25"/></svg><svg class="ss-star " viewBox="0 0 25 25" aria-hidden="true" style="position:absolute;left:20%;top:40%;width:9px;height:9px;color:#f5d267;transform:rotate(-8deg)"><use href="#ss-s" width="25" height="25"/></svg><svg class="ss-star " viewBox="0 0 25 25" aria-hidden="true" style="position:absolute;left:54%;top:34%;width:8px;height:8px;color:#f6efe2;transform:rotate(10deg)"><use href="#ss-s" width="25" height="25"/></svg><svg class="ss-star " viewBox="0 0 25 25" aria-hidden="true" style="position:absolute;left:88%;top:46%;width:10px;height:10px;color:#f5d267;transform:rotate(-16deg)"><use href="#ss-s" width="25" height="25"/></svg>
+          <span style="position:absolute;left:12px;bottom:10px;font-size:11px;font-weight:600;color:#f6efe2">Illustration placeholder</span>
+        </div>
+        <div class="ss-spread__page">
+          <p>Once upon a Tuesday, Hazel packed a picnic for the moon. Two jam sandwiches, one thermos of cocoa, and the striped blanket, because the moon is very fond of stripes.</p>
+          <span class="ss-spread__folio">7</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="ss-gift ss-scallop-hem" id="gifts">
+    <div class="ss-container ss-gift__inner">
+      <div class="ss-gift__copy">
+        <p class="ss-eyebrow">Made to be given</p>
+        <h2 class="ss-h2" style="margin-bottom:16px">Wrapped in tissue, tied with a ribbon</h2>
+        <p style="margin:0 0 28px">Every book arrives in a keepsake box with a dedication card, ready for a birthday, a new sibling or the first night in a big-kid bed.</p>
+        <a class="ss-btn ss-btn--secondary" href="#">Shop gifts</a>
+      </div>
+      <div style="flex:1 1 380px;min-width:0;display:flex;justify-content:center">
+        <div class="ss-dedication">
+          <img class="ss-dedication__seal" src="../assets/logos/storystar-monogram.svg" alt="" width="76" height="76">
+          <span class="ss-ribbon">Gift ready</span>
+          <p class="ss-dedication__to">For Hazel,</p>
+          <p class="ss-dedication__body">who asks for one more story every single night. This one is all yours.</p>
+          <p class="ss-dedication__from">with love, Grandma</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="ss-container ss-section">
+    <h2 class="ss-h2">Questions grown-ups ask</h2>
+    <div class="ss-faq">
+      <div class="ss-faq__item"><h3>What kind of photo works best?</h3><p>A clear, front-facing photo in good light with nothing covering the face. A phone photo is perfect.</p></div>
+      <div class="ss-faq__item"><h3>What happens to my child's photo?</h3><p>[YOUR PHOTO PROMISE: how photos are used, how long they are kept and when they are deleted.]</p></div>
+      <div class="ss-faq__item"><h3>When will it arrive?</h3><p>[YOUR SHIPPING WINDOW]. Gift orders can ship straight to the lucky reader.</p></div>
+    </div>
+  </section>
+</main>
+
+<footer class="ss-footer ss-scallop-top">
+  <div class="ss-container ss-footer__inner">
+    <div class="ss-footer__brand">
+      <img src="../assets/logos/storystar-wordmark-cream.svg" alt="storystar" width="200" height="44">
+      <p style="margin:0 0 24px;max-width:360px">Picture books where your child is the star.</p>
+      <form class="ss-signup" action="#" method="post">
+        <label for="ft-email">Bedtime notes in your inbox</label>
+        <input id="ft-email" type="email" name="email" placeholder="you@example.com" autocomplete="email">
+        <button type="submit">Sign up</button>
+      </form>
+    </div>
+    <nav class="ss-footer__col" aria-label="Shop"><span class="ss-footer__label">Shop</span><a href="#">Story worlds</a><a href="#">Gifts</a><a href="#">Gift cards</a></nav>
+    <nav class="ss-footer__col" aria-label="Help"><span class="ss-footer__label">Help</span><a href="#">How it works</a><a href="#">Shipping</a><a href="#">Contact us</a></nav>
+    <nav class="ss-footer__col" aria-label="About"><span class="ss-footer__label">About</span><a href="#">Our story</a><a href="#">Photo privacy</a><a href="#">Terms</a></nav>
+  </div>
+  <div class="ss-container ss-footer__legal">© 2026 StoryStar</div>
+</footer>
+
+<script>
+  /* Theme: Daytime by default, Bedtime from 7pm to 6am local time unless the reader picked one. */
+  (function () {
+    var root = document.documentElement;
+    var toggle = document.querySelector('.ss-theme-toggle');
+    function apply(theme) {
+      root.setAttribute('data-theme', theme);
+      toggle.setAttribute('aria-label', theme === 'bedtime' ? 'Switch to daytime theme' : 'Switch to bedtime theme');
+    }
+    var saved = null;
+    try { saved = localStorage.getItem('ss-theme'); } catch (e) {}
+    var forced = new URLSearchParams(location.search).get('theme'); /* ?theme=bedtime to preview */
+    if (forced === 'bedtime' || forced === 'daytime') saved = forced;
+    var hour = new Date().getHours();
+    apply(saved || (hour >= 19 || hour < 6 ? 'bedtime' : 'daytime'));
+    toggle.addEventListener('click', function () {
+      var next = root.getAttribute('data-theme') === 'bedtime' ? 'daytime' : 'bedtime';
+      apply(next);
+      try { localStorage.setItem('ss-theme', next); } catch (e) {}
+    });
+    /* Phone menu */
+    var header = document.querySelector('.ss-header');
+    var menuBtn = document.querySelector('.ss-menu-btn');
+    menuBtn.addEventListener('click', function () {
+      var open = header.classList.toggle('is-open');
+      menuBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      menuBtn.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+    });
+    /* Story-world chips: single select */
+    var chips = document.querySelectorAll('.ss-chip');
+    chips.forEach(function (chip) {
+      chip.addEventListener('click', function () {
+        chips.forEach(function (c) { c.setAttribute('aria-pressed', c === chip ? 'true' : 'false'); });
+      });
+    });
+  })();
+</script>
+</body>
+</html>
