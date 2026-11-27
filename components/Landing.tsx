@@ -1,140 +1,328 @@
 /* eslint-disable @next/next/no-img-element */
 import Link from "next/link";
-import { ART_STYLE_LABELS, type ArtStyle } from "@/lib/schemas/theme";
-import { ScrollBand } from "./ScrollBand";
+import { loadBuiltInThemeFiles } from "@/lib/themes";
+import { HOUSE_THEME_ID } from "@/lib/schemas/theme";
+import { Star } from "@/components/brand/Star";
+import {
+  BookCover,
+  NewStoryRibbon,
+  type CoverGround,
+} from "@/components/brand/BookCover";
 
-/** Example pages shown on the home page. Swap the files in public/examples/ to change them. */
-const EXAMPLE = {
-  title: "Charlie and the Stream That Goes",
-  style: "Gentle ink & wash",
-  theme: "Quiet Meadow",
-  spread: "/examples/charlie/spread.jpg",
-  pages: [
-    { src: "/examples/charlie/title.jpg", alt: "Title page" },
-    { src: "/examples/charlie/meadow.jpg", alt: "Charlie and her brothers in the meadow" },
-    { src: "/examples/charlie/oak.jpg", alt: "Meeting woodland friends at the old oak" },
-    { src: "/examples/charlie/stones.jpg", alt: "Crossing the stepping stones" },
-    { src: "/examples/charlie/pond.jpg", alt: "A pink pond at sunset" },
-    { src: "/examples/charlie/lantern.jpg", alt: "Friends on the log bench at night" },
-  ],
-  bands: {
-    boats: "/examples/bands/boats.jpg",
-    oak: "/examples/bands/oak.jpg",
-    lantern: "/examples/bands/lantern.jpg",
-  },
-};
+/**
+ * The home page for visitors, built to storystar-brand/BRAND.md section 10:
+ * hero, how it works, stories, peek inside, gifts, questions. The header and footer
+ * come from the layout. Bracketed text is a fact only the business can supply.
+ */
 
-const STEPS = [
-  { n: "1", pipe: "pipe-pink", dot: "bg-pink", title: "Tell us about your child", text: "Their name, age and favorite things, plus a few photos so the pictures look like them. Add grown-ups and siblings as co-stars." },
-  { n: "2", pipe: "pipe-tangerine", dot: "bg-tangerine", title: "Read the story first", text: "We write a story with a real beginning, middle and end. Change any words you like before a single picture is painted." },
-  { n: "3", pipe: "pipe-mint", dot: "bg-mint", title: "Watch it come to life", text: "Every page is painted in the style you choose. Read it on screen, then order a beautiful printed hardcover." },
+/** Printed hardcover length for the story lengths we offer (12 to 24 story pages plus title,
+ *  "belongs to", dedication and "The End" pages, padded to the printer's 24-page minimum). */
+const PAGE_RANGE = "24 to 30 pages";
+
+/** Sample names on cover mockups (placeholders, BRAND.md section 10). */
+const SAMPLE_NAMES = ["Hazel", "Milo", "June", "Arlo", "Nell", "Otis"];
+const GROUNDS: CoverGround[] = [
+  "delft",
+  "navy",
+  "sage",
+  "persimmon",
+  "navy",
+  "delft",
 ];
 
-const FRAMES = ["frame-candy", "frame-candy-blue", "frame-candy-olive"];
+const STEPS = [
+  {
+    title: "Add a photo",
+    text: "One clear, smiling face in good light. A phone photo is perfect.",
+    rot: -10,
+  },
+  {
+    title: "Pick a story",
+    text: "A firefly who lost her glow, a sleepy sunflower clock, a lullaby for the whole garden.",
+    rot: 8,
+  },
+  {
+    title: "Write a dedication",
+    text: "A few lines for the first page, signed however you like.",
+    rot: -4,
+  },
+  {
+    title: "Unwrap it together",
+    text: "A hardcover book with your dedication on the first page.",
+    rot: 12,
+  },
+];
 
-const STYLES: ArtStyle[] = ["painted-whimsy", "gentle-ink-wash", "watercolor-storybook", "whimsical-ink", "bold-comic", "soft-3d"];
+const TRAIL: Array<
+  [left: number, top: number, size: number, color: string, rot: number]
+> = [
+  [44, 64, 12, "var(--persimmon)", -10],
+  [50, 58, 9, "var(--buttercup)", 18],
+  [55, 52, 14, "var(--persimmon)", 6],
+  [40, 72, 8, "var(--buttercup)", -20],
+];
 
-export function Landing({ signedIn, startHref }: { signedIn: boolean; startHref: string }) {
-  const cta = signedIn ? "Make a book" : "Start your book";
+export function Landing({
+  startHref,
+}: {
+  signedIn: boolean;
+  startHref: string;
+}) {
+  const house = loadBuiltInThemeFiles().find((t) => t.id === HOUSE_THEME_ID);
+  const stories = house?.starters ?? [];
   return (
-    <div className="-mt-8 pb-4 sm:-mt-12">
-      {/* Hero */}
-      <section className="full-bleed scallop-bottom confetti bg-sky [--scallop:var(--color-sky)]">
-        <div className="mx-auto grid max-w-6xl items-center gap-10 px-5 py-12 sm:px-10 lg:grid-cols-[1fr_1.15fr]">
-          <div className="space-y-5">
-            <p className="eyebrow text-coral">Personalized picture books</p>
-            <h1 className="font-display text-4xl font-medium leading-tight text-navy sm:text-5xl">
-              A storybook where <em className="text-coral">your child</em> is the hero
-            </h1>
-            <p className="max-w-md text-lg text-navy/80">
-              Real stories with heart, painted pages that look like your little one, and a keepsake hardcover to read again and again.
+    <div className="-mb-8 -mt-8 sm:-mb-12 sm:-mt-12">
+      {/* 1. Hero */}
+      <section className="full-bleed">
+        <div className="ss-container ss-hero">
+          <div className="ss-hero__copy">
+            <p className="ss-eyebrow">Personalized picture books</p>
+            <h1 className="ss-h1">every child, the star</h1>
+            <p className="ss-lede">
+              Upload one photo and your child becomes the hero of a hardcover
+              storybook, the one they will ask for again tonight.
             </p>
-            <div className="flex flex-wrap gap-3">
-              <Link href={startHref} className="btn btn-primary btn-lg" data-testid="landing-start">
-                {cta}
+            <div className="ss-hero__actions">
+              <Link
+                className="ss-btn ss-btn--primary"
+                href={startHref}
+                data-testid="landing-start"
+              >
+                <Star />
+                Make their book
               </Link>
-              <a href="#example" className="btn btn-secondary btn-lg bg-white">
-                See an example
-              </a>
+              <Link className="ss-link" href="/examples">
+                See a sample page
+              </Link>
             </div>
+            <ul className="ss-facts">
+              <li>
+                <Star />
+                Hardcover, {PAGE_RANGE}
+              </li>
+              <li>
+                <Star />
+                From [YOUR PRICE]
+              </li>
+              <li>
+                <Star />
+                Ships in [X] days
+              </li>
+            </ul>
           </div>
-          <figure>
-            <div className="preppy-frame rotate-1 bg-white">
-              <img src={EXAMPLE.spread} alt="A two-page spread from an example book" className="block w-full" />
+          <div className="ss-hero__art">
+            <BookCover
+              name="Hazel"
+              title={stories[0]?.title ?? "Luma's Lost Glow"}
+              ribbon={<NewStoryRibbon />}
+            />
+            <div className="ss-frame">
+              <div className="ss-frame__photo">
+                <div
+                  className="ss-frame__placeholder"
+                  role="img"
+                  aria-label="Placeholder for your child's photo"
+                >
+                  <span>Your child&apos;s photo</span>
+                </div>
+              </div>
             </div>
-            <figcaption className="mt-4 text-center text-sm text-navy/70">
-              From <span className="italic">{EXAMPLE.title}</span>
-            </figcaption>
+            {TRAIL.map(([left, top, size, color, rot], i) => (
+              <Star
+                key={i}
+                className="ss-trail"
+                style={{
+                  left: `${left}%`,
+                  top: `${top}%`,
+                  width: size,
+                  height: size,
+                  color,
+                  transform: `rotate(${rot}deg)`,
+                }}
+              />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 2. How it works */}
+      <section className="full-bleed ss-band-raised scroll-mt-4" id="how">
+        <div className="ss-container ss-section">
+          <p className="ss-eyebrow">How it works</p>
+          <h2 className="ss-h2 max-w-[640px]">
+            From one photo to a book on their nightstand
+          </h2>
+          <ol className="ss-steps">
+            {STEPS.map((s, i) => (
+              <li key={s.title} className="ss-step">
+                <div className="ss-step__badge">
+                  <Star style={{ transform: `rotate(${s.rot}deg)` }} />
+                  <span>{i + 1}</span>
+                </div>
+                <h3 className="ss-h3">{s.title}</h3>
+                <p>{s.text}</p>
+              </li>
+            ))}
+          </ol>
+        </div>
+        <div className="ss-ticking" aria-hidden="true" />
+      </section>
+
+      {/* 3. Stories */}
+      <section className="full-bleed scroll-mt-4" id="stories">
+        <div className="ss-container ss-section">
+          <div className="ss-section__head">
+            <div>
+              <p className="ss-eyebrow">The Wishing Garden</p>
+              <h2 className="ss-h2">Pick where the story goes</h2>
+            </div>
+            <Link className="ss-link" href="/examples">
+              Peek inside a book
+            </Link>
+          </div>
+          <div className="ss-books">
+            {stories.map((s, i) => (
+              <article
+                key={s.id}
+                className="ss-book"
+                data-testid={`landing-story-${s.id}`}
+              >
+                <BookCover
+                  card
+                  name={SAMPLE_NAMES[i % SAMPLE_NAMES.length]}
+                  title={s.title}
+                  ground={GROUNDS[i % GROUNDS.length]}
+                  ribbon={i === 0 ? <NewStoryRibbon /> : undefined}
+                />
+                <div className="ss-book__meta">
+                  <h3 className="ss-book__title">{s.title}</h3>
+                  <span className="ss-book__price">[PRICE]</span>
+                </div>
+                <p className="ss-book__detail">
+                  Hardcover, {PAGE_RANGE}. {s.summary}
+                </p>
+                <Link
+                  className="ss-btn ss-btn--secondary ss-btn--sm"
+                  href={startHref}
+                >
+                  Choose this story
+                </Link>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 4. Peek inside */}
+      <section className="full-bleed ss-band-sunk scroll-mt-4" id="peek">
+        <div className="ss-container ss-section ss-peek">
+          <div className="ss-peek__copy">
+            <p className="ss-eyebrow">Peek inside</p>
+            <h2 className="ss-h2 mb-4">
+              Their name, their face, on every page
+            </h2>
+            <p className="ss-muted mb-7 mt-0">
+              Illustrated from your photo, a story written to be read aloud, and
+              a hero who looks a lot like the one on your lap.
+            </p>
+            <Link className="ss-btn ss-btn--secondary" href="/examples">
+              Flip through a sample book
+            </Link>
+          </div>
+          <figure
+            className="ss-spread m-0"
+            aria-label="A two-page spread from a sample book, Charlie and the Stream That Goes"
+          >
+            <img
+              src="/examples/charlie/spread.jpg"
+              alt="A two-page spread from a sample book: Charlie and her brothers by the stream"
+              className="block h-auto w-full"
+            />
           </figure>
         </div>
       </section>
 
-      {/* How it works */}
-      <section className="rise-in mt-20 space-y-6">
-        <h2 className="text-center font-display text-3xl font-medium">How it works</h2>
-        <ol className="grid gap-5 sm:grid-cols-3">
-          {STEPS.map((s) => (
-            <li key={s.n} className={`${s.pipe} bg-white p-6 ring-1 ring-[color:var(--line)]`}>
-              <span className={`mt-2 flex h-10 w-10 items-center justify-center rounded-full font-display text-lg text-white ${s.dot}`}>{s.n}</span>
-              <h3 className="mt-4 font-display text-xl font-medium">{s.title}</h3>
-              <p className="mt-2 text-[color:var(--muted)]">{s.text}</p>
-            </li>
-          ))}
-        </ol>
-      </section>
-
-      <div className="mt-20">
-        <ScrollBand src={EXAMPLE.bands.boats} alt="Children sailing leaf boats down a stream">
-          <p className="font-display text-2xl italic sm:text-3xl">&ldquo;We can share,&rdquo; says Oliver, and he puts his big boat in her hands.</p>
-        </ScrollBand>
-      </div>
-
-      {/* Example book */}
-      <section id="example" className="mt-20 scroll-mt-24 space-y-8">
-        <div className="rise-in text-center">
-          <p className="eyebrow text-coral">An example book</p>
-          <h2 className="font-display text-3xl font-medium italic">{EXAMPLE.title}</h2>
-          <p className="mt-1 text-[color:var(--muted)]">
-            {EXAMPLE.theme} theme · {EXAMPLE.style} style · starring a one-year-old and her big brothers
-          </p>
-        </div>
-        <ul className="grid grid-cols-2 gap-5 sm:grid-cols-3">
-          {EXAMPLE.pages.map((p, i) => (
-            <li key={p.src} className={`rise-in ${FRAMES[i % FRAMES.length]} shadow-md transition hover:-translate-y-1 hover:shadow-lg`}>
-              <img src={p.src} alt={p.alt} loading="lazy" className="block aspect-square w-full object-cover" />
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      <div className="mt-20">
-        <ScrollBand src={EXAMPLE.bands.oak} alt="Woodland friends at the old oak" ribbon="candy" />
-      </div>
-
-      {/* Styles */}
-      <section className="rise-in full-bleed mt-0 bg-cream">
-        <div className="mx-auto max-w-6xl space-y-5 px-5 py-14 text-center sm:px-10">
-          <h2 className="font-display text-3xl font-medium">Painted your way</h2>
-          <p className="mx-auto max-w-xl text-[color:var(--muted)]">
-            Choose a look for every book, from delicate hand-painted whimsy to bold, bright comics. Your child&apos;s character is drawn to match.
-          </p>
-          <ul className="flex flex-wrap justify-center gap-2">
-            {STYLES.map((s, i) => (
-              <li key={s} className={`bg-white px-4 py-1.5 text-sm ring-1 ring-[color:var(--line)] ${["pipe-pink", "pipe-tangerine", "pipe-sun", "pipe-mint", "pipe-blue", "pipe-lilac"][i % 6]}`}>
-                {ART_STYLE_LABELS[s]}
-              </li>
-            ))}
-          </ul>
+      {/* 5. Gifts */}
+      <section
+        className="full-bleed ss-gift ss-scallop-hem scroll-mt-4"
+        id="gifts"
+      >
+        <div className="ss-container ss-gift__inner">
+          <div className="ss-gift__copy">
+            <p className="ss-eyebrow">Made to be given</p>
+            <h2 className="ss-h2 mb-4">A gift that starts with their name</h2>
+            <p className="mb-7 mt-0">
+              Write a dedication for the first page and it is printed in their
+              hardcover. Gift orders can ship straight to the lucky reader with
+              a gift note, for a birthday, a new sibling or the first night in a
+              big-kid bed.
+            </p>
+            <Link className="ss-btn ss-btn--secondary" href={startHref}>
+              Make one to give
+            </Link>
+          </div>
+          <div className="flex min-w-0 flex-[1_1_380px] justify-center">
+            <div className="ss-dedication">
+              <img
+                className="ss-dedication__seal"
+                src="/brand/logos/storystar-monogram.svg"
+                alt=""
+                width={76}
+                height={76}
+              />
+              <span className="ss-ribbon">Gift ready</span>
+              <p className="ss-dedication__to" aria-label="For Hazel">
+                For Hazel,
+              </p>
+              <p className="ss-dedication__body">
+                who asks for one more story every single night. This one is all
+                yours.
+              </p>
+              <p
+                className="ss-dedication__from"
+                aria-label="With love, Grandma"
+              >
+                with love, Grandma
+              </p>
+            </div>
+          </div>
         </div>
       </section>
 
-      <ScrollBand src={EXAMPLE.bands.lantern} alt="Friends together on a log bench as the stars come out">
-        <h2 className="font-display text-3xl font-medium !text-white sm:text-4xl">Make a book they&apos;ll keep forever</h2>
-        <p className="mt-2 text-white/90">Every new account starts with free credits to write and paint your first story.</p>
-        <Link href={startHref} className="btn btn-lg mt-5 inline-flex bg-coral text-white hover:bg-pink">
-          {cta}
-        </Link>
-      </ScrollBand>
+      {/* 6. Questions */}
+      <section className="full-bleed">
+        <div className="ss-container ss-section">
+          <h2 className="ss-h2">Questions grown-ups ask</h2>
+          <div className="ss-faq">
+            <div className="ss-faq__item">
+              <h3>What kind of photo works best?</h3>
+              <p>
+                A clear, front-facing photo in good light with nothing covering
+                the face. A phone photo is perfect.
+              </p>
+            </div>
+            <div className="ss-faq__item">
+              <h3>What happens to my child&apos;s photo?</h3>
+              <p>
+                We use it only to draw your child&apos;s character. Location
+                data is removed, photos are stored encrypted, and by default the
+                original photos are deleted as soon as you approve the
+                character.{" "}
+                <Link className="ss-link" href="/photo-privacy">
+                  Read our photo privacy page
+                </Link>
+              </p>
+            </div>
+            <div className="ss-faq__item">
+              <h3>When will it arrive?</h3>
+              <p>
+                [YOUR SHIPPING WINDOW]. Gift orders can ship straight to the
+                lucky reader.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

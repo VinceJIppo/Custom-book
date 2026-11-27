@@ -198,6 +198,13 @@
   /* Site additions: the signed-in nav is longer than the kit's, so it tightens on mid-size screens;
      the current page is underlined. */
   .ss-nav a[aria-current="page"] { text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 5px; }
+  /* Six stories sit in an even grid (the kit's flex row would stretch the last two). */
+  @media (min-width: 761px) {
+    .ss-books { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (min-width: 1000px) {
+    .ss-books { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  }
   @media (min-width: 761px) and (max-width: 1080px) {
     .ss-header__bar { gap: 18px; }
     .ss-nav { gap: 18px; font-size: 14px; }
@@ -242,6 +249,8 @@
     .ss-gift__inner { padding-top: 52px; padding-bottom: 56px; gap: 32px; }
     .ss-faq { gap: 0; margin-top: 24px; }
     .ss-faq__item { flex-basis: 100%; padding: 18px 0; }
+    /* Site addition: room for the seal that hangs off the dedication card's corner. */
+    .ss-dedication { max-width: calc(100% - 26px); margin-right: 26px; }
   }
 
 }
