@@ -15,13 +15,9 @@ import "@fontsource/eb-garamond/400-italic.css";
 import "@fontsource/cormorant-garamond/500.css";
 import "@fontsource/cormorant-garamond/500-italic.css";
 import "@fontsource/eb-garamond/500.css";
-import "@fontsource/newsreader/400.css";
-import "@fontsource/newsreader/400-italic.css";
-import "@fontsource/newsreader/500.css";
-import "@fontsource/figtree/400.css";
-import "@fontsource/figtree/500.css";
-import "@fontsource/figtree/600.css";
 import "./globals.css";
+import { StarSymbol } from "@/components/brand/Star";
+import { THEME_SCRIPT } from "@/components/brand/theme";
 import { authMode, getOptionalUser } from "@/lib/auth";
 import { isAdminEmail } from "@/lib/admin";
 import { signOutAction } from "./signin/actions";
@@ -40,8 +36,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // Parents don't pick themes any more (one house theme); the Themes pages stay for admins.
   const admin = !!user && isAdminEmail(user.email);
   return (
-    <html lang="en">
-      <body className="flex min-h-screen flex-col font-sans text-[15px] antialiased">
+    // data-theme is set before first paint by the script below, so React leaves it alone.
+    <html lang="en" data-theme="daytime" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+      </head>
+      <body className="flex min-h-screen flex-col bg-paper font-sans text-ink antialiased">
+        <StarSymbol />
         <div className="bg-sunny px-4 py-2 text-center text-[13px] font-medium text-navy">
           Personalized picture books where your child is the hero.{" "}
           {user && (

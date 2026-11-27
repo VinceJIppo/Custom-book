@@ -1,0 +1,125 @@
+/* StoryStar design tokens (Direction 1: Star ceiling), ported from
+   storystar-brand/tokens/tokens.css (the source of truth is tokens.json there).
+   Changes from the kit: font paths point at /brand/fonts, the stray "}" after each
+   text style is removed, and the text styles sit in the components layer so
+   Tailwind utilities on the same element still win. Daytime is the default;
+   data-theme="bedtime" on <html> switches to Bedtime. */
+
+@font-face {
+  font-family: "Young Serif";
+  src: url("/brand/fonts/YoungSerif-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Figtree";
+  src: url("/brand/fonts/Figtree-Variable.woff2") format("woff2");
+  font-weight: 300 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Sacramento";
+  src: url("/brand/fonts/Sacramento-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root,
+[data-theme="daytime"] {
+  --paper: #fbf6ec;
+  --paper-raised: #fffdf8;
+  --paper-sunk: #f3ecdd;
+  --ink: #1e2a4f;
+  --ink-muted: #5b6385;
+  --line: #e4dac6;
+  --delft: #2e4c9e;
+  --delft-wash: #dfe7f6;
+  --on-delft: #fffdf8;
+  --persimmon: #c03f27;
+  --persimmon-wash: #fbe1d6;
+  --on-persimmon: #fffdf8;
+  --ballet: #f3c6cd;
+  --ballet-deep: #a8425e;
+  --buttercup: #f2c64b;
+  --sage: #7fa07c;
+  --on-accent: #16204a;
+  --ceiling: var(--delft);
+  --on-ceiling: var(--on-delft);
+  --focus-ring: var(--delft);
+  --shadow-lift: 0 1px 0 rgba(30, 42, 79, 0.06), 0 10px 28px rgba(30, 42, 79, 0.1);
+  --shadow-book: inset 6px 0 0 rgba(30, 42, 79, 0.1), 0 2px 0 rgba(30, 42, 79, 0.08), 0 14px 30px rgba(30, 42, 79, 0.16);
+  color-scheme: light;
+}
+
+[data-theme="bedtime"] {
+  --paper: #131b37;
+  --paper-raised: #1c2650;
+  --paper-sunk: #0e1530;
+  --ink: #f6efe2;
+  --ink-muted: #b7bdd6;
+  --line: #2e3a6b;
+  --delft: #9db4f0;
+  --delft-wash: #24336b;
+  --on-delft: #131b37;
+  --persimmon: #f08a68;
+  --persimmon-wash: #4a2a35;
+  --on-persimmon: #131b37;
+  --ballet: #e7a9b5;
+  --ballet-deep: #f2b3c2;
+  --buttercup: #f5d267;
+  --sage: #a9c8a5;
+  --on-accent: #16204a;
+  --ceiling: var(--delft-wash);
+  --on-ceiling: var(--ink);
+  --focus-ring: var(--delft);
+  --shadow-lift: 0 1px 0 rgba(0, 0, 0, 0.3), 0 10px 28px rgba(0, 0, 0, 0.4);
+  --shadow-book: inset 6px 0 0 rgba(0, 0, 0, 0.25), 0 2px 0 rgba(0, 0, 0, 0.35), 0 14px 30px rgba(0, 0, 0, 0.45);
+  color-scheme: dark;
+}
+
+:root {
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --radius-book: 4px;
+  --radius-pill: 999px;
+  --content-max: 1200px;
+  --gutter: 32px;
+  --scallop-size: 32px;
+  --scallop-depth: 16px;
+  /* --font-display, --font-sans, --font-script, --radius-sm and --radius-md are set in
+     globals.css's @theme (same values), so Tailwind's classes use them too. */
+}
+
+@media (max-width: 760px) {
+  :root {
+    --gutter: 20px;
+  }
+}
+
+/* Text styles. */
+@layer components {
+  .display-xl { font-family: var(--font-display); font-size: 64px; line-height: 68px; font-weight: 400; letter-spacing: -0.01em; }
+  .display-l { font-family: var(--font-display); font-size: 44px; line-height: 50px; font-weight: 400; letter-spacing: -0.005em; }
+  .heading { font-family: var(--font-display); font-size: 30px; line-height: 36px; font-weight: 400; }
+  .title { font-family: var(--font-display); font-size: 22px; line-height: 28px; font-weight: 400; }
+  .story { font-family: var(--font-display); font-size: 20px; line-height: 32px; font-weight: 400; }
+  .body { font-family: var(--font-sans); font-size: 17px; line-height: 26px; font-weight: 400; }
+  .body-s { font-family: var(--font-sans); font-size: 15px; line-height: 22px; font-weight: 400; }
+  .label { font-family: var(--font-sans); font-size: 15px; line-height: 20px; font-weight: 600; }
+  .eyebrow { font-family: var(--font-sans); font-size: 13px; line-height: 16px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--persimmon); }
+  .monogram { font-family: var(--font-script); font-size: 48px; line-height: 52px; font-weight: 400; }
+  .signature { font-family: var(--font-script); font-size: 30px; line-height: 34px; font-weight: 400; }
+  @media (max-width: 760px) {
+    .display-xl { font-size: 46px; line-height: 50px; }
+    .display-l { font-size: 32px; line-height: 38px; }
+  }
+}

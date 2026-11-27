@@ -1,160 +1,214 @@
 @import "tailwindcss";
+@import "./brand/tokens.css";
+@import "./brand/storystar.css";
 @import "../components/book/book.css";
 
+/* StoryStar Direction 1 (storystar-brand/BRAND.md). Every color comes from a token in
+   app/brand/tokens.css, so Daytime and Bedtime both work. */
 @theme {
-  --font-sans: "Figtree", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Newsreader", Georgia, serif;
-  /* Palette: classic preppy gift-shop. Deep navy type, a clear medium blue for
-     actions, pale blues for calm backgrounds, and pink, olive and chartreuse
-     stripes as accents. */
-  --color-navy: #14334c;
-  --color-cobalt: #3175b3;
-  --color-cobalt-dark: #245d92;
-  --color-coral: #d9566b;
-  --color-sun: #cfc65a;
-  --color-sky: #dfebf6;
-  --color-bluebell: #a9d0ea;
-  --color-tint: #eef5fb;
-  --color-cream: #faf6ec;
-  --color-blush: #f8e9ea;
-  --color-pink: #e58a96;
-  --color-olive: #4f6b3e;
-  --color-chartreuse: #d8d46a;
-  /* A few bright accents for a little extra pop. */
-  --color-sunny: #ffd447;
-  --color-tangerine: #ff8f5e;
-  --color-mint: #5fcfae;
-  --color-lilac: #b49ae8;
-  /* Crisp, nearly square corners. */
-  --radius-sm: 2px;
-  --radius-md: 3px;
-  --radius-lg: 3px;
-  --radius-xl: 4px;
-  --radius-2xl: 6px;
+  --font-sans: Figtree, "Avenir Next", system-ui, sans-serif;
+  --font-display: "Young Serif", "Iowan Old Style", Georgia, serif;
+  --font-script: Sacramento, "Snell Roundhand", cursive;
+  /* Brand radii: inputs 8px, cards 16px, buttons and chips are pills (rounded-full). */
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 16px;
+  --radius-xl: 16px;
+  --radius-2xl: 16px;
+}
+
+@theme inline {
+  /* Brand tokens as Tailwind colors: bg-paper, text-ink, bg-persimmon, ring-line... */
+  --color-paper: var(--paper);
+  --color-paper-raised: var(--paper-raised);
+  --color-paper-sunk: var(--paper-sunk);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-line: var(--line);
+  --color-delft: var(--delft);
+  --color-delft-wash: var(--delft-wash);
+  --color-on-delft: var(--on-delft);
+  --color-persimmon: var(--persimmon);
+  --color-persimmon-wash: var(--persimmon-wash);
+  --color-on-persimmon: var(--on-persimmon);
+  --color-ballet: var(--ballet);
+  --color-ballet-deep: var(--ballet-deep);
+  --color-buttercup: var(--buttercup);
+  --color-sage: var(--sage);
+  --color-on-accent: var(--on-accent);
+  --color-ceiling: var(--ceiling);
+  --color-on-ceiling: var(--on-ceiling);
+  --shadow-lift: var(--shadow-lift);
+  --shadow-book: var(--shadow-book);
+
+  /* Older color names, pointed at the brand so every page follows the theme until it is
+     converted to the token names above. Remove each once nothing uses it. */
+  --color-navy: var(--ink);
+  --color-cobalt: var(--delft);
+  --color-cobalt-dark: var(--delft);
+  --color-coral: var(--persimmon);
+  --color-sun: var(--buttercup);
+  --color-sky: var(--delft-wash);
+  --color-bluebell: var(--delft-wash);
+  --color-tint: var(--paper-sunk);
+  --color-cream: var(--paper-sunk);
+  --color-blush: var(--persimmon-wash);
+  --color-pink: var(--ballet);
+  --color-olive: var(--sage);
+  --color-chartreuse: var(--buttercup);
+  --color-sunny: var(--buttercup);
+  --color-tangerine: var(--persimmon);
+  --color-mint: var(--sage);
+  --color-lilac: var(--ballet);
+  --color-white: var(--paper-raised);
+  --color-black: var(--ink);
+  /* Status boxes: warnings and errors on persimmon wash, success on a sage wash, text in ink. */
+  --color-amber-50: var(--persimmon-wash);
+  --color-amber-100: var(--persimmon-wash);
+  --color-amber-200: color-mix(in oklab, var(--persimmon) 35%, var(--paper-raised));
+  --color-amber-500: var(--persimmon);
+  --color-amber-700: var(--ink);
+  --color-amber-800: var(--ink);
+  --color-amber-900: var(--ink);
+  --color-amber-950: var(--ink);
+  --color-red-50: var(--persimmon-wash);
+  --color-red-100: var(--persimmon-wash);
+  --color-red-200: color-mix(in oklab, var(--persimmon) 35%, var(--paper-raised));
+  --color-red-600: var(--persimmon);
+  --color-red-700: var(--persimmon);
+  --color-red-800: var(--ink);
+  --color-red-900: var(--ink);
+  --color-emerald-50: color-mix(in oklab, var(--sage) 22%, var(--paper-raised));
+  --color-emerald-100: color-mix(in oklab, var(--sage) 22%, var(--paper-raised));
+  --color-emerald-200: color-mix(in oklab, var(--sage) 55%, var(--paper-raised));
+  --color-emerald-600: var(--ink);
+  --color-emerald-700: var(--ink);
+  --color-emerald-800: var(--ink);
+  --color-emerald-900: var(--ink);
+  --color-gray-100: var(--paper-sunk);
+  --color-gray-700: var(--ink-muted);
+  --color-neutral-200: var(--paper-sunk);
+  --color-neutral-400: var(--ink-muted);
 }
 
 :root {
-  --bg: #ffffff;
-  --fg: #14334c;
-  --muted: #5a7184;
-  --line: #dde5ec;
+  /* Older names used by pages as var(--muted), var(--bg), var(--fg). */
+  --bg: var(--paper);
+  --fg: var(--ink);
+  --muted: var(--ink-muted);
 }
 
 html,
 body {
-  background: var(--bg);
-  color: var(--fg);
+  background: var(--paper);
+  color: var(--ink);
 }
 
-/* Headlines: soft serif in navy, regular weight (book pages keep their own type).
-   In the base layer so a color or weight class on a heading still wins. */
+/* Headings: Young Serif has one weight (400); hierarchy comes from size and space.
+   Book pages keep their own type. */
 @layer base {
   main h1:not(.bk-display),
-  main h2:not(.bk-display) {
-    color: var(--color-navy);
+  main h2:not(.bk-display),
+  main h3:not(.bk-display) {
     font-family: var(--font-display);
     font-weight: 400;
     letter-spacing: 0;
   }
+  a {
+    text-underline-offset: 4px;
+  }
 }
 
 @layer components {
+  /* Older button classes, restyled as the brand's pills. New code uses ss-btn.
+     btn-primary is the one persimmon action per view; btn-secondary is cream with a
+     delft outline and pink inner piping. */
   .btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 0.45rem;
-    border-radius: 0;
-    border: 1px solid transparent;
-    padding: 0.7rem 1.3rem;
-    font-size: 0.92rem;
-    font-weight: 500;
-    line-height: 1.15;
-    letter-spacing: 0.01em;
+    gap: var(--space-2);
+    min-height: 48px;
+    padding: 0 24px;
+    border: 0;
+    border-radius: var(--radius-pill);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 20px;
+    font-weight: 600;
     white-space: nowrap;
-    transition: background-color 150ms, color 150ms, border-color 150ms;
+    text-decoration: none;
     cursor: pointer;
+    transition: transform 120ms ease, box-shadow 120ms ease, background-color 120ms ease;
   }
   .btn:disabled {
     opacity: 0.45;
     cursor: not-allowed;
   }
   .btn-sm {
-    padding: 0.45rem 0.85rem;
-    font-size: 0.82rem;
+    min-height: 44px;
+    padding: 0 18px;
+    font-size: 14px;
   }
   .btn-lg {
-    padding: 0.95rem 1.8rem;
-    font-size: 1rem;
+    min-height: 52px;
+    padding: 0 30px;
+    font-size: 16px;
   }
-  /* Filled blue, for the main action on a page. */
-  .btn-primary {
-    background: var(--color-cobalt);
-    color: #fff;
-  }
-  .btn-primary:hover:not(:disabled) {
-    background: var(--color-cobalt-dark);
-  }
-  .btn-sky {
-    background: var(--color-sky);
-    color: var(--color-navy);
-  }
-  .btn-sky:hover:not(:disabled) {
-    background: var(--color-bluebell);
-  }
-  /* Navy outline, the everyday button. */
-  .btn-secondary {
-    background: #fff;
-    color: var(--color-navy);
-    border-color: var(--color-navy);
-  }
-  .btn-secondary:hover:not(:disabled) {
-    background: var(--color-navy);
-    color: #fff;
-  }
-  /* The one call to buy: olive green with cream type. */
+  .btn-primary,
   .btn-order {
-    background: var(--color-olive);
-    color: var(--color-cream);
-    padding: 0.95rem 1.7rem;
-    font-size: 1rem;
+    background: var(--persimmon);
+    color: var(--on-persimmon);
+    box-shadow: inset 0 0 0 4px var(--persimmon), inset 0 0 0 5.5px var(--ballet);
   }
+  .btn-primary:hover:not(:disabled),
   .btn-order:hover:not(:disabled) {
-    background: #3f5731;
+    transform: translateY(-1px);
+    box-shadow: inset 0 0 0 4px var(--persimmon), inset 0 0 0 5.5px var(--ballet), var(--shadow-lift);
   }
-  .btn-danger {
-    background: #b42318;
-    color: #fff;
+  .btn-secondary,
+  .btn-sky {
+    background: var(--paper-raised);
+    color: var(--delft);
+    box-shadow: inset 0 0 0 1.5px var(--delft), inset 0 0 0 4.5px var(--paper-raised), inset 0 0 0 6px var(--ballet);
   }
+  .btn-secondary:hover:not(:disabled),
+  .btn-sky:hover:not(:disabled) {
+    background: var(--delft-wash);
+    box-shadow: inset 0 0 0 1.5px var(--delft), inset 0 0 0 4.5px var(--delft-wash), inset 0 0 0 6px var(--ballet);
+  }
+  /* Destructive actions: an outline in persimmon, never a second filled primary. */
+  .btn-danger,
   .btn-danger-outline {
-    background: #fff;
-    color: #b42318;
-    border: 1px solid #f3c2bd;
+    background: var(--paper-raised);
+    color: var(--persimmon);
+    box-shadow: inset 0 0 0 1.5px var(--persimmon);
+  }
+  .btn-danger:hover:not(:disabled),
+  .btn-danger-outline:hover:not(:disabled) {
+    background: var(--persimmon-wash);
+    color: var(--ink);
   }
   .card {
-    background: #fff;
+    background: var(--paper-raised);
     border: 1px solid var(--line);
-    border-radius: 0;
-  }
-  .eyebrow {
-    font-size: 0.7rem;
-    font-weight: 600;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--muted);
+    border-radius: var(--radius-md);
   }
   .chip {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 24px;
+    padding: 0 12px 0 10px;
     border-radius: 0;
-    padding: 0.15rem 0.45rem;
-    font-size: 0.65rem;
+    font-size: 12px;
     font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    clip-path: polygon(0 0, 100% 0, calc(100% - 7px) 50%, 100% 100%, 0 100%);
   }
   .chip-sun {
-    background: var(--color-sun);
-    color: var(--color-navy);
+    background: var(--buttercup);
+    color: var(--on-accent);
   }
   /* Preppy ribbon stripe (pink, cream pinstripe, olive), used under the header. */
   .stripe-band {
@@ -183,7 +237,7 @@ body {
   /* Candy stripes: thin diagonal pink-and-white band. */
   .ribbon-candy {
     height: 12px;
-    background: repeating-linear-gradient(135deg, var(--color-pink) 0 8px, #fff 8px 16px);
+    background: repeating-linear-gradient(135deg, var(--color-pink) 0 8px, var(--paper-raised) 8px 16px);
   }
   /* Card borders in candy stripes (pink, blue or olive). */
   .frame-candy,
@@ -191,8 +245,8 @@ body {
   .frame-candy-olive {
     border: 7px solid transparent;
     background:
-      linear-gradient(#fff, #fff) padding-box,
-      repeating-linear-gradient(135deg, var(--c, var(--color-pink)) 0 7px, #fff 7px 14px) border-box;
+      linear-gradient(var(--paper-raised), var(--paper-raised)) padding-box,
+      repeating-linear-gradient(135deg, var(--c, var(--color-pink)) 0 7px, var(--paper-raised) 7px 14px) border-box;
   }
   .frame-candy-blue {
     --c: var(--color-bluebell);
@@ -313,11 +367,12 @@ body {
   width: 600px;
   visibility: hidden;
 }
+/* Book pages are product art: they stay white paper in both themes, like the printed book. */
 .flip-host .flip-page {
   background: #fff;
 }
 .flip-stage:fullscreen {
-  background: #1b1530;
+  background: var(--paper-sunk);
   display: flex;
   flex-direction: column;
   justify-content: center;
