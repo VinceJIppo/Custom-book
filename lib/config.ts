@@ -132,6 +132,12 @@ const EnvSchema = z.object({
   ORDER_POLL_MINUTES: z.coerce.number().int().min(1).default(30),
 
   CHARACTER_SHEET_OPTIONS: z.coerce.number().int().min(1).max(4).default(1),
+  /**
+   * How many stored pictures the PDF renderer prepares at once. 1 keeps the worker's memory
+   * lowest (a 2 GB server ran out of memory with no limit); more is faster on a machine with
+   * several CPUs and memory to spare.
+   */
+  PRINT_IMAGE_CONCURRENCY: z.coerce.number().int().min(1).max(8).default(1),
   /** How many tries (drawings, or sets when options are raised) a parent gets per art style. */
   CHARACTER_SHEET_MAX_ROUNDS: z.coerce.number().int().min(1).max(10).default(3),
 

@@ -16,6 +16,7 @@ import type { BookView } from "../books/viewTypes";
 import type { CoverLayout } from "./cover";
 import { BLEED_IN, SAFE_IN, getTrim, pageSizeWithBleed } from "./geometry";
 import { getStorage } from "../storage";
+import { getConfig } from "../config";
 import { FIT_TEXT_SOURCE } from "./fitText";
 
 /** Print resolution every picture is brought up to (Lulu asks for 300 ppi). */
@@ -82,13 +83,22 @@ export interface RenderedPdf {
 
 /**
  * Print pictures are big (decoded, enlarged and faded, each holds tens of megabytes), and the
- * browser asks for several at once. Preparing them one at a time keeps the worker's memory low.
+ * browser asks for several at once. Preparing only a few at a time (one by default) keeps the worker's memory low.
  */
-let imageQueue: Promise<unknown> = Promise.resolve();
-function oneImageAtATime<T>(fn: () => Promise<T>): Promise<T> {
-  const run = imageQueue.then(fn, fn);
-  imageQueue = run.catch(() => undefined);
-  return run;
+let picturesActive = 0;
+const picturesWaiting: Array<() => void> = [];
+/** Runs at most PRINT_IMAGE_CONCURRENCY picture preparations at once (1 by default: lowest memory). */
+export async function limitPictures<T>(fn: () => Promise<T>): Promise<T> {
+  if (picturesActive >= getConfig().PRINT_IMAGE_CONCURRENCY) await new Promise<void>((go) => picturesWaiting.push(go));
+  else picturesActive++;
+  try {
+    return await fn();
+  } finally {
+    // Hand the slot straight to the next one waiting, so the limit is never exceeded.
+    const next = picturesWaiting.shift();
+    if (next) next();
+    else picturesActive--;
+  }
 }
 
 /** Serves fonts and stored images to the headless browser. Raster art goes in as high-quality JPEG to keep PDFs a sensible size. */
@@ -101,7 +111,7 @@ async function serveAsset(url: string): Promise<{ body: Buffer; contentType: str
     if (!fs.existsSync(p)) return null;
     return { body: fs.readFileSync(p), contentType: file.endsWith(".woff2") ? "font/woff2" : "font/woff" };
   }
-  if (u.pathname.startsWith("/files/")) return oneImageAtATime(() => servePicture(u));
+  if (u.pathname.startsWith("/files/")) return limitPictures(() => servePicture(u));
   return null;
 }
 

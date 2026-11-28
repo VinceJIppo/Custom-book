@@ -28,6 +28,8 @@ export default defineConfig({
       BATCH_POLL_SECONDS: "0",
       // Print files are made on their own in tests that need them (tests/order-flow.test.ts).
       AUTO_PRINT_FILES: "false",
+      // Tests aren't memory-bound: prepare print pictures in parallel so PDF tests stay fast.
+      PRINT_IMAGE_CONCURRENCY: "4",
     },
   },
 });
