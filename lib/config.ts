@@ -148,7 +148,7 @@ const EnvSchema = z.object({
   /** Free credits every new account starts with (USD). */
   CREDIT_SIGNUP_USD: z.coerce.number().min(0).default(5),
   /** Credits added for every printed book bought (USD). */
-  CREDIT_PER_BOOK_USD: z.coerce.number().min(0).default(10),
+  CREDIT_PER_BOOK_USD: z.coerce.number().min(0).default(5),
   /** Credits expire this many months after they are added. */
   CREDIT_EXPIRY_MONTHS: z.coerce.number().int().min(1).max(60).default(6),
   /** Credits can pay toward a book at checkout as long as this much stays in the account (USD). */

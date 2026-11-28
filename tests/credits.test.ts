@@ -159,7 +159,7 @@ describe("usage credits", () => {
       exportId = exp.id;
     });
 
-    it("a paid book adds $10, and credits pay toward it keeping $5 in the account", async () => {
+    it("a paid book adds $5, and credits pay toward it keeping $5 in the account", async () => {
       await grantCredits(userId, 15, "admin"); // $20 in total
       const start = await startCheckout(userId, { bookId, exportId, address, shippingLevel: "MAIL", useCredits: true });
       if (!start.ok) throw new Error(start.message);
@@ -172,7 +172,7 @@ describe("usage credits", () => {
       payment.pay(order.checkoutSessionId!);
       await fulfillCheckout(order.checkoutSessionId!);
       await fulfillCheckout(order.checkoutSessionId!);
-      expect(await balance(userId)).toBe(15); // 20 - 15 used + 10 for buying a book
+      expect(await balance(userId)).toBe(10); // 20 - 15 used + 5 for buying a book
       // Refund: credits come back, and the unspent book reward is removed.
       const refund = await refundOrder(order.id);
       expect(refund.ok).toBe(true);
@@ -186,17 +186,17 @@ describe("usage credits", () => {
       const order = await db.order.findUniqueOrThrow({ where: { id: start.orderId } });
       expect(order).toMatchObject({ status: "paid", paymentProvider: "credits", checkoutSessionId: null });
       expect(order.creditCents).toBe(order.totalCents);
-      expect(await balance(userId)).toBeCloseTo(505 - order.totalCents / 100 + 10, 6);
+      expect(await balance(userId)).toBeCloseTo(505 - order.totalCents / 100 + 5, 6);
     });
 
-    it("with $5 or less, nothing can be used at checkout, and the order still earns $10", async () => {
+    it("with $5 or less, nothing can be used at checkout, and the order still earns $5", async () => {
       const start = await startCheckout(userId, { bookId, exportId, address, shippingLevel: "MAIL", useCredits: true });
       if (!start.ok) throw new Error(start.message);
       const order = await db.order.findUniqueOrThrow({ where: { id: start.orderId } });
       expect(order.creditCents).toBe(0);
       (getPaymentProvider() as MockPaymentProvider).pay(order.checkoutSessionId!);
       await handlePaymentEvent({ type: "checkout.completed", sessionId: order.checkoutSessionId! });
-      expect(await balance(userId)).toBe(15);
+      expect(await balance(userId)).toBe(10); // $5 for signing up + $5 for buying a book
     });
 
     it("buying a credit pack adds it once, by return page or webhook", async () => {
