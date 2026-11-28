@@ -83,11 +83,6 @@ export default async function OurStoryPage() {
             We started StoryStar because we loved telling stories about our kids and wanted to hold on to them. We hope your book becomes the one someone in your house can recite with their eyes closed, and that it shows
             your star a little of who they can be. Thank you for letting us be part of story time.
           </p>
-          <p className="ss-dedication__from">
-            With love,
-            <br />
-            two young parents
-          </p>
         </div>
         <div className="max-w-md space-y-5">
           <p className="ss-h3 !m-0">Your star is already the hero of most of your stories. Now they can star in a book.</p>
