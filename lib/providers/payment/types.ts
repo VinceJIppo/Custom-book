@@ -45,4 +45,6 @@ export interface PaymentProvider {
   /** Verifies the signature on the raw body; returns null for events we don't use. */
   parseWebhook(rawBody: string, headers: Record<string, string>): Promise<PaymentEvent | null>;
   refund(paymentRef: string): Promise<{ id: string }>;
+  /** Closes an unpaid checkout so it can no longer be paid. Does nothing to one that's already paid or closed; check getCheckout after. */
+  expireCheckout(sessionId: string): Promise<void>;
 }

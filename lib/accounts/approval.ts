@@ -41,7 +41,7 @@ export async function notifyAdminsOfRequest(user: Pick<User, "id" | "email" | "a
   if (user.approval !== "pending" || user.approvalRequestedAt) return;
   const claimed = await db.user.updateMany({ where: { id: user.id, approvalRequestedAt: null }, data: { approvalRequestedAt: new Date() } });
   if (claimed.count !== 1) return;
-  const waiting = await db.user.count({ where: { approval: "pending" } });
+  const waiting = await db.user.count({ where: { approval: "pending", deletedAt: null } });
   const link = `${appUrl()}/admin/accounts`;
   const line = `${user.email} signed up and is waiting for approval. ${waiting} account${waiting === 1 ? " is" : "s are"} waiting in total.`;
   for (const to of adminEmails()) {
@@ -64,7 +64,7 @@ export type ApprovalResult = { ok: true } | { ok: false; message: string };
 /** An admin approves an account: it can now make books and gets its welcome credits. */
 export async function approveAccount(admin: Pick<User, "email">, userId: string): Promise<ApprovalResult> {
   if (!isAdminEmail(admin.email)) return { ok: false, message: "Only admins can approve accounts." };
-  const r = await db.user.updateMany({ where: { id: userId, approval: { not: "approved" } }, data: { approval: "approved" } });
+  const r = await db.user.updateMany({ where: { id: userId, approval: { not: "approved" }, deletedAt: null }, data: { approval: "approved" } });
   if (r.count !== 1) return { ok: false, message: "That account is already approved or doesn't exist." };
   const user = await db.user.findUniqueOrThrow({ where: { id: userId } });
   await ensureSignupCredits(user.id);
@@ -86,10 +86,10 @@ export async function approveAccount(admin: Pick<User, "email">, userId: string)
 /** An admin declines an account. It stays signed out of everything that costs money. */
 export async function declineAccount(admin: Pick<User, "email">, userId: string): Promise<ApprovalResult> {
   if (!isAdminEmail(admin.email)) return { ok: false, message: "Only admins can decline accounts." };
-  const r = await db.user.updateMany({ where: { id: userId, approval: "pending" }, data: { approval: "rejected" } });
+  const r = await db.user.updateMany({ where: { id: userId, approval: "pending", deletedAt: null }, data: { approval: "rejected" } });
   return r.count === 1 ? { ok: true } : { ok: false, message: "That account isn't waiting for approval." };
 }
 
 export async function pendingAccounts() {
-  return db.user.findMany({ where: { approval: { in: ["pending", "rejected"] } }, orderBy: { createdAt: "desc" }, take: 200 });
+  return db.user.findMany({ where: { approval: { in: ["pending", "rejected"] }, deletedAt: null }, orderBy: { createdAt: "desc" }, take: 200 });
 }

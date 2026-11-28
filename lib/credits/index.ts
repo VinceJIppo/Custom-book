@@ -16,6 +16,7 @@ import { db } from "../db";
 import { getConfig } from "../config";
 import { isAdminEmail } from "../admin";
 import { log } from "../log";
+import { wasDeletedBefore } from "../accounts/deleted";
 
 type Tx = Prisma.TransactionClient;
 const DEFICIT_EXPIRY = new Date("9999-12-31T00:00:00Z");
@@ -68,13 +69,16 @@ export async function grantCredits(
 /** Every account gets its starting credits once (also for accounts made before credits existed). */
 export async function ensureSignupCredits(userId: string) {
   if (!creditsEnabled()) return;
-  // Accounts waiting for approval get their welcome credits when they're approved.
-  if (getConfig().NEW_ACCOUNT_APPROVAL) {
-    const u = await db.user.findUnique({ where: { id: userId }, select: { approval: true, email: true } });
-    if (!u || (u.approval !== "approved" && !isAdminEmail(u.email))) return;
-  }
   const amount = getConfig().CREDIT_SIGNUP_USD;
   if (amount <= 0) return;
+  // Already given (the usual case): one quick lookup.
+  if (await db.creditLot.findUnique({ where: { sourceKey: `signup:${userId}` }, select: { id: true } })) return;
+  const u = await db.user.findUnique({ where: { id: userId }, select: { approval: true, email: true, deletedAt: true } });
+  if (!u || u.deletedAt) return;
+  // Accounts waiting for approval get their welcome credits when they're approved.
+  if (getConfig().NEW_ACCOUNT_APPROVAL && u.approval !== "approved" && !isAdminEmail(u.email)) return;
+  // Welcome credits are once per email: not again after deleting an account and signing up anew.
+  if (await wasDeletedBefore(u.email)) return;
   try {
     await grantCredits(userId, amount, "signup", { sourceKey: `signup:${userId}`, note: "Welcome credits" });
   } catch (err) {

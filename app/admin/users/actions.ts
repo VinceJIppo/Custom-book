@@ -12,8 +12,9 @@ export async function saveRewardsAction(fd: FormData) {
   if (!isAdminEmail(me.email)) redirect("/");
   const tier = String(fd.get("tierOverride") ?? "");
   const n = (k: string) => Math.max(0, Math.min(500, Math.floor(Number(fd.get(k) ?? 0)) || 0));
-  await db.user.update({
-    where: { id: String(fd.get("userId") ?? "") },
+  // updateMany: a deleted account (gone from the list) is left untouched.
+  await db.user.updateMany({
+    where: { id: String(fd.get("userId") ?? ""), deletedAt: null },
     data: {
       tierOverride: (TIER_IDS as readonly string[]).includes(tier) ? tier : null,
       bonusBooks: n("bonusBooks"),
@@ -33,7 +34,7 @@ export async function addCreditsAction(fd: FormData) {
   const key = String(fd.get("key") ?? "");
   if (!(amount >= 0.01 && amount <= 500) || !/^[a-z0-9-]{8,64}$/i.test(key)) redirect("/admin/users?error=amount");
   const note = String(fd.get("note") ?? "").trim().slice(0, 120) || `Added by ${me.email}`;
-  const user = await db.user.findUnique({ where: { id: userId }, select: { email: true } });
+  const user = await db.user.findFirst({ where: { id: userId, deletedAt: null }, select: { email: true } });
   if (!user) redirect("/admin/users?error=user");
   await grantCredits(userId, amount, "admin", { sourceKey: `admin:${key}`, note });
   redirect(`/admin/users?credited=${encodeURIComponent(`$${amount.toFixed(2)} to ${user.email}`)}`);

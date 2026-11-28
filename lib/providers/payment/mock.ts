@@ -59,6 +59,11 @@ export class MockPaymentProvider implements PaymentProvider {
     return e.type && e.sessionId ? e : null;
   }
 
+  async expireCheckout(sessionId: string) {
+    const s = store.get(sessionId);
+    if (s && s.status === "open" && !s.paid) s.status = "expired";
+  }
+
   async refund(paymentRef: string) {
     return { id: `mock_re_${paymentRef}` };
   }

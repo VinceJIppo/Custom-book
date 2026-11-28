@@ -13,6 +13,7 @@
 import { db } from "../db";
 import { getConfig } from "../config";
 import { isAdminEmail } from "../admin";
+import { priorUsage } from "../accounts/deleted";
 
 export const ALLOWANCE_ACTIONS = ["book", "character", "redraw", "rewrite", "theme"] as const;
 export type AllowanceAction = (typeof ALLOWANCE_ACTIONS)[number];
@@ -101,12 +102,22 @@ async function countUsage(userId: string, since: Date | null): Promise<Record<Al
   return { book, character, redraw: edits + redraws, rewrite, theme };
 }
 
+/** Everything an account has used, ever (saved when an account is deleted). */
+export function lifetimeUsage(userId: string) {
+  return countUsage(userId, null);
+}
+
 export async function getAllowance(userId: string): Promise<Allowance> {
   const user = await db.user.findUniqueOrThrow({ where: { id: userId } });
   const paidOrders = await db.order.count({ where: { userId, paidAt: { not: null }, status: { not: "refunded" } } });
   const tier = tierFor(paidOrders, user.tierOverride);
   const since = tier.window === "30d" ? new Date(Date.now() - 30 * 86400_000) : null;
   const used = await countUsage(userId, since);
+  // The lifetime "try it" allowance counts what an earlier, deleted account with this email used.
+  if (!since) {
+    const prior = await priorUsage(user.email);
+    for (const a of ALLOWANCE_ACTIONS) used[a] += prior[a] ?? 0;
+  }
   const limits = {
     ...tier.limits,
     book: tier.limits.book + user.bonusBooks,

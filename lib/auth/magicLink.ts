@@ -16,6 +16,7 @@ import { db } from "../db";
 import { getConfig } from "../config";
 import { getEmailProvider } from "../providers/registry";
 import { errorMessage, log } from "../log";
+import { isDeletedEmail } from "../accounts/deleted";
 
 export const LINK_MINUTES = 15;
 const MAX_LINKS_PER_HOUR = 5;
@@ -32,7 +33,8 @@ const EmailSchema = z.string().trim().toLowerCase().email().max(254);
 
 export function normalizeEmail(input: unknown): string | null {
   const r = EmailSchema.safeParse(input);
-  return r.success ? r.data : null;
+  // The placeholder address of a deleted account can never sign in.
+  return r.success && !isDeletedEmail(r.data) ? r.data : null;
 }
 
 export type LinkResult = { ok: true; devLink?: string } | { ok: false; message: string };
@@ -93,7 +95,7 @@ export async function redeemSignInLink(rawEmail: unknown, token: string): Promis
 export async function userForSession(sessionToken: string | undefined | null) {
   if (!sessionToken) return null;
   const s = await db.session.findUnique({ where: { tokenHash: hashToken(sessionToken) }, include: { user: true } });
-  if (!s || s.expiresAt < new Date()) return null;
+  if (!s || s.expiresAt < new Date() || s.user.deletedAt) return null;
   // Note activity at most once an hour.
   if (Date.now() - s.lastSeenAt.getTime() > 3600_000) await db.session.update({ where: { id: s.id }, data: { lastSeenAt: new Date() } }).catch(() => undefined);
   return s.user;

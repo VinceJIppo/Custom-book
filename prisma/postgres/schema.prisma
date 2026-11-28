@@ -30,6 +30,14 @@ model User {
   bonusRedraws    Int      @default(0)
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
+  /// Set when the parent deletes their account. The row then only holds paid order and
+  /// credit purchase records: the email is replaced and every other detail is erased.
+  deletedAt        DateTime?
+  /// One-way hash of the deleted account's email, so a new account with the same address
+  /// doesn't get the welcome credits or the free trial again.
+  deletedEmailHash String?
+  /// Lifetime use at deletion ({ book, character, ... } counts), carried to a new account with the same email.
+  deletedUsage     Json?
 
   children ChildProfile[]
   books    Book[]
@@ -40,6 +48,8 @@ model User {
   creditLots      CreditLot[]
   creditEntries   CreditEntry[]
   creditPurchases CreditPurchase[]
+
+  @@index([deletedEmailHash])
 }
 
 /// Usage credits, in US dollars. Each grant is a lot with its own expiry; usage

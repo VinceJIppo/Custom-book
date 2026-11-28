@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getOptionalUser } from "@/lib/auth";
 import { isApproved } from "@/lib/accounts/approval";
@@ -30,6 +31,12 @@ export default async function PendingPage() {
         <form action={signOutAction}>
           <button className="ss-btn ss-btn--secondary ss-btn--sm">Sign out</button>
         </form>
+        <p className="body-s text-ink-muted">
+          Changed your mind?{" "}
+          <Link href="/account#delete" className="ss-link">
+            Delete your account
+          </Link>
+        </p>
       </div>
     </div>
   );

@@ -20,7 +20,7 @@ export default async function AdminOrders({ searchParams }: { searchParams: Prom
     where: sp.status ? { status: sp.status } : { status: { notIn: ["expired"] } },
     orderBy: { createdAt: "desc" },
     take: 200,
-    include: { user: { select: { email: true } } },
+    include: { user: { select: { email: true, deletedAt: true } } },
   });
   const attention = orders.filter((o) => ["failed", "rejected"].includes(o.status) || (o.providerStatus === "UNPAID" && o.status === "created"));
   const paidCents = orders.filter((o) => o.paidAt && o.status !== "refunded").reduce((s, o) => s + o.totalCents, 0);
@@ -81,7 +81,7 @@ export default async function AdminOrders({ searchParams }: { searchParams: Prom
                     <div className="text-ink-muted">{o.createdAt.toLocaleString()}</div>
                   </td>
                   <td className="p-3">
-                    <div>{o.user.email}</div>
+                    <div>{o.user.deletedAt ? <span className="text-ink-muted">Deleted account</span> : o.user.email}</div>
                     <div className="text-ink-muted">
                       {a?.name}, {a?.city} {a?.countryCode}
                     </div>

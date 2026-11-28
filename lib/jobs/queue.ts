@@ -26,7 +26,8 @@ export type JobType =
   | "book.export"
   | "export.validate"
   | "order.submit"
-  | "order.status";
+  | "order.status"
+  | "account.sweep";
 
 export interface EnqueueOptions {
   userId: string;

@@ -23,7 +23,7 @@ export function SiteFooter({ signedIn }: { signedIn: boolean }) {
   const shop: FooterItem[] = [
     { href: "/books/new", label: "Start a book" },
     { href: "/#stories", label: "Stories" },
-    ...(signedIn ? [{ href: "/orders", label: "Your orders" }] : []),
+    ...(signedIn ? [{ href: "/orders", label: "Your orders" }, { href: "/account", label: "Your account" }] : []),
   ];
   const help: FooterItem[] = [{ href: "/#how", label: "How it works" }, { href: "/examples", label: "Peek inside" }, { placeholder: "Shipping" }, { placeholder: "Contact us" }];
   const about: FooterItem[] = [{ placeholder: "Our story" }, { href: "/photo-privacy", label: "Photo privacy" }, { placeholder: "Terms" }];

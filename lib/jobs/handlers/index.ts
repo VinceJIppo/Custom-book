@@ -8,6 +8,7 @@ import { artDirectHandler } from "../../books/review";
 import { bibleHandler, sheetHandler } from "./characters";
 import { exportHandler, validateHandler } from "./export";
 import { orderStatusHandler, orderSubmitHandler } from "./orders";
+import { sweepDeletedAccount } from "../../accounts/deleteAccount";
 
 export const handlers: Record<JobType, JobHandler> = {
   "book.outline": outlineHandler,
@@ -26,6 +27,8 @@ export const handlers: Record<JobType, JobHandler> = {
   "character.bible": bibleHandler,
   "order.submit": orderSubmitHandler,
   "order.status": orderStatusHandler,
+  // After an account is deleted: removes anything a job already running at the time wrote afterwards.
+  "account.sweep": async (job) => ({ result: await sweepDeletedAccount((job.payload as { userId: string }).userId, job.id) }),
   "book.finalize": async (job) => {
     if (job.bookId) await maybeFinalizeBook(job.bookId);
     return {};

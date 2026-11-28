@@ -95,6 +95,17 @@ export class StripePaymentProvider implements PaymentProvider {
     }
   }
 
+  async expireCheckout(sessionId: string) {
+    try {
+      await this.stripe.checkout.sessions.expire(sessionId);
+    } catch (err) {
+      // Stripe refuses to expire a session that is already complete or expired; that's fine.
+      // Anything else (it's still open) is a real failure.
+      const s = await this.stripe.checkout.sessions.retrieve(sessionId);
+      if (s.status === "open") throw err;
+    }
+  }
+
   async refund(paymentRef: string) {
     // A repeated click or retry never refunds twice.
     const r = await this.stripe.refunds.create({ payment_intent: paymentRef }, { idempotencyKey: `refund-${paymentRef}` });

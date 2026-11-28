@@ -36,7 +36,7 @@ export async function notifyOrderStatus(order: Order, status: string) {
   try {
     const user = await db.user.findUnique({ where: { id: order.userId } });
     const c = content(order, status);
-    if (!user || !c || user.email.endsWith(".local")) return;
+    if (!user || !c || user.deletedAt || user.email.endsWith(".local")) return;
     const link = `${getConfig().APP_URL.replace(/\/$/, "")}/orders/${order.id}`;
     const email = getEmailProvider();
     await email.send({

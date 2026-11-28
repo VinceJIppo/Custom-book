@@ -15,7 +15,7 @@ export default async function AdminUsers({ searchParams }: { searchParams: Promi
   const me = await requireOnboardedUser();
   if (!isAdminEmail(me.email)) notFound();
   const sp = await searchParams;
-  const users = await db.user.findMany({ orderBy: { createdAt: "desc" }, take: 200 });
+  const users = await db.user.findMany({ where: { deletedAt: null }, orderBy: { createdAt: "desc" }, take: 200 });
   const rows = await Promise.all(users.map(async (u) => ({ u, a: await getAllowance(u.id) })));
   const credits = creditsEnabled();
   // Current balances, read directly (looking doesn't change anything).

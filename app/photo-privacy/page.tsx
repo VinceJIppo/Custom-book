@@ -33,7 +33,7 @@ const SHORT = [
   "Location and other hidden data are removed from every photo before it is checked or stored.",
   "Two services see the photos: Anthropic's Claude checks each one for a clear face, and Google's Gemini API draws the character. Under the business terms we use, neither may use them to train its models or improve its products.",
   "Photos are kept in private storage that only your account can reach, encrypted at rest.",
-  "By default, the original photos are deleted as soon as you approve a character. You can delete photos, characters or everything about a child at any time.",
+  "By default, the original photos are deleted as soon as you approve a character. You can delete photos, characters, everything about a child, or your whole account at any time.",
   "We never use your photos or your books for marketing, examples or training.",
 ];
 
@@ -44,7 +44,7 @@ export default function PhotoPrivacyPage() {
       <header className="space-y-3">
         <p className="eyebrow">Photo privacy</p>
         <h1 className="display-l">What happens to your child&apos;s photos</h1>
-        <p className="text-ink-muted">Last updated November 27, 2026. This page explains, step by step, where the photos you upload go, who can see them and how to delete them.</p>
+        <p className="text-ink-muted">Last updated November 28, 2026. This page explains, step by step, where the photos you upload go, who can see them and how to delete them.</p>
       </header>
 
       <section className="ss-card ss-card--piped space-y-3" aria-labelledby="short-version">
@@ -139,7 +139,13 @@ export default function PhotoPrivacyPage() {
             address, status) are kept for our accounts. Pictures of a grown-up already drawn into a child&apos;s book stay with that book.
           </li>
           <li>
-            <strong className="font-semibold">Your account:</strong> to delete your whole account, email us at [CONTACT EMAIL].
+            <strong className="font-semibold">Your account:</strong> on your{" "}
+            <Link className="ss-link" href="/account#delete">
+              Account page
+            </Link>
+            , &ldquo;Delete my account&rdquo; erases all of the above for every child and grown-up, plus your custom themes, credits, sign-in details and email address, straight away. We keep only records of paid
+            orders and payments (with no email attached), and a scrambled one-way copy of your email address so a new account with the same address doesn&apos;t get the welcome offer again. An account can&apos;t be
+            deleted while a printed book is still on its way. We email you to confirm.
           </li>
           <li>
             <strong className="font-semibold">Backups:</strong> our database backups may keep deleted records for [BACKUP RETENTION] before they roll off. Photo files themselves are not in those backups.
@@ -152,6 +158,7 @@ export default function PhotoPrivacyPage() {
           <li>Our printer, Lulu, receives only the finished book files (the drawn pages and the words) and the shipping details, never photos.</li>
           <li>Stripe handles payment on its own page. It receives the order amount, the book title, the recipient&apos;s name and your email, never photos.</li>
           <li>Our email provider, Resend, sends sign-in links and notices about your books and orders, never images.</li>
+          <li>If you delete your account, Stripe and Lulu keep their own records of past payments and orders under their own policies.</li>
         </ul>
       </Section>
 
