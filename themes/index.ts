@@ -16,6 +16,9 @@ import cottageHens from "./cottage-hens.json";
 import firstBigSnow from "./first-big-snow.json";
 import mistyWoods from "./misty-woods.json";
 import lowTideShore from "./low-tide-shore.json";
+import frostyWinterEvening from "./frosty-winter-evening.json";
+import redRockLoop from "./red-rock-loop.json";
+import breezyAutumnStreet from "./breezy-autumn-street.json";
 
 export const BUILT_IN_THEME_FILES: Record<string, unknown> = {
   "construction-crew.json": constructionCrew,
@@ -32,4 +35,7 @@ export const BUILT_IN_THEME_FILES: Record<string, unknown> = {
   "first-big-snow.json": firstBigSnow,
   "misty-woods.json": mistyWoods,
   "low-tide-shore.json": lowTideShore,
+  "frosty-winter-evening.json": frostyWinterEvening,
+  "red-rock-loop.json": redRockLoop,
+  "breezy-autumn-street.json": breezyAutumnStreet,
 };

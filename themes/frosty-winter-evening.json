@@ -1,0 +1,74 @@
+{
+  "id": "frosty-winter-evening",
+  "name": "The Frosty Winter Evening",
+  "genre": "love and belonging",
+  "ageRange": [
+    2,
+    8
+  ],
+  "pitch": "On a frosty winter day a tiny ginger kitten comes to live with the child. Every night at bedtime the child lays a hand on their own chest, feels thump, thump, and whispers the words they know by heart. When the kitten cannot settle on his first night away from the big warm cat he always slept against, the child remembers how a heartbeat feels and shares theirs.",
+  "setting": "A cozy home on a frosty winter evening: lacy frost on the windows, an early blue dusk outside and a bare tree with the first star above it, warm lamplight, and the child's bedroom with a bed, a soft rug and a warm radiator under the window. Beside the bed sits the kitten's new round basket with a soft blanket and a jingly ball. A pinecone sits on the sill.",
+  "supportingCast": [
+    {
+      "name": "Saffron",
+      "role": "a tiny new kitten who cannot settle on his first night in a new home",
+      "look": "a tiny real ginger boy kitten with a white chest, four white paws, a white tip on his tail and round green eyes; he mews, pounces, kneads and purrs like a real kitten and never talks"
+    }
+  ],
+  "storyBeats": [
+    "a hand on their own chest at bedtime: every beat says I love you",
+    "the same words on sunny days and muddy days",
+    "a tiny kitten comes to live with the child",
+    "he has always slept curled against a big warm cat",
+    "a busy first day of pouncing and tumbling",
+    "bedtime and a small cry from the basket",
+    "he is the child's to look after",
+    "a jingly ball he will not chase",
+    "a basket by the warm radiator and still a small cry",
+    "a hand on the child's own heart",
+    "patting him softly in time: thump, thump",
+    "purring and sleep while the frost sparkles on the window"
+  ],
+  "powerIdeas": "The child's own heartbeat and the bedtime words they know by heart are what help: remembering how that steady thump, thump comforts them, the child guesses what the kitten misses and shares it. A favorite color can be the kitten's blanket, and a favorite animal can be on the child's pajamas.",
+  "artDirection": {
+    "defaultStyle": "painted-whimsy",
+    "palette": [
+      "#4E6A88",
+      "#F1BC57",
+      "#D9824A",
+      "#D6CCE4"
+    ],
+    "mood": "cozy and tender: early blue winter dusk and lacy frost at the window, warm lamplight and soft blankets inside, a tiny ginger kitten, quiet and safe rather than sad"
+  },
+  "contentRules": [
+    "real world only: Saffron acts like a real kitten (he mews, pounces, kneads and purrs) and never talks; no magic",
+    "the refrain is exactly \"Every beat says I love you\", said at most three times: at the start, when the child passes it on, and on the last page",
+    "the words never change with the child's mood or muddles: that steady love is the heart of the story, shown and never preached",
+    "Saffron is healthy and safe the whole time: he is only lonely, never sick, hurt, lost or a stray",
+    "the child holds Saffron gently with two hands under his middle and never squeezes; at night he stays in his basket and the child pats him there",
+    "the winter night is calm and cozy: frost on the glass and no snowstorm, wind, power cuts or scary sounds",
+    "the child chooses to settle Saffron and finds the answer; any grown-up says goodnight but never settles him",
+    "show the child only at their current age: no baby pictures, growing-up scenes or glimpses of the future",
+    "any grown-up the family has not added is simply 'a grown-up', unnamed, with their face out of view",
+    "if the family's own pet is in the book, it is gentle with Saffron by day but sleeps in its own bed in another room, so it never settles him",
+    "no brand names and no readable words on signs, books or labels in the pictures"
+  ],
+  "familyParts": {
+    "grownUp": "Taught the child the bedtime words: at the start the child rests an ear on their chest, hears thump, thump, and they say the words together. At the end they look in and tuck the child back into bed.",
+    "youngerChild": "The younger child helps unpack the kitten's basket and roll his jingly ball. At bedtime they watch from their own bed and are the first to whisper that Saffron is purring.",
+    "olderChild": "The older child shows the hero how to hold Saffron with two gentle hands by day. At bedtime they listen from the doorway, and when the purring starts they give the hero a quiet thumbs up.",
+    "withoutGrownUp": "The bedtime words are the child's own, said with a hand on their heart. A grown-up says goodnight from the doorway, face out of view, and never comes in to settle the kitten: the child does that."
+  },
+  "starters": [
+    {
+      "id": "every-beat",
+      "title": "Every Beat Says I Love You",
+      "summary": "A tiny kitten has come to live with your child. All day he pounces and tumbles, but at bedtime, far from the warm cat he has always slept beside, he just cannot settle.",
+      "trait": "Empathy",
+      "voice": "quiet-wisdom",
+      "idea": "Every night the child lays a hand on their chest, feels thump, thump, and whispers the same words on sunny days and muddy days: \"Every beat says I love you\" (shown at the start). A tiny kitten named Saffron moves in. He has always slept against a big warm cat, so at bedtime he cries in his basket. He is the child's to look after, so the child gets up. A jingly ball fails: he isn't bored. A basket by the radiator fails: he is warm but still cries. The child feels their own thump, thump, guesses he misses a heartbeat and pats him softly in time, whispering the words. He purrs and sleeps."
+    }
+  ],
+  "houseOrder": 7,
+  "licensed": false
+}

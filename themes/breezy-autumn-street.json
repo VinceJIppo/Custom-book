@@ -1,0 +1,74 @@
+{
+  "id": "breezy-autumn-street",
+  "name": "The Breezy Autumn Street",
+  "genre": "superhero play",
+  "ageRange": [
+    2,
+    8
+  ],
+  "pitch": "The child is a superhero at home: a homemade cape, a hero name they made up, and a red magnet on a string for rescuing lost paper clips from under the sofa. But there is never anyone real to rescue. Then one breezy autumn morning, the friendly neighbor next door drops her keys into a narrow gap beside her front steps, and she can't get home.",
+  "setting": "A little town street on a breezy late autumn morning: two narrow brick houses side by side with stone front steps, the child's home with a big front window, and Mrs. Okafor's house next door with its bright red door. A street tree drops yellow leaves and twigs, and a narrow gap between her stone steps and the brick wall is half full of fallen leaves.",
+  "supportingCast": [
+    {
+      "name": "Mrs. Okafor",
+      "role": "the friendly neighbor next door who drops her keys (a neighbor, not family)",
+      "look": "an older woman with short silver curls, round red glasses, a long plum raincoat and a mustard knitted scarf; she carries a cloth shopping bag and a big jingly iron key ring"
+    }
+  ],
+  "storyBeats": [
+    "a homemade cape and a hero name",
+    "rescuing paper clips from the dark under the sofa with the magnet",
+    "waving to Mrs. Okafor through the big front window",
+    "plink: her keys drop into the gap by her steps",
+    "no grown-up's arm fits and her spare key hangs inside",
+    "a job for a real hero",
+    "a long stretch that stops just short",
+    "a twig that pushes the keys under the leaves",
+    "the magnet doesn't need to see",
+    "down and down then wiggle and click",
+    "the red door opens",
+    "a hero wave from window to window"
+  ],
+  "powerIdeas": "The child's choice to stop and help, and their quick thinking about how their homemade hero gadget works (a magnet on a string finds iron without seeing it), are the power. A favorite color can be the cape and a favorite animal the felt patch sewn on it.",
+  "artDirection": {
+    "defaultStyle": "painted-whimsy",
+    "palette": [
+      "#5E7FA3",
+      "#E2A93B",
+      "#B4473A",
+      "#7A4E6E"
+    ],
+    "mood": "cozy breezy autumn morning: a slate blue street, mustard leaves twirling past a bright red door, warm window light and playful hero energy that settles into a warm glow"
+  },
+  "contentRules": [
+    "real world only: the powers are pretend, so nobody really flies, glows or does magic; the child zooms, leaps and stretches like any child",
+    "no villains, no baddies and no fighting: the only problem is the dropped keys",
+    "the hero name is a favorite thing plus a made-up word: never Super, Captain, Mighty, Iron, Wonder, a magnet word or a lone animal, nor ending in man, girl, boy",
+    "the cape is a homemade towel cape with one felt patch of a favorite animal or shape (never a letter, star, bolt, spider or bat) and no mask hides the face",
+    "true to how magnets work: the magnet picks up iron things like paper clips and the iron key ring, never crayons, socks or leaves",
+    "the child stays on the steps and the pavement, never climbs into the gap or puts their head in; the arm slides in and out easily and nothing is pried or broken",
+    "the breeze is gentle and fun: leaves twirl and scarves flutter, never a storm, thunder or scary wind",
+    "Mrs. Okafor is a neighbor, not family: calm and grateful, she never scolds and never thinks of the magnet herself",
+    "if the story needs a grown-up from home and none is given, say only 'a grown-up' and keep their face out of view",
+    "no brands, house numbers, signs or readable words anywhere",
+    "the magnet is one big red horseshoe magnet on a short string, far too big for a mouth; the child never steps into the road"
+  ],
+  "familyParts": {
+    "grownUp": "Carries Mrs. Okafor's shopping and stands calmly by her steps. Their arm is too big for the gap and they never think of the magnet: the child makes the rescue.",
+    "youngerChild": "Wears a little cape too and keeps watch beside the gap, then is the first to cheer when the keys come up on the magnet, but never does the rescue.",
+    "olderChild": "Holds Mrs. Okafor's shopping bag. Their arm is too big for the gap, like a grown-up's, so they cheer each try and let the child lower the magnet and bring up the keys on their own.",
+    "withoutGrownUp": "A grown-up watches from the child's own open front door a few steps away: say only 'a grown-up' and show just a hand on the door or a voice. Mrs. Okafor stays right beside the child the whole time."
+  },
+  "starters": [
+    {
+      "id": "rescue-at-the-red-door",
+      "title": "The Rescue at the Red Door",
+      "summary": "Your child is a superhero with a homemade cape and a hero name all their own. One breezy morning the neighbor next door drops her keys where no grown-up can reach, and it is time for a real rescue.",
+      "trait": "Resourcefulness",
+      "voice": "quiet-wisdom",
+      "idea": "The child plays superhero in a homemade cape, rescuing paper clips from the dark under the sofa with a red magnet on a string (shown at the start): it grabs iron things, never socks. Next door, Mrs. Okafor juggles her shopping and drops her iron key ring into a narrow gap by her steps. No grown-up's arm fits, and her spare key hangs inside. The child chooses to help. Stretching an arm in fails: the keys are too deep. Hooking them with a twig fails too: it pushes them under the leaves, out of sight. Then the child lowers the magnet, which doesn't need to see. Click! Up come the keys."
+    }
+  ],
+  "houseOrder": 9,
+  "licensed": false
+}

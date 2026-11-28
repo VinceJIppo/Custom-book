@@ -467,6 +467,18 @@
     {
       "name": "The Twits",
       "genre": "whimsical"
+    },
+    {
+      "name": "Magneto",
+      "genre": "superheroes"
+    },
+    {
+      "name": "Miraculous Ladybug",
+      "aliases": [
+        "Cat Noir",
+        "Chat Noir"
+      ],
+      "genre": "superheroes"
     }
   ]
 }

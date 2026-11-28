@@ -23,7 +23,7 @@ test("create a profile, pick a theme, and read a 16-page book in the flipbook", 
 
   await page.getByRole("link", { name: "New book" }).click();
   // One house theme: pick one of the base stories (the first is chosen already).
-  await expect(page.getByTestId("simple-book-form").locator('[data-testid^="story-"]')).toHaveCount(6);
+  await expect(page.getByTestId("simple-book-form").locator('[data-testid^="story-"]')).toHaveCount(9);
   await page.getByTestId("story-before-the-tide").click();
   await page.getByTestId("create-book").click();
 

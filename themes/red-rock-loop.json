@@ -1,0 +1,66 @@
+{
+  "id": "red-rock-loop",
+  "name": "The Red Rock Loop",
+  "genre": "mountain biking",
+  "ageRange": [
+    2,
+    8
+  ],
+  "pitch": "Every Saturday afternoon the child rides the little loop trail through the red rocks to the Lookout, rolling up and over every bump. But a spring rain in the night has washed a round rock into the narrowest bend, and every time the child tries to ride past it, the front wheel goes straight back to the rock.",
+  "setting": "A gentle desert bike trail at the end of a quiet lane on a warm spring afternoon after rain: smooth red dirt with little bumps, red rock towers, a twisty old juniper tree just past the narrow bend, yellow and orange spring flowers, cactus in bloom well back from the trail, and a flat rock Lookout over the red valley. At home, an ankle high stone wall runs to the front gatepost.",
+  "supportingCast": [],
+  "storyBeats": [
+    "walking the low wall with arms out and eyes on the gatepost",
+    "helmet on for the Saturday afternoon loop",
+    "rolling up and over the little bumps past the twisty tree",
+    "a spring rain in the night",
+    "a round rock in the narrowest bend",
+    "wheels stay on the trail",
+    "too tall for a little wheel to climb",
+    "steering past while staring at the rock",
+    "a bird lands on the twisty tree and the child looks up",
+    "eyes on the twisty tree",
+    "rolling past the rock and on to the Lookout",
+    "the low wall again at home"
+  ],
+  "powerIdeas": "The child's steady balance and their own wall walking trick (eyes on where you want to go, never on your feet) are the power. A favorite color can be the bike or the helmet, and a favorite animal can be the one the child hopes to spot from the Lookout, like a lizard or a hawk.",
+  "artDirection": {
+    "defaultStyle": "painted-whimsy",
+    "palette": [
+      "#C65A3A",
+      "#E6B98F",
+      "#5F8F80",
+      "#E58AA6"
+    ],
+    "mood": "warm, clean spring light after rain: glowing red rock and sandstone under a clear blue sky, soft juniper greens, little bursts of yellow and pink flowers, open, airy and calm"
+  },
+  "contentRules": [
+    "real world only: no magic and no talking animals",
+    "a buckled helmet on every riding page; the bike is a small pedal bike or a balance bike that suits the child's age",
+    "a gentle trail only: smooth dirt and little bumps, with no jumps, no drops and no steep or fast hills",
+    "true trail know-how: the bike goes where the rider looks, and wheels stay on the trail so the desert plants and soil stay safe",
+    "a bump into the rock is a slow, soft stop with a foot down in the sand; nobody is ever hurt and the bike is fine",
+    "cactus grow well back from the trail and nobody touches one; the rock is never moved, kicked or climbed",
+    "a grown-up is always close by on the trail and never steers, pushes or explains the trick: the child works it out",
+    "no brands, trail signs or readable words anywhere",
+    "the wall at home is only ankle high and the child walks it slowly with a grown-up near; no climbing on anything taller"
+  ],
+  "familyParts": {
+    "grownUp": "Walks or rides just behind, buckles the helmet at the start and carries the water. At the rock they offer to walk the bike past, then wait calmly and cheer, but never steer, push or explain the trick.",
+    "youngerChild": "Follows on a balance bike or on foot and stops at the rock too. Once past, the hero calls back to look at the twisty tree, and the little one comes through second, never the one who finds the trick.",
+    "olderChild": "Rides just ahead, walks their own bike past the new rock and waits by the twisty tree to cheer. They never explain the trick or ride it for the child, and at the Lookout the child shows them where to look.",
+    "withoutGrownUp": "A grown-up walks a little way behind the whole time: say only 'a grown-up' and show them from behind or just a hand holding the water bottle. The child rides, thinks and works it out alone."
+  },
+  "starters": [
+    {
+      "id": "eyes-on-the-twisty-tree",
+      "title": "Eyes on the Twisty Tree",
+      "summary": "Your child rides the little desert loop every Saturday. But a spring rain has left a round rock in the narrowest bend, and the front wheel keeps finding it.",
+      "trait": "Focus",
+      "voice": "quiet-wisdom",
+      "idea": "Each Saturday the child rides the little loop past the twisty tree to the Lookout. A spring rain left a round rock in the narrowest bend: too heavy to move; wheels stay on the trail. Walking past is fine, but the child wants to ride it. Rolling slowly up to bump over it fails: it is too tall, so the wheel stops softly, foot down. Steering past on the smooth side fails too: the child stares at the rock, so the wheel goes right to it. A bird lands on the twisty tree. The child remembers walking the low wall at home, eyes on the gatepost (shown at the start). Eyes on the tree, they roll past."
+    }
+  ],
+  "houseOrder": 8,
+  "licensed": false
+}
