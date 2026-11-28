@@ -7,3 +7,4 @@
 - One persimmon primary button per view. Ballet pink and buttercup are never text colors. The script font is for the child's name and sign-offs only.
 - Never invent prices, shipping times, reviews, ratings or press. Keep bracketed placeholders like `[YOUR PRICE]` and list them in your summary.
 - Never put a comma in any title or heading (page titles, section and card titles, book titles). This overrides the reference homepage, whose hero line had one.
+- Every headline and heading starts with a capital letter, including the big display lines (never all lowercase). This overrides the lowercase lines in the reference homepage.

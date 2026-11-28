@@ -19,6 +19,8 @@
 
   /* Type helpers -------------------------------------------------------- */
   .ss-eyebrow { margin: 0 0 var(--space-3); font-size: 13px; line-height: 16px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--persimmon); }
+  /* Headlines always start with a capital letter (owner's rule), even if the words are typed in lowercase. */
+  .ss-h1::first-letter { text-transform: uppercase; }
   .ss-h1 { margin: 0 0 20px; font-family: var(--font-display); font-weight: 400; font-size: 72px; line-height: 76px; letter-spacing: -0.01em; }
   .ss-h2 { margin: 0; font-family: var(--font-display); font-weight: 400; font-size: 44px; line-height: 50px; }
   .ss-h3 { margin: 0 0 var(--space-2); font-family: var(--font-display); font-weight: 400; font-size: 24px; line-height: 30px; }

@@ -20,7 +20,7 @@ export default async function OurStoryPage() {
     <div className="space-y-16 sm:space-y-20">
       <header className="max-w-2xl">
         <p className="ss-eyebrow">Our story</p>
-        <h1 className="ss-h1 !mb-4">it started with one more story</h1>
+        <h1 className="ss-h1 !mb-4">It started with one more story</h1>
         <p className="ss-lede">StoryStar is here to bring more joy and love to reading, for the kids being read to and the grown-ups doing the voices.</p>
       </header>
 

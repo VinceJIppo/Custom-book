@@ -15,7 +15,8 @@ StoryStar makes hardcover picture books starring a real child, built from one ph
 
 - **Name:** "StoryStar" in sentences. The logo is the lowercase wordmark "storystar" with a star; it is an image, never live text.
 - **Tagline:** "Picture books where your child is the star."
-- **Hero line:** "every child is the star" (display lines may be all lowercase).
+- **Hero line:** "Every child is the star".
+- **Capital first letter.** Every headline, display line and heading starts with a capital letter: never all lowercase (the owner's rule; it overrides the lowercase lines in the reference files).
 - **No commas in titles.** Page titles, headings, section and card titles, and book titles never contain a comma (the owner's rule; it overrides any older example in the reference files).
 - **Mood references:** Weezie (approachable luxury, contrast piping, scallops, monograms), Sister Parish's Serendipity print (a happy star print overhead), Riley Sheehey (watercolor storybook art, delft tiles, ribbons). These are mood only: never copy their art, patterns, products or marks.
 
@@ -25,7 +26,7 @@ Write to the grown-up who is buying, about the child who is starring. Warm, a li
 
 - The child is the subject: "Hazel packs a picnic for the moon", not "our AI creates a personalized adventure".
 - Say "your star" or the child's name. Avoid "your little one", "kiddo", "mini me".
-- Display headlines may be all lowercase. Everything else is sentence case, including buttons.
+- Everything is sentence case, including display headlines and buttons: the first letter is always a capital.
 - Buttons: verb first, three words or fewer ("Make their book", "Start a book", "Choose this story").
 - One exclamation mark per page at most.
 - Be plain about how a book is made: "your child appears on every page", "illustrated from your photo". Never imply a human artist hand-painted each book.
@@ -106,7 +107,7 @@ Three families, each with one job. Self-host the files in `assets/fonts/` (SIL O
 
 | Class | Family | Size / line | Weight | Use |
 | --- | --- | --- | --- | --- |
-| `.display-xl` | display | 64px / 68px, tracking -0.01em | 400 | Home hero only. Lowercase or sentence case. |
+| `.display-xl` | display | 64px / 68px, tracking -0.01em | 400 | Home hero only. Sentence case. |
 | `.display-l` | display | 44px / 50px, tracking -0.005em | 400 | Section openers and the book title on a cover mockup. |
 | `.heading` | display | 30px / 36px | 400 | Page and panel headings. |
 | `.title` | display | 22px / 28px | 400 | Book card titles, step titles. |
@@ -199,7 +200,7 @@ Build the homepage in this order. Copy is approved as written; bracketed text is
 
 1. **Header** (`--ceiling`): cream wordmark; nav "Story worlds", "How it works", "Gifts", "Peek inside"; moon toggle; primary "Start a book". Then the star band and a scallop hem.
 2. **Hero** (on `--paper`, two columns, stacks on phones):
-   - Eyebrow "Personalized picture books"; H1 "every child is the star"; lede "Upload one photo and your child becomes the hero of a hardcover storybook, the one they will ask for again tonight."
+   - Eyebrow "Personalized picture books"; H1 "Every child is the star"; lede "Upload one photo and your child becomes the hero of a hardcover storybook, the one they will ask for again tonight."
    - Primary "Make their book" (with star icon) and link "See a sample page".
    - Facts row with small persimmon stars: "Hardcover, 32 pages", "From [YOUR PRICE]", "Ships in [X] days".
    - Art: a large cover ("Starring Hazel, The Moon Picnic", New story ribbon) tilted 3 degrees, the photo frame tilted -4 degrees overlapping its lower left, and a few small stars between them.

@@ -77,7 +77,7 @@ export function Landing({
         <div className="ss-container ss-hero">
           <div className="ss-hero__copy">
             <p className="ss-eyebrow">Personalized picture books</p>
-            <h1 className="ss-h1">every child is the star</h1>
+            <h1 className="ss-h1">Every child is the star</h1>
             <p className="ss-lede">
               Upload one photo and your child becomes the hero of a hardcover
               storybook, the one they will ask for again tonight.

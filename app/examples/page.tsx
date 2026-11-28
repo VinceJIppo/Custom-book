@@ -28,7 +28,7 @@ export default async function ExamplesPage() {
     <div className="space-y-12">
       <div className="max-w-2xl">
         <p className="ss-eyebrow">Peek inside</p>
-        <h1 className="ss-h1 !mb-4">every page made just for them</h1>
+        <h1 className="ss-h1 !mb-4">Every page made just for them</h1>
         <p className="ss-lede">
           Pages from <span className="italic">{SAMPLE.title}</span>, a sample book starring a one-year-old and her big brothers. Every page is illustrated from the family&apos;s photos, with a story written to be read aloud.
         </p>
