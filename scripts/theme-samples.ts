@@ -39,6 +39,8 @@ async function main() {
     const dir = path.join(process.cwd(), "public", "theme-samples", t.id);
     fs.mkdirSync(dir, { recursive: true });
     const beats = [t.storyBeats[0], t.storyBeats[Math.floor(t.storyBeats.length / 2)]];
+    // The picture prompt doesn't see the story's rules, so carry the one safety detail that must show.
+    const gear = t.contentRules.some((r) => /helmet/i.test(r)) ? " wearing a buckled bike helmet" : "";
     for (const [i, beat] of beats.entries()) {
       const file = path.join(dir, `${i + 1}.jpg`);
       // Without a theme name, only missing pictures are drawn (so a re-run finishes what's left).
@@ -53,7 +55,7 @@ async function main() {
         bible: null,
         childName: "the child",
         scene: {
-          action: `A cheerful young child (about five)${friend ? ` and ${friend.name}` : ""} in a moment of "${beat}"`,
+          action: `A cheerful young child (about five)${gear}${friend ? ` and ${friend.name}` : ""} in a moment of "${beat}"`,
           characters: ["the child", ...(friend ? [friend.name] : [])],
           setting: t.setting,
           mood: t.artDirection.mood,
@@ -99,7 +101,7 @@ async function main() {
         bible: null,
         childName: "the child",
         scene: {
-          action: `A cheerful young child (about five)${who.length ? ` with ${who.map((c) => c.name).join(" and ")}` : ""} at the start of this story: ${st.summary ?? st.title}`,
+          action: `A cheerful young child (about five)${gear}${who.length ? ` with ${who.map((c) => c.name).join(" and ")}` : ""} at the start of this story: ${st.summary ?? st.title}`,
           characters: ["the child", ...who.map((c) => c.name)],
           setting: t.setting,
           mood: t.artDirection.mood,
