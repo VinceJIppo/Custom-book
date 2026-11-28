@@ -10,7 +10,7 @@
     "worker": "tsx scripts/worker.ts",
     "build": "next build",
     "start": "next start",
-    "start:all": "concurrently -n web,worker --restart-tries -1 --restart-after 5000 \"next start\" \"VIPS_CONCURRENCY=1 nice -n 10 tsx scripts/worker.ts\"",
+    "start:all": "MALLOC_ARENA_MAX=2 concurrently -n web,worker --restart-tries -1 --restart-after 5000 \"next start\" \"VIPS_CONCURRENCY=1 nice -n 10 tsx scripts/worker.ts\"",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",

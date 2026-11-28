@@ -47,6 +47,29 @@ export async function runJob(job: GenerationJob) {
   }
 }
 
+/**
+ * Jobs whose worker vanished mid-run (a crash, running out of memory, a restart). One with
+ * tries left goes back in the queue; one that has used its tries fails for good, with the
+ * usual clean-up, instead of being picked up again and again (a job that kills the worker
+ * every time would otherwise loop forever, and its book would wait forever).
+ */
+export async function reclaimAbandonedJobs(now = new Date()) {
+  const { db } = await import("../db");
+  const stale = await db.generationJob.findMany({ where: { status: "running", lockedUntil: { lt: now } } });
+  const exhausted = stale.filter((j) => j.attempts >= j.maxAttempts);
+  const reason = "The worker stopped while doing this (it may have run out of memory or restarted).";
+  for (const job of exhausted) {
+    const r = await db.generationJob.updateMany({
+      where: { id: job.id, status: "running", lockedUntil: { lt: now } },
+      data: { status: "failed", error: reason, lockedBy: null, lockedUntil: null, finishedAt: now },
+    });
+    if (r.count !== 1) continue;
+    log.warn(`Job ${job.type} ${job.id} failed: its worker stopped on every try`, { attempts: job.attempts });
+    await onJobGaveUp(job, new Error(reason)).catch((err) => log.error("Clean-up after an abandoned job failed", { jobId: job.id, err: errorMessage(err) }));
+  }
+  return { requeued: await reclaimExpired(now), failed: exhausted.length };
+}
+
 /** When a job fails for good, mark the related book or page so the UI can show it. */
 async function onJobGaveUp(job: GenerationJob, _err: unknown) {
   const { db } = await import("../db");
@@ -117,7 +140,7 @@ export async function drainQueue(
 ) {
   const workerId = opts.workerId ?? `inline-${crypto.randomUUID().slice(0, 8)}`;
   let n = 0;
-  await reclaimExpired();
+  await reclaimAbandonedJobs();
   for (;;) {
     if (opts.maxJobs && n >= opts.maxJobs) break;
     const job = await claimNext(workerId, 300);

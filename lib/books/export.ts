@@ -23,7 +23,7 @@ export async function productsForBook(trimSize: string, opts: { offeredOnly?: bo
   return all;
 }
 
-export type PrintFilesState = { state: "ready" } | { state: "making" } | { state: "failed"; message: string };
+export type PrintFilesState = { state: "ready" } | { state: "making"; since: Date } | { state: "failed"; message: string };
 
 /**
  * Parents never make print files themselves: when a book is finished (and again
@@ -36,8 +36,16 @@ export async function ensurePrintFiles(userId: string, bookId: string): Promise<
   const product = (await productsForBook(book.trimSize, { offeredOnly: true }))[0];
   if (!product) return { state: "failed", message: "This book's size can't be printed as a hardcover." };
   const currentKey = (await buildBookView(book, { pageRules: product.pageRules })).contentKey;
-  const exports = await db.bookExport.findMany({ where: { bookId, productId: product.id }, orderBy: { createdAt: "desc" }, take: 5 });
-  if (exports.some((e) => e.status === "rendering")) return { state: "making" };
+  let exports = await db.bookExport.findMany({ where: { bookId, productId: product.id }, orderBy: { createdAt: "desc" }, take: 5 });
+  const rendering = exports.find((e) => e.status === "rendering");
+  if (rendering) {
+    // Only "being made" while a job is actually on it. If the worker stopped and the job is
+    // gone or failed, this try failed: mark it so, and start again below (at most twice).
+    const live = await db.generationJob.count({ where: { bookId, type: "book.export", status: { in: ["queued", "running"] } } });
+    if (live) return { state: "making", since: rendering.createdAt };
+    await db.bookExport.updateMany({ where: { id: rendering.id, status: "rendering" }, data: { status: "failed", error: "Making the print files stopped before it finished." } });
+    exports = await db.bookExport.findMany({ where: { bookId, productId: product.id }, orderBy: { createdAt: "desc" }, take: 5 });
+  }
   const current = exports.find((e) => e.contentKey === currentKey);
   if (current?.status === "ready" && current.preflightOk && current.validationStatus !== "failed") return { state: "ready" };
   if (current?.status === "ready" && !current.preflightOk) return { state: "failed", message: "A page still needs a fix before it can print. Open Edit pages, or ask us for help." };
@@ -45,7 +53,7 @@ export async function ensurePrintFiles(userId: string, bookId: string): Promise<
   const failedTries = exports.filter((e) => e.contentKey === currentKey && e.status === "failed").length;
   if (failedTries >= 2) return { state: "failed", message: current?.error ?? "We couldn't prepare the book for printing. Please try again later." };
   const started = await startExport(userId, bookId, product.id);
-  return started.ok ? { state: "making" } : { state: "failed", message: started.message };
+  return started.ok ? { state: "making", since: new Date() } : { state: "failed", message: started.message };
 }
 
 export async function startExport(userId: string, bookId: string, productId: string): Promise<ExportResult> {

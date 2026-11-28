@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { db } from "@/lib/db";
 import { backoffMs, claimNext, complete, enqueue, fail, reclaimExpired } from "@/lib/jobs/queue";
+import { reclaimAbandonedJobs } from "@/lib/jobs/runner";
 import { makeUser, resetDb } from "./helpers";
 
 describe("job queue", () => {
@@ -56,6 +57,23 @@ describe("job queue", () => {
     await db.generationJob.update({ where: { id: job.id }, data: { lockedUntil: new Date(Date.now() - 1000) } });
     expect(await reclaimExpired()).toBe(1);
     expect((await claimNext("w2", 60))?.id).toBe(job.id);
+  });
+
+  it("a job whose worker died on every try fails for good instead of looping forever", async () => {
+    await enqueue("book.outline", {}, { userId, maxAttempts: 2 });
+    await enqueue("book.outline", {}, { userId, maxAttempts: 2 });
+    const first = (await claimNext("w", 60))!;
+    const second = (await claimNext("w", 60))!;
+    // The first has used both tries; the second still has one left.
+    await db.generationJob.update({ where: { id: first.id }, data: { attempts: 2, lockedUntil: new Date(Date.now() - 1000) } });
+    await db.generationJob.update({ where: { id: second.id }, data: { lockedUntil: new Date(Date.now() - 1000) } });
+    expect(await reclaimAbandonedJobs()).toEqual({ requeued: 1, failed: 1 });
+    expect(await db.generationJob.findUniqueOrThrow({ where: { id: first.id } })).toMatchObject({ status: "failed", lockedBy: null });
+    expect((await db.generationJob.findUniqueOrThrow({ where: { id: first.id } })).error).toMatch(/worker stopped/);
+    expect((await db.generationJob.findUniqueOrThrow({ where: { id: second.id } })).status).toBe("queued");
+    // Nothing is left to pick up a third time.
+    expect((await claimNext("w2", 60))?.id).toBe(second.id);
+    expect(await claimNext("w3", 60)).toBeNull();
   });
 
   it("backoff grows and is capped", () => {

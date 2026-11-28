@@ -12,6 +12,14 @@ import { OrderForm } from "@/components/OrderForm";
 
 export const dynamic = "force-dynamic";
 
+/** An honest wait message: how long it usually takes, and how long it has been. */
+function waitNote(since: Date | null) {
+  const minutes = since ? Math.floor((Date.now() - since.getTime()) / 60000) : 0;
+  if (minutes < 1) return "This usually takes a few minutes.";
+  if (minutes < 10) return `This usually takes a few minutes (started ${minutes} minute${minutes === 1 ? "" : "s"} ago).`;
+  return `This is taking longer than usual (started ${minutes} minutes ago).`;
+}
+
 export default async function OrderBook({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ cancelled?: string }> }) {
   const user = await requireOnboardedUser();
   const credits = await getCredits(user.id);
@@ -53,7 +61,9 @@ export default async function OrderBook({ params, searchParams }: { params: Prom
           ) : (
             <>
               <p className="animate-pulse font-semibold">Getting your book ready for the printer...</p>
-              <p className="mt-1 text-ink-muted">This takes about a minute. The page updates on its own.</p>
+              <p className="mt-1 text-ink-muted" data-testid="print-files-wait">
+                {waitNote(files?.state === "making" ? files.since : null)} The page updates on its own, and you can leave it: we keep going.
+              </p>
             </>
           )}
         </section>

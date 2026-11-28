@@ -80,6 +80,17 @@ export interface RenderedPdf {
   images: ImageCheck[];
 }
 
+/**
+ * Print pictures are big (decoded, enlarged and faded, each holds tens of megabytes), and the
+ * browser asks for several at once. Preparing them one at a time keeps the worker's memory low.
+ */
+let imageQueue: Promise<unknown> = Promise.resolve();
+function oneImageAtATime<T>(fn: () => Promise<T>): Promise<T> {
+  const run = imageQueue.then(fn, fn);
+  imageQueue = run.catch(() => undefined);
+  return run;
+}
+
 /** Serves fonts and stored images to the headless browser. Raster art goes in as high-quality JPEG to keep PDFs a sensible size. */
 async function serveAsset(url: string): Promise<{ body: Buffer; contentType: string } | null> {
   const u = new URL(url);
@@ -90,27 +101,29 @@ async function serveAsset(url: string): Promise<{ body: Buffer; contentType: str
     if (!fs.existsSync(p)) return null;
     return { body: fs.readFileSync(p), contentType: file.endsWith(".woff2") ? "font/woff2" : "font/woff" };
   }
-  if (u.pathname.startsWith("/files/")) {
-    const key = decodeURIComponent(u.pathname.slice("/files/".length));
-    const obj = await getStorage().get(key);
-    if (!obj) return null;
-    // Placeholder SVGs are rasterized (3x, about 300 ppi on a full page) so print files never carry vector transparency.
-    let source = obj.meta.contentType === "image/svg+xml" ? sharp(obj.data, { density: 216 }) : sharp(obj.data);
-    // ?scale=: the picture is placed too large for its pixels; enlarge it (Lanczos) so it prints at 300 ppi.
-    const scale = Math.min(4, Number(u.searchParams.get("scale") ?? "1"));
-    if (scale > 1.001) {
-      const meta = await source.metadata();
-      source = sharp(await source.resize({ width: Math.round((meta.width ?? 1000) * scale), kernel: "lanczos3" }).toBuffer());
-    }
-    // ?feather=1: soft-edged pictures floating on a white page blend into the paper (no visible grey box).
-    if (u.searchParams.get("feather") === "1") {
-      const paper = /^[0-9a-f]{6}$/i.test(u.searchParams.get("paper") ?? "") ? `#${u.searchParams.get("paper")}` : "#ffffff";
-      source = sharp(await featherToWhite(await source.toBuffer(), paper));
-    }
-    const jpeg = await source.flatten({ background: "#ffffff" }).toColorspace("srgb").jpeg({ quality: 92, chromaSubsampling: "4:4:4", mozjpeg: true }).toBuffer();
-    return { body: jpeg, contentType: "image/jpeg" };
-  }
+  if (u.pathname.startsWith("/files/")) return oneImageAtATime(() => servePicture(u));
   return null;
+}
+
+async function servePicture(u: URL): Promise<{ body: Buffer; contentType: string } | null> {
+  const key = decodeURIComponent(u.pathname.slice("/files/".length));
+  const obj = await getStorage().get(key);
+  if (!obj) return null;
+  // Placeholder SVGs are rasterized (3x, about 300 ppi on a full page) so print files never carry vector transparency.
+  let source = obj.meta.contentType === "image/svg+xml" ? sharp(obj.data, { density: 216 }) : sharp(obj.data);
+  // ?scale=: the picture is placed too large for its pixels; enlarge it (Lanczos) so it prints at 300 ppi.
+  const scale = Math.min(4, Number(u.searchParams.get("scale") ?? "1"));
+  if (scale > 1.001) {
+    const meta = await source.metadata();
+    source = sharp(await source.resize({ width: Math.round((meta.width ?? 1000) * scale), kernel: "lanczos3" }).toBuffer());
+  }
+  // ?feather=1: soft-edged pictures floating on a white page blend into the paper (no visible grey box).
+  if (u.searchParams.get("feather") === "1") {
+    const paper = /^[0-9a-f]{6}$/i.test(u.searchParams.get("paper") ?? "") ? `#${u.searchParams.get("paper")}` : "#ffffff";
+    source = sharp(await featherToWhite(await source.toBuffer(), paper));
+  }
+  const jpeg = await source.flatten({ background: "#ffffff" }).toColorspace("srgb").jpeg({ quality: 92, chromaSubsampling: "4:4:4", mozjpeg: true }).toBuffer();
+  return { body: jpeg, contentType: "image/jpeg" };
 }
 
 /**

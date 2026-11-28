@@ -62,10 +62,24 @@ describe("ordering straight from the book", () => {
   it("the order page makes them if they're missing, and doesn't start a second copy", async () => {
     await drainQueue(); // finished without automatic files (off in tests)
     expect(await db.bookExport.count({ where: { bookId } })).toBe(0);
-    expect(await ensurePrintFiles(userId, bookId)).toEqual({ state: "making" });
-    expect(await ensurePrintFiles(userId, bookId)).toEqual({ state: "making" });
+    expect(await ensurePrintFiles(userId, bookId)).toMatchObject({ state: "making" });
+    expect(await ensurePrintFiles(userId, bookId)).toMatchObject({ state: "making" });
     await drainQueue();
     expect(await db.bookExport.count({ where: { bookId } })).toBe(1);
     expect(await ensurePrintFiles(userId, bookId)).toEqual({ state: "ready" });
   }, 120_000);
+
+  it("print files stuck 'being made' with no job behind them are started again, not waited on forever", async () => {
+    await drainQueue();
+    expect(await ensurePrintFiles(userId, bookId)).toMatchObject({ state: "making" });
+    // The worker died mid-render: the job failed for good and nothing is working on the files.
+    await db.generationJob.updateMany({ where: { bookId, type: "book.export" }, data: { status: "failed" } });
+    const stuck = await db.bookExport.findFirstOrThrow({ where: { bookId } });
+    expect(stuck.status).toBe("rendering");
+    expect(await ensurePrintFiles(userId, bookId)).toMatchObject({ state: "making" });
+    expect((await db.bookExport.findUniqueOrThrow({ where: { id: stuck.id } })).status).toBe("failed");
+    expect(await db.bookExport.count({ where: { bookId, status: "rendering" } })).toBe(1);
+    await drainQueue();
+    expect(await ensurePrintFiles(userId, bookId)).toEqual({ state: "ready" });
+  }, 180_000);
 });

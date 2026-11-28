@@ -10,8 +10,8 @@ import crypto from "node:crypto";
 async function main() {
   const { getConfig } = await import("../lib/config");
   const { tuneSqlite } = await import("../lib/db");
-  const { claimNext, reclaimExpired } = await import("../lib/jobs/queue");
-  const { runJob } = await import("../lib/jobs/runner");
+  const { claimNext } = await import("../lib/jobs/queue");
+  const { reclaimAbandonedJobs, runJob } = await import("../lib/jobs/runner");
   const { activeProviderNames } = await import("../lib/providers/registry");
   const { log } = await import("../lib/log");
   const { scheduleOrderChecks } = await import("../lib/orders/service");
@@ -42,7 +42,7 @@ async function main() {
       try {
         if (Date.now() - lastReclaim > 30_000) {
           lastReclaim = Date.now();
-          await reclaimExpired();
+          await reclaimAbandonedJobs();
         }
         const job = await claimNext(workerId, config.JOB_LEASE_SECONDS);
         if (!job) {
