@@ -90,10 +90,17 @@ export class S3Storage implements Storage {
     await this.client.send(new DeleteObjectCommand({ Bucket: this.opts.bucket, Key: key }));
   }
 
-  /** Removes every object under a prefix (used by "delete this child and everything"). */
+  /**
+   * Removes every object under a prefix (deleting a child, or a whole account). Copies
+   * saved under the misplaced "<bucket>/" folder (see countMisplaced) go too.
+   */
   async deletePrefix(prefix: string) {
     assertSafeKey(prefix);
     if (!prefix.endsWith("/")) throw new Error("deletePrefix needs a folder-style prefix ending in /");
+    return (await this.deleteUnder(prefix)) + (await this.deleteUnder(`${this.opts.bucket}/${prefix}`));
+  }
+
+  private async deleteUnder(prefix: string) {
     let deleted = 0;
     let token: string | undefined;
     do {

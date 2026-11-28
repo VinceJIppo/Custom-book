@@ -159,6 +159,10 @@ export class MockImageProvider implements ImageProvider, BatchImageProvider {
     return [name];
   }
 
+  async cancelIllustrationBatch(name: string) {
+    mockBatches.delete(name);
+  }
+
   async getIllustrationBatch(name: string): Promise<{ state: BatchState; results?: BatchResult[] }> {
     const items = mockBatches.get(name);
     if (!items) return { state: "expired" };

@@ -278,7 +278,11 @@ async function markExpired(order: Order) {
 export async function handlePaymentEvent(event: PaymentEvent) {
   // Credit packs use the same payment provider and webhook.
   if (await db.creditPurchase.findUnique({ where: { checkoutSessionId: event.sessionId } })) return handleCreditPurchaseEvent(event);
-  if (event.type === "checkout.completed") return fulfillCheckout(event.sessionId);
+  if (event.type === "checkout.completed") {
+    const order = await fulfillCheckout(event.sessionId);
+    if (!order) await warnUnmatchedPayment(event.sessionId);
+    return order;
+  }
   const order = await db.order.findUnique({ where: { checkoutSessionId: event.sessionId } });
   if (!order) return null;
   if (event.type === "checkout.expired") return markExpired(order);
@@ -287,6 +291,19 @@ export async function handlePaymentEvent(event: PaymentEvent) {
     data: { status: "payment_failed", statusHistory: pushHistory(order.statusHistory, { status: "payment_failed", message: "The payment didn't go through" }) as unknown as Prisma.InputJsonValue },
   });
   return db.order.findUnique({ where: { id: order.id } });
+}
+
+/**
+ * A paid checkout that matches no order or credit pack (for example the account was deleted while a
+ * bank payment was still clearing). Nothing can be fulfilled, so the money needs refunding by hand.
+ */
+async function warnUnmatchedPayment(sessionId: string) {
+  try {
+    const state = await getPaymentProvider().getCheckout(sessionId);
+    if (state.paid) log.error("Payment received for an order or credit pack that no longer exists: refund it in the payment dashboard", { sessionId, paymentRef: state.paymentRef, amountCents: state.amountCents });
+  } catch (err) {
+    log.warn("Couldn't check an unmatched payment", { sessionId, err: errorMessage(err) });
+  }
 }
 
 /** Verifies and applies a payment webhook. Throws WebhookSignatureError on a bad signature. */

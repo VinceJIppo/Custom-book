@@ -41,3 +41,8 @@ export async function priorUsage(email: string): Promise<UsageCounts> {
   }
   return total;
 }
+
+/** True when an earlier account with this email was declined by an admin and then deleted. */
+export async function wasDeclinedBefore(email: string) {
+  return (await db.user.count({ where: { deletedEmailHash: deletedEmailHash(email), deletedAt: { not: null }, approval: "rejected" } })) > 0;
+}

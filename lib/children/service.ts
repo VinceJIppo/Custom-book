@@ -153,6 +153,9 @@ export async function deleteChildEverything(userId: string, childId: string) {
   const child = await db.childProfile.findFirst({ where: { id: childId, userId }, select: { id: true } });
   if (!child) return { ok: false as const };
   const bookIds = (await db.book.findMany({ where: { childId }, select: { id: true } })).map((b) => b.id);
+  // Overnight pictures still waiting at the image provider are stopped and deleted there too.
+  const { cancelProviderBatches } = await import("../jobs/handlers/batch");
+  await cancelProviderBatches({ bookId: { in: bookIds } });
   await db.generationJob.updateMany({
     where: { bookId: { in: bookIds }, status: { in: ["queued", "running"] } },
     data: { status: "cancelled" },

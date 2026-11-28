@@ -106,6 +106,8 @@ export interface BatchResult {
 export interface BatchImageProvider {
   submitIllustrationBatch(items: BatchItem[], label: string): Promise<string[]>;
   getIllustrationBatch(name: string): Promise<{ state: BatchState; results?: BatchResult[] }>;
+  /** Stops a batch and deletes it at the provider (used when its book or account is deleted). Best effort. */
+  cancelIllustrationBatch?(name: string): Promise<void>;
 }
 
 export function supportsBatch(p: ImageProvider): p is ImageProvider & BatchImageProvider {

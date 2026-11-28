@@ -32,8 +32,8 @@ export default async function PendingPage() {
           <button className="ss-btn ss-btn--secondary ss-btn--sm">Sign out</button>
         </form>
         <p className="body-s text-ink-muted">
-          Changed your mind?{" "}
-          <Link href="/account#delete" className="ss-link">
+          {declined ? "Want us to remove your details?" : "Changed your mind?"}{" "}
+          <Link href="/account#delete" className="ss-link inline-flex min-h-11 items-center">
             Delete your account
           </Link>
         </p>

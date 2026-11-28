@@ -19,6 +19,9 @@ export interface StripeOptions {
   client?: Stripe;
 }
 
+/** Stripe's answer for a session id it doesn't know (for example one made with other keys). */
+const isMissing = (err: unknown) => (err as { code?: string } | null)?.code === "resource_missing";
+
 export class StripePaymentProvider implements PaymentProvider {
   readonly name = "stripe";
   private readonly stripe: Stripe;
@@ -60,7 +63,14 @@ export class StripePaymentProvider implements PaymentProvider {
   }
 
   async getCheckout(sessionId: string): Promise<CheckoutState> {
-    const s = await this.stripe.checkout.sessions.retrieve(sessionId);
+    let s: Stripe.Checkout.Session;
+    try {
+      s = await this.stripe.checkout.sessions.retrieve(sessionId);
+    } catch (err) {
+      // A session these keys can't see can't be paid through them either.
+      if (isMissing(err)) return { id: sessionId, status: "expired", paid: false };
+      throw err;
+    }
     const pi = s.payment_intent;
     return {
       id: s.id,
@@ -99,10 +109,9 @@ export class StripePaymentProvider implements PaymentProvider {
     try {
       await this.stripe.checkout.sessions.expire(sessionId);
     } catch (err) {
-      // Stripe refuses to expire a session that is already complete or expired; that's fine.
-      // Anything else (it's still open) is a real failure.
-      const s = await this.stripe.checkout.sessions.retrieve(sessionId);
-      if (s.status === "open") throw err;
+      // Stripe refuses to expire a session that is already complete or expired (or one these
+      // keys can't see); that's fine. Anything else (it's still open) is a real failure.
+      if ((await this.getCheckout(sessionId)).status === "open") throw err;
     }
   }
 

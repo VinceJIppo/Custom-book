@@ -400,6 +400,9 @@ model GenerationJob {
   @@index([status, runAfter])
   @@index([bookId])
   @@index([userId, createdAt])
+  // Deleting a child or page cascades to its jobs; these keep that from scanning every job.
+  @@index([childId])
+  @@index([pageId])
 }
 
 model Order {

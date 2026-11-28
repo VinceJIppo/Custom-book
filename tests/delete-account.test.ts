@@ -11,18 +11,20 @@ import { PrintRouter } from "@/lib/providers/print/router";
 import { MockPrintProvider } from "@/lib/providers/print/mock";
 import { MockPaymentProvider } from "@/lib/providers/payment/mock";
 import { MockEmailProvider } from "@/lib/providers/email/mock";
+import { MockImageProvider } from "@/lib/providers/image/mock";
+import { enqueue } from "@/lib/jobs/queue";
 import { startCheckout } from "@/lib/orders/service";
 import { getCredits, grantCredits } from "@/lib/credits";
 import { startCreditPurchase } from "@/lib/credits/purchase";
 import { getAllowance } from "@/lib/allowance";
-import { hashToken, normalizeEmail, userForSession } from "@/lib/auth/magicLink";
+import { hashToken, normalizeEmail, redeemSignInLink, userForSession } from "@/lib/auth/magicLink";
 import { deleteAccount, deletionBlockers, sweepDeletedAccount, userPrefix } from "@/lib/accounts/deleteAccount";
 import { deletedEmailFor, deletedEmailHash, isDeletedEmail } from "@/lib/accounts/deleted";
 import { resetConfigCache } from "@/lib/config";
 import { makeUser, resetDb } from "./helpers";
 
-const address = { name: "Grandma Rose", street1: "12 Elm Street", city: "Springfield", stateCode: "IL", postcode: "62704", countryCode: "US", phone: "217-555-0100" };
 const EMAIL = "parent@example.com";
+const address = { name: "Grandma Rose", street1: "12 Elm Street", city: "Springfield", stateCode: "IL", postcode: "62704", countryCode: "US", phone: "217-555-0100", email: EMAIL };
 
 function setEnv(vars: Record<string, string | undefined>) {
   for (const [k, v] of Object.entries(vars)) {
@@ -99,7 +101,7 @@ describe("deleting an account", () => {
     await db.loginToken.create({ data: { email: EMAIL, tokenHash: hashToken("link-token"), expiresAt: new Date(Date.now() + 600_000) } });
 
     const r = await deleteAccount(userId);
-    expect(r.ok).toBe(true);
+    expect(r).toMatchObject({ ok: true, emailed: true });
 
     // Files: nothing left in the account's folder.
     expect(await storage.exists(page.imageKey!)).toBe(false);
@@ -123,6 +125,8 @@ describe("deleting an account", () => {
     // Records: paid order and paid pack stay, with no book link, gift note or print files.
     const kept = await db.order.findUniqueOrThrow({ where: { id: paid.id } });
     expect(kept).toMatchObject({ bookId: null, giftNote: null, interiorPdfKey: null, status: "delivered", bookTitle: "Oliver and the Lost Little Star", totalCents: 3000 });
+    // The shipping address stays for the record, without the email and phone.
+    expect(kept.address).toEqual({ name: "Grandma Rose", street1: "12 Elm Street", city: "Springfield", stateCode: "IL", postcode: "62704", countryCode: "US" });
     expect(await db.creditPurchase.findUnique({ where: { id: paidPack.id } })).not.toBeNull();
     // The account row only holds those records now.
     const user = await db.user.findUniqueOrThrow({ where: { id: userId } });
@@ -141,7 +145,7 @@ describe("deleting an account", () => {
   it("waits while a printed book is still on its way, and deletes nothing", async () => {
     const order = await deliveredOrder();
     await db.order.update({ where: { id: order.id }, data: { status: "in_production" } });
-    expect(await deletionBlockers(userId)).toEqual([{ orderId: order.id, title: "Oliver and the Lost Little Star", status: "Printing" }]);
+    expect(await deletionBlockers(userId)).toEqual([{ orderId: order.id, title: "Oliver and the Lost Little Star", status: "in_production", label: "Printing" }]);
     const r = await deleteAccount(userId);
     expect(r).toMatchObject({ ok: false, reason: "open_orders" });
     expect(await db.childProfile.count({ where: { userId } })).toBe(1);
@@ -158,6 +162,74 @@ describe("deleting an account", () => {
     expect(r).toMatchObject({ ok: false, reason: "payment_went_through" });
     expect((await db.order.findUniqueOrThrow({ where: { id: order.id } })).status).toBe("paid");
     expect(await db.book.count({ where: { userId } })).toBe(1);
+  });
+
+  it("stops while a bank payment is still clearing", async () => {
+    const start = await startCheckout(userId, { bookId, exportId, address, shippingLevel: "MAIL" });
+    if (!start.ok) throw new Error(start.message);
+    const order = await db.order.findUniqueOrThrow({ where: { id: start.orderId } });
+    // Checkout finished, but the money hasn't arrived yet (bank debit and similar).
+    (getPaymentProvider() as MockPaymentProvider).session(order.checkoutSessionId!)!.status = "complete";
+    expect(await deleteAccount(userId)).toMatchObject({ ok: false, reason: "payment_processing" });
+    expect(await db.order.findUnique({ where: { id: order.id } })).not.toBeNull();
+    expect((await db.user.findUniqueOrThrow({ where: { id: userId } })).deletedAt).toBeNull();
+  });
+
+  it("ignores checkouts from a payment service that's no longer in use", async () => {
+    const old = await db.order.create({ data: { userId, provider: "mock", status: "awaiting_payment", paymentProvider: "stripe", checkoutSessionId: "cs_test_old" } });
+    expect((await deleteAccount(userId)).ok).toBe(true);
+    expect(await db.order.findUnique({ where: { id: old.id } })).toBeNull();
+  });
+
+  it("undoes the claim and asks to retry when a checkout opens during the delete", async () => {
+    await db.session.create({ data: { tokenHash: hashToken("keep"), userId, expiresAt: new Date(Date.now() + 86400_000) } });
+    // Stands in for a checkout another tab opened after the delete began.
+    await db.order.create({ data: { userId, provider: "mock", status: "awaiting_payment", createdAt: new Date(Date.now() + 60_000) } });
+    expect(await deleteAccount(userId)).toMatchObject({ ok: false, reason: "retry" });
+    const user = await db.user.findUniqueOrThrow({ where: { id: userId } });
+    expect(user).toMatchObject({ email: EMAIL, deletedAt: null });
+    expect((await userForSession("keep"))?.id).toBe(userId);
+    expect(await db.childProfile.count({ where: { userId } })).toBe(1);
+  });
+
+  it("a second delete at the same moment finds nothing to do", async () => {
+    const [a, b] = await Promise.all([deleteAccount(userId), deleteAccount(userId)]);
+    expect([a.ok, b.ok].sort()).toEqual([false, true]);
+    const user = await db.user.findUniqueOrThrow({ where: { id: userId } });
+    expect((user.deletedUsage as { book: number }).book).toBe(1);
+  });
+
+  it("stops overnight batches waiting at the image provider", async () => {
+    class SpyImages extends MockImageProvider {
+      cancelled: string[] = [];
+      async cancelIllustrationBatch(name: string) {
+        this.cancelled.push(name);
+      }
+    }
+    const images = new SpyImages();
+    resetProviders({ image: images, printRouter: new PrintRouter([new MockPrintProvider(60)]), payment: new MockPaymentProvider(), email });
+    await enqueue("book.batch.poll", { names: ["batches/one", "batches/two"], keys: [], startedAt: new Date().toISOString() }, { userId, bookId, runAfter: new Date(Date.now() + 3600_000) });
+    expect((await deleteAccount(userId)).ok).toBe(true);
+    expect(images.cancelled.sort()).toEqual(["batches/one", "batches/two"]);
+  });
+
+  it("someone an admin declined stays declined after deleting and signing up again", async () => {
+    setEnv({ NEW_ACCOUNT_APPROVAL: "true" });
+    try {
+      await db.user.update({ where: { id: userId }, data: { approval: "rejected" } });
+      expect((await deleteAccount(userId)).ok).toBe(true);
+      await db.loginToken.create({ data: { email: EMAIL, tokenHash: hashToken("again"), expiresAt: new Date(Date.now() + 600_000) } });
+      const r = await redeemSignInLink(EMAIL, "again");
+      if (!r.ok) throw new Error(r.message);
+      expect((await db.user.findUniqueOrThrow({ where: { id: r.userId } })).approval).toBe("rejected");
+      // A new address is just pending as usual.
+      await db.loginToken.create({ data: { email: "new@example.com", tokenHash: hashToken("fresh"), expiresAt: new Date(Date.now() + 600_000) } });
+      const n = await redeemSignInLink("new@example.com", "fresh");
+      if (!n.ok) throw new Error(n.message);
+      expect((await db.user.findUniqueOrThrow({ where: { id: n.userId } })).approval).toBe("pending");
+    } finally {
+      setEnv({ NEW_ACCOUNT_APPROVAL: undefined });
+    }
   });
 
   it("a new account with the same email starts without the welcome credits or a fresh trial", async () => {

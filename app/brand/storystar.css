@@ -257,6 +257,14 @@
     .ss-header__bar { gap: 18px; }
     .ss-nav { gap: 18px; font-size: 14px; }
   }
+  /* Nav labels never break onto two lines, and the wordmark never shrinks. */
+  .ss-header__logo { flex: none; }
+  .ss-nav a, .ss-nav button { white-space: nowrap; }
+  @media (min-width: 761px) and (max-width: 900px) {
+    .ss-header__bar { gap: 12px; }
+    .ss-header__logo img { height: 34px; }
+    .ss-nav { gap: 12px; font-size: 13px; }
+  }
 
   /* Phones ------------------------------------------------------------------------------------------ */
   @media (max-width: 760px) {

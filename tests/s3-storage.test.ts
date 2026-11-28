@@ -61,7 +61,9 @@ describe("S3 / R2 storage driver", () => {
     const s = new S3Storage({ ...opts, client });
     for (const k of ["a.jpg", "b.jpg", "books/x/p1.png", "books/x/p2.png", "sheets/s.png"]) await s.put(`users/u1/children/c1/${k}`, Buffer.from("x"), "image/png");
     await s.put("users/u1/children/c2/keep.jpg", Buffer.from("x"), "image/jpeg");
-    expect(await s.deletePrefix("users/u1/children/c1/")).toBe(5);
+    // A copy left in the misplaced "<bucket>/" folder (old endpoint mistake) goes too.
+    await s.put("storystar/users/u1/children/c1/old.png", Buffer.from("x"), "image/png");
+    expect(await s.deletePrefix("users/u1/children/c1/")).toBe(6);
     expect([...objects.keys()]).toEqual(["users/u1/children/c2/keep.jpg"]);
     await expect(s.deletePrefix("users/u1/children/c")).rejects.toThrow(/ending in \//);
   });

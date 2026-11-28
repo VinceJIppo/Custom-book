@@ -16,7 +16,7 @@ import { db } from "../db";
 import { getConfig } from "../config";
 import { getEmailProvider } from "../providers/registry";
 import { errorMessage, log } from "../log";
-import { isDeletedEmail } from "../accounts/deleted";
+import { isDeletedEmail, wasDeclinedBefore } from "../accounts/deleted";
 
 export const LINK_MINUTES = 15;
 const MAX_LINKS_PER_HOUR = 5;
@@ -81,7 +81,9 @@ export async function redeemSignInLink(rawEmail: unknown, token: string): Promis
   const claimed = await db.loginToken.updateMany({ where: { id: row.id, usedAt: null }, data: { usedAt: new Date() } });
   if (claimed.count !== 1) return expired;
 
-  const user = await db.user.upsert({ where: { email }, update: {}, create: { email, approval: initialApproval(email) } });
+  // Someone an admin declined can't come back as a fresh request by deleting the account and signing up again.
+  const approval = initialApproval(email) === "pending" && (await wasDeclinedBefore(email)) ? "rejected" : initialApproval(email);
+  const user = await db.user.upsert({ where: { email }, update: {}, create: { email, approval } });
   // New accounts that need approval: tell the admins (once).
   if (user.approval === "pending") await notifyAdminsOfRequest(user);
   const sessionToken = newToken();

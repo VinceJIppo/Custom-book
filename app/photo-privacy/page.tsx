@@ -33,7 +33,7 @@ const SHORT = [
   "Location and other hidden data are removed from every photo before it is checked or stored.",
   "Two services see the photos: Anthropic's Claude checks each one for a clear face, and Google's Gemini API draws the character. Under the business terms we use, neither may use them to train its models or improve its products.",
   "Photos are kept in private storage that only your account can reach, encrypted at rest.",
-  "By default, the original photos are deleted as soon as you approve a character. You can delete photos, characters, everything about a child, or your whole account at any time.",
+  "By default, the original photos are deleted as soon as you approve a character. You can delete photos, characters or everything about a child at any time, and your whole account once any printed book you ordered has arrived.",
   "We never use your photos or your books for marketing, examples or training.",
 ];
 
@@ -143,9 +143,10 @@ export default function PhotoPrivacyPage() {
             <Link className="ss-link" href="/account#delete">
               Account page
             </Link>
-            , &ldquo;Delete my account&rdquo; erases all of the above for every child and grown-up, plus your custom themes, credits, sign-in details and email address, straight away. We keep only records of paid
-            orders and payments (with no email attached), and a scrambled one-way copy of your email address so a new account with the same address doesn&apos;t get the welcome offer again. An account can&apos;t be
-            deleted while a printed book is still on its way. We email you to confirm.
+            , &ldquo;Delete my account&rdquo; erases all of the above for every child and grown-up, plus your custom themes, credits, sign-in details and email address, straight away. What we keep: records of
+            paid orders (book title, recipient&apos;s name, shipping address and amount, with no email or phone) and of credits you bought, for our accounts; and a scrambled one-way copy of your email
+            address with a count of how many books and characters you made, so a new account with the same address doesn&apos;t get the welcome offer again. An account can&apos;t be deleted while a print order
+            is unfinished or a payment is still clearing. We email you to confirm when we can.
           </li>
           <li>
             <strong className="font-semibold">Backups:</strong> our database backups may keep deleted records for [BACKUP RETENTION] before they roll off. Photo files themselves are not in those backups.

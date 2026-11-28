@@ -137,3 +137,26 @@ export async function batchPollHandler(job: GenerationJob): Promise<JobOutcome> 
   if (missing.length) log.warn("Overnight batch missed some pictures; drawing them now", { bookId: book.id, missing: missing.length, states: statuses.map((s) => s.state) });
   return { result: { drawn: ready.length, redrawnNow: missing.length, states: statuses.map((s) => s.state) } };
 }
+
+/**
+ * Stops overnight batches still waiting at the image provider for the matching jobs, and
+ * deletes them there (their book or whole account is being deleted). Best effort: a failure
+ * is logged and never blocks the delete.
+ */
+export async function cancelProviderBatches(where: Prisma.GenerationJobWhereInput) {
+  const polls = await db.generationJob.findMany({ where: { AND: [where, { type: "book.batch.poll", status: { in: ["queued", "running"] } }] }, select: { payload: true } });
+  const names = [...new Set(polls.flatMap((j) => (j.payload as { names?: string[] } | null)?.names ?? []))];
+  if (!names.length) return 0;
+  const provider = getImageProvider();
+  if (!supportsBatch(provider) || !provider.cancelIllustrationBatch) return 0;
+  let cancelled = 0;
+  for (const name of names) {
+    try {
+      await provider.cancelIllustrationBatch(name);
+      cancelled++;
+    } catch (err) {
+      log.warn("Couldn't cancel an overnight batch", { name, err: err instanceof Error ? err.message : String(err) });
+    }
+  }
+  return cancelled;
+}

@@ -13,6 +13,8 @@
  *   POST {base}/models/{model}:batchGenerateContent
  *     body: { batch: { displayName, inputConfig: { requests: { requests: [{ request, metadata }] } } } }
  *   GET  {base}/batches/{id}  -> { name, done, metadata: { state: BATCH_STATE_*, output: { inlinedResponses: { inlinedResponses: [{ response, error, metadata }] } } } }
+ *   POST {base}/batches/{id}:cancel and DELETE {base}/batches/{id} (both routes confirmed on the live
+ *   API host 2026-11-28: they answer 403 without a key, where unknown routes answer 404).
  * Batch Mode is billed at 50% of the standard price; the target turnaround is 24 hours.
  */
 import sharp from "sharp";
@@ -215,7 +217,7 @@ export class GeminiImageProvider implements ImageProvider, BatchImageProvider {
     };
   }
 
-  private async http(method: "GET" | "POST", path: string, body?: unknown) {
+  private async http(method: "GET" | "POST" | "DELETE", path: string, body?: unknown) {
     const res = await this.fetchImpl(`${GEMINI_BASE}/${path}`, {
       method,
       headers: { "x-goog-api-key": this.opts.apiKey, "Content-Type": "application/json" },
@@ -227,7 +229,8 @@ export class GeminiImageProvider implements ImageProvider, BatchImageProvider {
       if (res.status === 429 || res.status >= 500) throw new Error(msg);
       throw new PermanentProviderError(msg);
     }
-    return res.json() as Promise<Record<string, unknown>>;
+    const text = await res.text();
+    return (text ? JSON.parse(text) : {}) as Record<string, unknown>;
   }
 
   async submitIllustrationBatch(items: BatchItem[], label: string): Promise<string[]> {
@@ -256,6 +259,13 @@ export class GeminiImageProvider implements ImageProvider, BatchImageProvider {
       names.push(name);
     }
     return names;
+  }
+
+  async cancelIllustrationBatch(name: string) {
+    if (!/^batches\/[A-Za-z0-9_-]+$/.test(name)) return;
+    // Cancel first (a finished batch refuses, which is fine), then delete it and its results.
+    await this.http("POST", `${name}:cancel`).catch(() => undefined);
+    await this.http("DELETE", name);
   }
 
   async getIllustrationBatch(name: string): Promise<{ state: BatchState; results?: BatchResult[] }> {
