@@ -1,3 +1,5 @@
+import { audienceText } from "@/lib/books/audience";
+import { EDITOR_SYSTEM_PROMPT, blindReaderSystemPrompt, editorSystemPrompt } from "@/lib/providers/anthropic/storyPrompts";
 import { describe, expect, it } from "vitest";
 import { budgetProblems, budgetText, storyBudget } from "@/lib/books/budget";
 import { applySetup, setupProblems } from "@/lib/books/setup";
@@ -40,5 +42,25 @@ describe("the setup agent re-plans every page", () => {
     // A full plan with a missing page, or an opening that differs from openingPages, is sent back.
     expect(setupProblems({ ...setup, pages: pages.slice(0, 11) }, 12).join(" ")).toMatch(/every page, 1 to 12/);
     expect(setupProblems({ ...setup, pages: [beat(1, "Something else."), ...pages.slice(1)] }, 12).join(" ")).toMatch(/must be the same as openingPages/);
+  });
+});
+
+describe("age-aware stories", () => {
+  it("toddler books are simpler and older books carry a second try", () => {
+    expect(storyBudget(16, "2-4")).toEqual({ helpers: 1, realParts: 1, attempts: [1, 1] });
+    expect(storyBudget(16, "4-6")).toEqual({ helpers: 2, realParts: 2, attempts: [1, 2] });
+    expect(storyBudget(16, "6-8")).toEqual({ helpers: 2, realParts: 2, attempts: [2, 2] });
+    expect(storyBudget(24, "6-8").attempts).toEqual([2, 3]);
+    expect(budgetText(16, "2-4")).toMatch(/exactly 1 failed try/);
+  });
+
+  it("the checks imagine the book's own listener", () => {
+    expect(editorSystemPrompt("2-4")).toMatch(/a three-year-old listener/);
+    expect(editorSystemPrompt("2-4")).not.toMatch(/five-year-old/);
+    expect(editorSystemPrompt("6-8")).toMatch(/Can a seven-year-old retell it/);
+    expect(blindReaderSystemPrompt("6-8")).toMatch(/a bright seven-year-old's grown-up/);
+    expect(editorSystemPrompt("4-6")).toBe(EDITOR_SYSTEM_PROMPT);
+    expect(audienceText("2-4")).toMatch(/three-year-old/);
+    expect(audienceText("2-4")).toMatch(/Repetition/);
   });
 });

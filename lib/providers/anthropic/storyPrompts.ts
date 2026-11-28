@@ -3,6 +3,8 @@ import { voiceFor } from "../../schemas/voices";
 import { verseShape } from "../../schemas/storyText";
 import type { BlindRead, Outline } from "../../schemas/story";
 import { budgetText } from "../../books/budget";
+import { audienceFor, audienceText } from "../../books/audience";
+import type { ReadingLevel } from "../../schemas/book";
 import type { StoryContext, ThemeDraftRequest } from "../story/types";
 import { ART_STYLES } from "../../schemas/theme";
 import { retryNote } from "./client";
@@ -209,10 +211,11 @@ export function outlinePrompt(ctx: StoryContext, problems?: string[]): string {
     starter
       ? `The parent chose this story idea. Build the spine on it: keep its problem, the reason the first tries fail, and how the hero solves it, but tell it with this child as the hero and give the people in otherPeopleInTheStory parts within the story budget. Adapt names, details and the number of pages to this book.\nStory idea "${starter.title}": ${starter.idea}\n`
       : "",
-    budgetText(n),
+    budgetText(n, ctx.options.readingLevel),
+    audienceText(ctx.options.readingLevel),
     "",
     `Plan the story spine before any words are written. The book has exactly ${n} story pages.`,
-    "- kidSummary: first, the whole story in five to seven very short sentences a five-year-old could say back, in order, using \"wants\", \"but\", \"because\" and \"so\" (for example: \"Nell loves feeding the ducks. But one day Dot is stuck on the island, because the water is too deep. Grandpa can't wade out. Nell throws bread, but the wind blows it back. So she builds a stone path, and Dot comes home.\"). If you can't say it this simply, the story is too complicated: simplify it before planning the pages.",
+    `- kidSummary: first, the whole story in ${audienceFor(ctx.options.readingLevel).summary} ${audienceFor(ctx.options.readingLevel).listener} could say back,`+" in order, using \"wants\", \"but\", \"because\" and \"so\" (for example: \"Nell loves feeding the ducks. But one day Dot is stuck on the island, because the water is too deep. Grandpa can't wade out. Nell throws bread, but the wind blows it back. So she builds a stone path, and Dot comes home.\"). If you can't say it this simply, the story is too complicated: simplify it before planning the pages.",
     "- title: short, includes the child's name or nickname, suits the voice. premise: one line.",
     "- worldRule: how the magic or situation in this world works, in one or two plain sentences, including why the obvious quick fix will not work.",
     "- problem: what goes wrong and WHY, in kid logic. goal: what the hero wants because of it.",
@@ -285,7 +288,8 @@ export function manuscriptPrompt(ctx: StoryContext, outline: Outline, problems?:
     outline.kidSummary.length
       ? "- Every sentence of kidSummary must happen clearly in the words, on a page a listener can point to: a child who only hears the story (never sees the plan or the pictures) must be able to say it back. Say the reasons out loud in the words (\"because...\", \"so...\"); never leave them only in the plan."
       : "",
-    budgetText(n),
+    budgetText(n, ctx.options.readingLevel),
+    audienceText(ctx.options.readingLevel),
     "- The story comes first and the voice second: if a rhyme would force nonsense or a filler word, choose a near-rhyme or a plain line instead.",
     "- Make every page follow from the one before, state the world's rule before it matters, and set up everything before it is used, exactly as the spine plans.",
     outline.setup
@@ -302,6 +306,17 @@ export function manuscriptPrompt(ctx: StoryContext, outline: Outline, problems?:
   ]
     .filter(Boolean)
     .join("\n");
+}
+
+/** The editor, judging for the book's own listener (a three-, five- or seven-year-old). */
+export function editorSystemPrompt(level: ReadingLevel): string {
+  return EDITOR_SYSTEM_PROMPT.replaceAll("a five-year-old", audienceFor(level).listener);
+}
+
+/** The blind reader, listening as the grown-up of the book's own listener. */
+export function blindReaderSystemPrompt(level: ReadingLevel): string {
+  const who = audienceFor(level).listener.replace(/^a /, "");
+  return BLIND_READER_SYSTEM_PROMPT.replace("a bright five-year-old's grown-up", `a bright ${who}'s grown-up`);
 }
 
 /** The blind reader: hears only the words, never the plan, and retells the story. */
@@ -362,7 +377,8 @@ export function fullRewritePrompt(
     "",
     `Write the whole story again, all ${ctx.options.length} pages, fixing every problem. Keep what already works (good lines, the voice, the ending), but make the story flow as one piece from page 1 to the end: every page follows from the one before, every reason is said in the words, and every sentence of kidSummary happens on a page.`,
     `- Respect the reading level exactly: ${readingRule(ctx)}`,
-    budgetText(ctx.options.length),
+    budgetText(ctx.options.length, ctx.options.readingLevel),
+    audienceText(ctx.options.readingLevel),
     ctx.options.dedication ? `- dedication: use exactly ${JSON.stringify(ctx.options.dedication)}` : "- dedication: keep the current one unless it no longer fits.",
     "- backCoverBlurb: keep the current one unless the story changed.",
     "Before answering, read it aloud in your head as if you had never seen the plan, and fix anything a child would not follow.",
@@ -404,6 +420,8 @@ function manuscriptText(pages: Array<{ pageNumber: number; text: string }>): str
 export function editorPrompt(ctx: StoryContext, outline: Outline, pages: Array<{ pageNumber: number; text: string }>, blind?: BlindRead): string {
   return [
     `This is a draft picture book for a ${ctx.child.age}-year-old (${readingRule(ctx)}), in the "${voiceFor(ctx.options).label}" voice.`,
+    audienceText(ctx.options.readingLevel),
+    "Flag as an issue any page or plot choice that doesn't fit that listener (too complicated, too babyish, too long or too scary for this age).",
     "The author's plan:",
     JSON.stringify({ kidSummary: outline.kidSummary, setup: outline.setup ? { homeWorld: outline.setup.homeWorld, heroWant: outline.setup.heroWant, incitingIncident: outline.setup.incitingIncident, whyItMatters: outline.setup.whyItMatters, whyTheHero: outline.setup.whyTheHero, decision: outline.setup.decision } : undefined, worldRule: outline.worldRule, problem: outline.problem, goal: outline.goal, attempts: outline.attempts, turningPoint: outline.turningPoint, resolution: outline.resolution, lessonShown: outline.lessonShown, setups: outline.setups, continuity: outline.continuity, characters: outline.characters }, null, 2),
     ctx.appearance?.hero ? `How ${ctx.child.nickname || ctx.child.firstName} looks (from the character sheet; the words must never contradict it): ${ctx.appearance.hero}` : "",

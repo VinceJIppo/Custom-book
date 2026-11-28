@@ -4,6 +4,9 @@
  * sentences get squeezed out, which is what makes a story stop making sense.
  * The plan stays inside this budget; everything else is optional.
  */
+import type { ReadingLevel } from "../schemas/book";
+import { audienceFor } from "./audience";
+
 export interface StoryBudget {
   /** Named made-up characters (theme characters, the pet, a friend) with a real part. */
   helpers: number;
@@ -13,16 +16,25 @@ export interface StoryBudget {
   attempts: [number, number];
 }
 
-export function storyBudget(storyPages: number): StoryBudget {
+function pageBudget(storyPages: number): StoryBudget {
   if (storyPages <= 12) return { helpers: 2, realParts: 2, attempts: [1, 1] };
   if (storyPages <= 16) return { helpers: 2, realParts: 2, attempts: [1, 2] };
   if (storyPages <= 20) return { helpers: 3, realParts: 3, attempts: [2, 2] };
   return { helpers: 3, realParts: 3, attempts: [2, 3] };
 }
 
+/** The budget for this many pages, adjusted for the listener's age (simpler for toddlers, a second try for older children). */
+export function storyBudget(storyPages: number, level: ReadingLevel = "4-6"): StoryBudget {
+  const b = pageBudget(storyPages);
+  const a = audienceFor(level).budget;
+  if (!a) return b;
+  const attempts: [number, number] = a.attempts ? (level === "2-4" ? a.attempts : [Math.max(b.attempts[0], a.attempts[0]), Math.max(b.attempts[1], a.attempts[1])]) : b.attempts;
+  return { helpers: Math.min(b.helpers, a.helpers ?? b.helpers), realParts: Math.min(b.realParts, a.realParts ?? b.realParts), attempts };
+}
+
 /** The budget as instructions for the planner and writer. */
-export function budgetText(storyPages: number): string {
-  const b = storyBudget(storyPages);
+export function budgetText(storyPages: number, level: ReadingLevel = "4-6"): string {
+  const b = storyBudget(storyPages, level);
   const tries = b.attempts[0] === b.attempts[1] ? `exactly ${b.attempts[0]}` : `${b.attempts[0]} or ${b.attempts[1]}`;
   return [
     `STORY BUDGET for ${storyPages} pages (a simple story a child can follow beats a crowded one):`,
@@ -35,8 +47,8 @@ export function budgetText(storyPages: number): string {
 }
 
 /** Plain-English problems with a plan that's over budget (empty when it fits). */
-export function budgetProblems(attempts: number, storyPages: number): string[] {
-  const b = storyBudget(storyPages);
+export function budgetProblems(attempts: number, storyPages: number, level: ReadingLevel = "4-6"): string[] {
+  const b = storyBudget(storyPages, level);
   if (attempts < b.attempts[0] || attempts > b.attempts[1])
     return [`Plan ${b.attempts[0] === b.attempts[1] ? b.attempts[0] : `${b.attempts[0]} or ${b.attempts[1]}`} failed ${b.attempts[1] === 1 ? "try" : "tries"} for a ${storyPages}-page book (you planned ${attempts}).`];
   return [];

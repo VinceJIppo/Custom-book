@@ -14,6 +14,11 @@ export default defineConfig({
       STORAGE_SIGNING_SECRET: "test-signing-secret-test-signing-secret",
       STORAGE_ENCRYPTION_KEY: "test-encryption-key-test-encryption-key",
       STORY_PROVIDER: "mock",
+      // Tests never call real AI services, even when a key is set in the environment.
+      ANTHROPIC_API_KEY: "",
+      STORYSTAR_ANTHROPIC_API_KEY: "",
+      GEMINI_API_KEY: "",
+      OPENAI_API_KEY: "",
       // Allowances are tested on their own (tests/allowance.test.ts); other tests make many books.
       ALLOWANCES_ENABLED: "false",
       // Most tests make whole books in one go and check the automatic redraw; both have their own tests.

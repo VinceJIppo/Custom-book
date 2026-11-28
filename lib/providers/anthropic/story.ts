@@ -28,12 +28,12 @@ import { ClaudeJson, imageBlock, type ClaudeOptions } from "./client";
 import {
   ART_SYSTEM_PROMPT,
   DESCRIBE_CHARACTER_PROMPT,
-  EDITOR_SYSTEM_PROMPT,
+  editorSystemPrompt,
   STORY_SYSTEM_PROMPT,
   THEME_SYSTEM_PROMPT,
   SETUP_SYSTEM_PROMPT,
   setupPrompt,
-  BLIND_READER_SYSTEM_PROMPT,
+  blindReaderSystemPrompt,
   blindReadPrompt,
   retellingText,
   fullRewritePrompt,
@@ -48,6 +48,7 @@ import {
 import { findProtectedNames } from "../../safety/protectedNames";
 import { setupProblems } from "../../books/setup";
 import { budgetProblems } from "../../books/budget";
+import { audienceFor } from "../../books/audience";
 
 /*
  * Wire schemas sent to the API as structured-output formats. They carry the
@@ -269,8 +270,9 @@ export class AnthropicStoryProvider implements StoryProvider {
         const problems = numberingProblems(o.pages, n);
         if (!o.worldRule.trim() || !o.problem.trim() || !o.goal.trim()) problems.push("Fill in worldRule, problem and goal: the story needs them to make sense.");
         if (o.attempts.length < 1) problems.push("Plan at least one attempt that fails for a clear reason before the solution.");
-        else problems.push(...budgetProblems(o.attempts.length, n));
-        if (o.kidSummary.length < 4) problems.push("Write kidSummary: the whole story in five to seven very short sentences a five-year-old could say back.");
+        else problems.push(...budgetProblems(o.attempts.length, n, ctx.options.readingLevel));
+        const aud = audienceFor(ctx.options.readingLevel);
+        if (o.kidSummary.length < aud.summaryMin) problems.push(`Write kidSummary: the whole story in ${aud.summary} ${aud.listener} could say back.`);
         const missingLinks = o.pages.filter((pg) => pg.pageNumber > 1 && !pg.causeFromPrevious.trim()).map((pg) => pg.pageNumber);
         if (missingLinks.length) problems.push(`Give causeFromPrevious for pages ${missingLinks.join(", ")}: how each follows from the page before.`);
         const badSetups = o.setups.filter((x) => x.setUpOnPage > x.paysOffOnPage).map((x) => x.item);
@@ -365,7 +367,7 @@ export class AnthropicStoryProvider implements StoryProvider {
       const blind = await run(
         this.claude.generate({
           label: "blind reader",
-          system: BLIND_READER_SYSTEM_PROMPT,
+          system: blindReaderSystemPrompt(c.options.readingLevel),
           build: () => blindReadPrompt(c, manuscript.pages),
           wire: WireBlind,
           schema: BlindReadSchema,
@@ -376,7 +378,7 @@ export class AnthropicStoryProvider implements StoryProvider {
       const report = await run(
         this.claude.generate({
           label: "editor",
-          system: EDITOR_SYSTEM_PROMPT,
+          system: editorSystemPrompt(c.options.readingLevel),
           build: () => editorPrompt(c, outline, manuscript.pages, blind),
           wire: WireEditor,
           schema: EditorReportSchema,
@@ -484,8 +486,8 @@ export class AnthropicStoryProvider implements StoryProvider {
    * editor's comparison with the plan. Doesn't change anything.
    */
   async scoreStory(outline: Outline, pages: Array<{ pageNumber: number; text: string }>, ctx: StoryContext): Promise<WithUsage<StoryScore>> {
-    const blind = await this.claude.generate({ label: "score: blind reader", system: BLIND_READER_SYSTEM_PROMPT, build: () => blindReadPrompt(ctx, pages), wire: WireBlind, schema: BlindReadSchema, maxTokens: 16000, effort: this.lightEffort });
-    const report = await this.claude.generate({ label: "score: editor", system: EDITOR_SYSTEM_PROMPT, build: () => editorPrompt(ctx, outline, pages, blind.value), wire: WireEditor, schema: EditorReportSchema, maxTokens: 24000, effort: this.lightEffort });
+    const blind = await this.claude.generate({ label: "score: blind reader", system: blindReaderSystemPrompt(ctx.options.readingLevel), build: () => blindReadPrompt(ctx, pages), wire: WireBlind, schema: BlindReadSchema, maxTokens: 16000, effort: this.lightEffort });
+    const report = await this.claude.generate({ label: "score: editor", system: editorSystemPrompt(ctx.options.readingLevel), build: () => editorPrompt(ctx, outline, pages, blind.value), wire: WireEditor, schema: EditorReportSchema, maxTokens: 24000, effort: this.lightEffort });
     return {
       value: {
         retellingMatch: report.value.retellingMatch ?? 0,
