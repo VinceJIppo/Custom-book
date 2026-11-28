@@ -9,6 +9,7 @@ import path from "node:path";
 import { renderToStaticMarkup } from "react-dom/server";
 import type { Browser } from "playwright";
 import sharp from "sharp";
+import { PDFDocument } from "pdf-lib";
 import { BookPage } from "../../components/book/BookPage";
 import { CoverSpread } from "../../components/book/CoverSpread";
 import type { BookView } from "../books/viewTypes";
@@ -247,21 +248,41 @@ function toImageChecks(raw: Array<{ page: number; src: string; ppi: number }>): 
     });
 }
 
-export async function renderInteriorPdf(browser: Browser, view: BookView): Promise<RenderedPdf> {
+/**
+ * Pages per browser pass. A whole book at print resolution in one browser page holds every
+ * picture in memory at once (well over a gigabyte), which can take down a small server, so
+ * the interior is drawn a few pages at a time and the parts are joined.
+ */
+export const INTERIOR_PAGES_PER_PASS = 4;
+
+export async function renderInteriorPdf(browser: Browser, view: BookView, pagesPerPass = INTERIOR_PAGES_PER_PASS): Promise<RenderedPdf> {
   const size = pageSizeWithBleed(getTrim(view.trim.id));
-  const body = renderToStaticMarkup(
-    <>
-      {view.pages.map((p) => (
-        <BookPage key={p.number} page={p} book={view} mode="print" />
-      ))}
-    </>,
-  );
-  return withPage(browser, htmlDocument(body, size.widthIn, size.heightIn), async (page) => {
-    await autoFix(page);
-    const m = await measure(page, ".bk-page", BLEED_IN + SAFE_IN);
-    const pdf = await page.pdf({ width: `${size.widthIn}in`, height: `${size.heightIn}in`, printBackground: true, preferCSSPageSize: true, margin: { top: "0", right: "0", bottom: "0", left: "0" } });
-    return { pdf, pages: view.pages.length, textIssues: m.textIssues, images: toImageChecks(m.images) };
-  });
+  const merged = await PDFDocument.create();
+  const textIssues: TextIssue[] = [];
+  const images: Array<{ page: number; src: string; ppi: number }> = [];
+  for (let start = 0; start < view.pages.length; start += pagesPerPass) {
+    const body = renderToStaticMarkup(
+      <>
+        {view.pages.slice(start, start + pagesPerPass).map((p) => (
+          <BookPage key={p.number} page={p} book={view} mode="print" />
+        ))}
+      </>,
+    );
+    const part = await withPage(browser, htmlDocument(body, size.widthIn, size.heightIn), async (page) => {
+      await autoFix(page);
+      const m = await measure(page, ".bk-page", BLEED_IN + SAFE_IN);
+      const pdf = await page.pdf({ width: `${size.widthIn}in`, height: `${size.heightIn}in`, printBackground: true, preferCSSPageSize: true, margin: { top: "0", right: "0", bottom: "0", left: "0" } });
+      return { pdf, m };
+    });
+    // Page numbers in the checks count from the start of the book, not of this pass.
+    for (const t of part.m.textIssues) textIssues.push({ ...t, page: t.page + start });
+    for (const i of part.m.images) images.push({ ...i, page: i.page + start });
+    const doc = await PDFDocument.load(part.pdf);
+    for (const pg of await merged.copyPages(doc, doc.getPageIndices())) merged.addPage(pg);
+  }
+  // Classic cross-reference tables (no object streams): the most widely accepted form for print.
+  const pdf = Buffer.from(await merged.save({ useObjectStreams: false }));
+  return { pdf, pages: view.pages.length, textIssues, images: toImageChecks(images) };
 }
 
 export async function renderCoverPdf(browser: Browser, view: BookView, layout: CoverLayout): Promise<RenderedPdf> {
@@ -278,7 +299,8 @@ export async function renderCoverPdf(browser: Browser, view: BookView, layout: C
 export async function launchBrowser(): Promise<Browser> {
   const { chromium } = await import("playwright");
   try {
-    return await chromium.launch();
+    // In a container /dev/shm is tiny (64 MB); large print pages would crash the renderer there.
+    return await chromium.launch({ args: ["--disable-dev-shm-usage"] });
   } catch (err) {
     throw new Error(
       `Couldn't start the PDF renderer (headless Chromium). Run "npx playwright install chromium" once, then try again. (${err instanceof Error ? err.message.split("\n")[0] : String(err)})`,

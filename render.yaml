@@ -15,7 +15,10 @@ services:
     runtime: docker
     region: oregon
     plan: 1c-2g
-    # Website and background worker in one container (if either stops, Render restarts both).
+    # Website and background worker in one container. If either one crashes it restarts on its
+    # own after 5 seconds, and the other keeps running (a failed PDF render never takes the site down).
+    # The worker runs at lower CPU priority with one image thread, so the website stays responsive
+    # (and passes Render's health check) while print files and pictures are being made.
     dockerCommand: npm run start:all
     healthCheckPath: /api/health
     # Apply database migrations before each deploy goes live.
