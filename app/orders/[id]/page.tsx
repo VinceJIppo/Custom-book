@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { requireOnboardedUser } from "@/lib/session";
 import { fulfillCheckout, getOrder, isAdmin, quoteOf } from "@/lib/orders/service";
 import { formatMoney, SHIPPING_LABELS } from "@/lib/orders/pricing";
-import type { StatusEvent } from "@/lib/orders/status";
+import { historyMessage, STATUS_LABELS, type OrderStatus, type StatusEvent } from "@/lib/orders/status";
 import { getStorage } from "@/lib/storage";
 import { AutoRefresh } from "@/components/AutoRefresh";
 import { OrderStatusBadge, OrderSteps } from "@/components/OrderStatus";
@@ -35,40 +35,52 @@ export default async function OrderPage({ params, searchParams }: { params: Prom
   return (
     <div className="space-y-6">
       <AutoRefresh active={order.status === "awaiting_payment" || order.status === "paid"} everyMs={2500} />
-      <Link href="/orders" className="text-sm font-semibold text-cobalt">
+      <Link href="/orders" className="ss-link body-s inline-flex min-h-11 items-center">
         ← All orders
       </Link>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="font-display text-3xl font-medium">{order.bookTitle}</h1>
-          <p className="text-[color:var(--muted)]">
+        <div className="min-w-0">
+          <h1 className="heading break-words">{order.bookTitle}</h1>
+          <p className="mt-1 text-ink-muted">
             Order {order.id.slice(-8).toUpperCase()} · placed {order.createdAt.toLocaleString()}
           </p>
         </div>
         <OrderStatusBadge status={order.status} />
       </div>
-      {sp.error && <p className="rounded-xl bg-amber-50 px-4 py-3 text-amber-900 ring-1 ring-amber-200">{sp.error}</p>}
-      {sp.resent && <p className="rounded-xl bg-emerald-50 px-4 py-3 text-emerald-900 ring-1 ring-emerald-200">Sent to the printer again with the new print files.</p>}
+      {sp.error && (
+        <p className="ss-note ss-note--error" role="alert">
+          {sp.error}
+        </p>
+      )}
+      {sp.resent && (
+        <p className="ss-note ss-note--success" role="status">
+          Sent to the printer again with the new print files.
+        </p>
+      )}
 
-      <section className="space-y-4 rounded-xl bg-white p-5 ring-1 ring-[color:var(--line)]">
+      <section className="ss-card ss-card--piped space-y-4">
         <OrderSteps status={order.status} />
-        {order.status === "awaiting_payment" && <p className="animate-pulse text-cobalt">Waiting for the payment to be confirmed...</p>}
-        {order.status === "paid" && <p className="animate-pulse text-cobalt">Payment received. Sending your book to the printer...</p>}
-        {order.statusReason && !fixable && <p className="text-[color:var(--muted)]" data-testid="status-reason">{order.statusReason}</p>}
+        {order.status === "awaiting_payment" && <p className="animate-pulse text-delft">Waiting for the payment to be confirmed...</p>}
+        {order.status === "paid" && <p className="animate-pulse text-delft">Payment received. Sending your book to the printer...</p>}
+        {order.statusReason && !fixable && (
+          <p className="text-ink-muted" data-testid="status-reason">
+            {order.statusReason}
+          </p>
+        )}
         {fixable && (
-          <div className="rounded-lg bg-amber-50 p-4 text-amber-900 ring-1 ring-amber-200" data-testid="fix-path">
+          <div className="ss-note ss-note--warn" data-testid="fix-path">
             <p className="font-semibold">{order.status === "failed" ? "We couldn't send this order to the printer." : order.status === "cancelled" ? "The printer cancelled this order." : "The printer couldn't print this order."}</p>
             {order.statusReason && <p className="mt-1">Reason: {order.statusReason}</p>}
             <p className="mt-2">How to fix it: correct the book if needed, make new print files on the Print files page, then send the order again. You won&apos;t be charged again.</p>
             <div className="mt-3 flex flex-wrap gap-3">
               {order.bookId && (
-                <Link href={`/books/${order.bookId}/print`} className="btn btn-secondary btn-sm">
+                <Link href={`/books/${order.bookId}/print`} className="ss-btn ss-btn--secondary ss-btn--sm">
                   Make new print files
                 </Link>
               )}
               <form action={resendOrderAction}>
                 <input type="hidden" name="orderId" value={order.id} />
-                <button className="btn btn-primary btn-sm" data-testid="resend">
+                <button className="ss-btn ss-btn--primary ss-btn--sm" data-testid="resend">
                   Send to the printer again
                 </button>
               </form>
@@ -76,10 +88,10 @@ export default async function OrderPage({ params, searchParams }: { params: Prom
           </div>
         )}
         {(order.trackingUrl || order.trackingNumber) && (
-          <p data-testid="tracking">
+          <p className="break-words" data-testid="tracking">
             Tracking: {order.carrier ? `${order.carrier} ` : ""}
             {order.trackingUrl ? (
-              <a href={order.trackingUrl} className="font-semibold text-cobalt underline" target="_blank" rel="noreferrer">
+              <a href={order.trackingUrl} className="ss-link" target="_blank" rel="noreferrer">
                 {order.trackingNumber ?? "track the parcel"}
               </a>
             ) : (
@@ -91,14 +103,14 @@ export default async function OrderPage({ params, searchParams }: { params: Prom
           <p>Estimated arrival: {new Date(`${order.estimatedArrival}T12:00:00`).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}</p>
         )}
         {order.providerOrderId && (
-          <form action={checkStatusAction} className="flex flex-wrap items-center gap-3 text-sm text-[color:var(--muted)]">
+          <form action={checkStatusAction} className="body-s flex flex-wrap items-center gap-3 text-ink-muted">
             <input type="hidden" name="orderId" value={order.id} />
-            <span>
-              {order.provider === "mock" ? "Test printer" : "Lulu"} job {order.providerOrderId}
-              {order.providerStatus ? ` (${order.providerStatus})` : ""}
-              {order.lastCheckedAt ? ` · checked ${order.lastCheckedAt.toLocaleString()}` : ""}
+            <span className="min-w-0 wrap-anywhere">
+              {admin ? `${order.provider === "mock" ? "Test printer" : "Lulu"} job ${order.providerOrderId}${order.providerStatus ? ` (${order.providerStatus})` : ""}` : `Printer status: ${STATUS_LABELS[order.status as OrderStatus] ?? order.status}`}
+              {order.lastCheckedAt ? ` · checked ${order.lastCheckedAt.toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}` : ""}
             </span>
-            <button className="btn btn-secondary btn-sm" data-testid="check-status">
+            {/* The one primary per view: "Send to the printer again" when the order needs a fix, otherwise this. */}
+            <button className={`ss-btn ss-btn--sm ${fixable ? "ss-btn--secondary" : "ss-btn--primary"}`} data-testid="check-status">
               Check status now
             </button>
           </form>
@@ -106,10 +118,10 @@ export default async function OrderPage({ params, searchParams }: { params: Prom
       </section>
 
       <div className="grid gap-6 md:grid-cols-2">
-        <section className="rounded-xl bg-white p-5 ring-1 ring-[color:var(--line)]">
-          <h2 className="mb-2 font-display text-xl font-medium">Shipping to</h2>
+        <section className="ss-card min-w-0">
+          <h2 className="title mb-3">Shipping to</h2>
           {a && (
-            <address className="not-italic">
+            <address className="not-italic break-words">
               {a.name}
               <br />
               {a.street1}
@@ -121,26 +133,26 @@ export default async function OrderPage({ params, searchParams }: { params: Prom
               {a.countryCode} · {a.phone}
             </address>
           )}
-          <p className="mt-2 text-sm text-[color:var(--muted)]">{SHIPPING_LABELS[order.shippingLevel as ShippingLevel] ?? order.shippingLevel}</p>
+          <p className="body-s mt-2 text-ink-muted">{SHIPPING_LABELS[order.shippingLevel as ShippingLevel] ?? order.shippingLevel}</p>
           {order.giftNote && (
-            <p className="mt-3 rounded-lg bg-cream p-3 text-sm">
+            <p className="body-s mt-4 break-words rounded-[var(--radius-sm)] bg-paper-sunk p-3">
               <span className="font-semibold">Gift note:</span> {order.giftNote}
             </p>
           )}
         </section>
-        <section className="rounded-xl bg-white p-5 ring-1 ring-[color:var(--line)]">
-          <h2 className="mb-2 font-display text-xl font-medium">Total</h2>
-          <p className="font-display text-2xl" data-testid="order-total">
+        <section className="ss-card min-w-0">
+          <h2 className="title mb-3">Total</h2>
+          <p className="text-2xl font-bold" data-testid="order-total">
             {formatMoney(order.totalCents, order.currency)}
           </p>
-          <p className="text-sm text-[color:var(--muted)]">Printing, shipping and tax included. {order.pageCount} pages.</p>
+          <p className="body-s mt-1 text-ink-muted">Printing, shipping and tax included. {order.pageCount} pages.</p>
           {order.creditCents > 0 && (
-            <p className="text-sm" data-testid="order-credits">
+            <p className="body-s mt-1" data-testid="order-credits">
               {formatMoney(order.creditCents, order.currency)} paid with credits, {formatMoney(order.totalCents - order.creditCents, order.currency)} by card.
             </p>
           )}
           {admin && quote && (
-            <dl className="mt-3 grid grid-cols-2 gap-x-4 text-sm" data-testid="price-breakdown">
+            <dl className="body-s mt-4 grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-1 [&_dd]:text-right [&_dd]:tabular-nums" data-testid="price-breakdown">
               <dt>Printer: printing</dt>
               <dd>{formatMoney(Math.round(quote.printer.printCost * 100))}</dd>
               <dt>Printer: shipping</dt>
@@ -156,13 +168,13 @@ export default async function OrderPage({ params, searchParams }: { params: Prom
             </dl>
           )}
           {files && (
-            <p className="mt-3 text-sm">
+            <p className="body-s mt-4">
               Exact files sent to the printer:{" "}
-              <a href={files.interior} className="text-cobalt underline">
+              <a href={files.interior} className="ss-link">
                 interior PDF
               </a>
               ,{" "}
-              <a href={files.cover} className="text-cobalt underline">
+              <a href={files.cover} className="ss-link">
                 cover PDF
               </a>
             </p>
@@ -171,12 +183,13 @@ export default async function OrderPage({ params, searchParams }: { params: Prom
       </div>
 
       {history.length > 0 && (
-        <section className="rounded-xl bg-white p-5 ring-1 ring-[color:var(--line)]">
-          <h2 className="mb-2 font-display text-xl font-medium">History</h2>
-          <ul className="space-y-1 text-sm" data-testid="order-history">
+        <section className="ss-card">
+          <h2 className="title mb-3">History</h2>
+          <ul className="body-s space-y-1" data-testid="order-history">
             {history.map((h, i) => (
-              <li key={i}>
-                <span className="text-[color:var(--muted)]">{new Date(h.at).toLocaleString()}</span> · {h.message ?? h.status}
+              <li key={i} className="break-words">
+                <span className="text-ink-muted">{new Date(h.at).toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" })}</span> · {historyMessage(h)}
+                {admin && h.detail && <span className="text-ink-muted"> (admin: {h.detail})</span>}
               </li>
             ))}
           </ul>

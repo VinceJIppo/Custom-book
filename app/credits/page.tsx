@@ -43,37 +43,52 @@ export default async function CreditsPage({ searchParams }: { searchParams: Prom
   const titles = new Map((await db.book.findMany({ where: { id: { in: bookIds }, userId: user.id }, select: { id: true, title: true } })).map((b) => [b.id, b.title ?? "Untitled book"]));
 
   if (!c.enabled) {
-    return <p className="text-[color:var(--muted)]">Credits aren&apos;t turned on for this app.</p>;
+    return <p className="text-ink-muted">Credits aren&apos;t turned on for this app.</p>;
   }
 
+  const packs = creditPacks();
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       <section>
-        <p className="eyebrow text-coral">Your credits</p>
-        <h1 className="font-display text-4xl font-medium" data-testid="credits-balance">
+        <p className="eyebrow mb-3">Your credits</p>
+        <h1 className="font-display text-4xl font-normal" data-testid="credits-balance">
           {money(c.balanceUsd)}
         </h1>
-        <p className="mt-2 max-w-2xl text-[color:var(--muted)]">
+        <p className="mt-3 max-w-2xl text-ink-muted">
           Credits pay for the AI that writes your stories and paints the pictures, at what it actually costs us. A book usually uses $1 to $3. Every printed book you buy adds ${cfg.CREDIT_PER_BOOK_USD.toFixed(0)}, and credits last {cfg.CREDIT_EXPIRY_MONTHS} months.
         </p>
-        {bought != null && <p className="mt-3 rounded-xl bg-emerald-50 px-4 py-2 text-emerald-900 ring-1 ring-emerald-200">Thank you! ${bought.toFixed(2)} of credits was added.</p>}
-        {sp.cancelled && <p className="mt-3 rounded-xl bg-amber-50 px-4 py-2 text-amber-900 ring-1 ring-amber-200">No charge was made.</p>}
-        {sp.error && <p className="mt-3 rounded-xl bg-red-50 px-4 py-2 text-red-900 ring-1 ring-red-200">{sp.error}</p>}
+        {bought != null && (
+          <p className="ss-note ss-note--success mt-4" role="status">
+            Thank you! ${bought.toFixed(2)} of credits was added.
+          </p>
+        )}
+        {sp.cancelled && (
+          <p className="ss-note mt-4" role="status">
+            No charge was made.
+          </p>
+        )}
+        {sp.error && (
+          <p className="ss-note ss-note--error mt-4" role="alert">
+            {sp.error}
+          </p>
+        )}
       </section>
 
-      <section className="rounded-xl bg-white p-5 ring-1 ring-[color:var(--line)]">
-        <h2 className="font-display text-xl font-medium">Add credits</h2>
-        <div className="mt-3 flex flex-wrap gap-3">
-          {creditPacks().map((amount) => (
+      <section className="ss-card ss-card--piped">
+        <h2 className="title">Add credits</h2>
+        <div className="mt-4 flex flex-wrap gap-3">
+          {packs.map((amount, i) => (
             <form key={amount} action={buyCreditsAction}>
               <input type="hidden" name="amount" value={amount} />
-              <button className="btn btn-primary" data-testid={`buy-${amount}`}>
+              {/* One primary action per view: the first pack; the others are secondary. */}
+              <button className={`ss-btn ${i === 0 ? "ss-btn--primary" : "ss-btn--secondary"}`} data-testid={`buy-${amount}`}>
                 Buy ${amount}
               </button>
             </form>
           ))}
         </div>
-        <p className="mt-2 text-sm text-[color:var(--muted)]">
+        <p className="body-s mt-3 text-ink-muted">
           At checkout for a printed book, credits can pay toward it as long as ${cfg.CREDIT_REDEEM_KEEP_USD.toFixed(0)} stays in your account
           {c.redeemableUsd > 0 ? ` (right now up to ${money(c.redeemableUsd)})` : ""}.
         </p>
@@ -81,15 +96,15 @@ export default async function CreditsPage({ searchParams }: { searchParams: Prom
 
       {c.lots.length > 0 && (
         <section>
-          <h2 className="font-display text-xl font-medium">When they expire</h2>
-          <ul className="mt-2 divide-y divide-[color:var(--line)] rounded-xl bg-white ring-1 ring-[color:var(--line)]">
+          <h2 className="title">When they expire</h2>
+          <ul className="mt-3 divide-y divide-line overflow-hidden rounded-[var(--radius-md)] border border-line bg-paper-raised">
             {c.lots.map((l) => (
-              <li key={l.id} className="flex justify-between gap-3 px-4 py-2 text-sm">
-                <span>
-                  {KIND[l.kind] ?? l.kind} <span className="text-[color:var(--muted)]">on {date(l.createdAt)}</span>
+              <li key={l.id} className="flex flex-wrap justify-between gap-x-3 gap-y-1 px-4 py-3 text-[15px] leading-[22px]">
+                <span className="min-w-0">
+                  {KIND[l.kind] ?? l.kind} <span className="text-ink-muted">on {date(l.createdAt)}</span>
                 </span>
-                <span>
-                  <strong>{money(l.remainingUsd)}</strong> <span className="text-[color:var(--muted)]">left, expires {date(l.expiresAt)}</span>
+                <span className="min-w-0">
+                  <strong>{money(l.remainingUsd)}</strong> <span className="text-ink-muted">left, expires {date(l.expiresAt)}</span>
                 </span>
               </li>
             ))}
@@ -98,19 +113,19 @@ export default async function CreditsPage({ searchParams }: { searchParams: Prom
       )}
 
       <section>
-        <h2 className="font-display text-xl font-medium">Levels</h2>
-        <p className="text-sm text-[color:var(--muted)]">Ordering printed books moves you up a level, with room for more characters and custom themes. You&apos;re at {a.unlimited ? "an admin level (no limits)" : a.tier.label}.</p>
-        <ul className="mt-2 grid gap-3 sm:grid-cols-3">
+        <h2 className="title">Levels</h2>
+        <p className="body-s mt-1 text-ink-muted">Ordering printed books moves you up a level, with room for more characters and custom themes. You&apos;re at {a.unlimited ? "an admin level (no limits)" : a.tier.label}.</p>
+        <ul className="mt-4 grid gap-4 sm:grid-cols-3">
           {TIER_IDS.map((id) => {
             const t = TIERS[id];
             const here = !a.unlimited && a.tier.id === id;
             return (
-              <li key={id} className={`rounded-xl bg-white p-4 ring-1 ${here ? "ring-2 ring-cobalt" : "ring-[color:var(--line)]"}`}>
-                <p className="font-semibold">
-                  {t.label} {here && <span className="text-sm text-cobalt">(you)</span>}
-                </p>
-                <p className="text-sm text-[color:var(--muted)]">{t.minPaidOrders === 0 ? "Everyone starts here" : `After ${t.minPaidOrders} printed book${t.minPaidOrders === 1 ? "" : "s"}`}</p>
-                <p className="mt-1 text-sm">
+              <li key={id} className={`ss-card min-w-0 p-4 sm:p-5 ${here ? "border-2 border-delft" : ""}`}>
+                <h3 className="title">
+                  {t.label} {here && <span className="body-s font-sans font-semibold text-delft">(you)</span>}
+                </h3>
+                <p className="body-s text-ink-muted">{t.minPaidOrders === 0 ? "Everyone starts here" : `After ${t.minPaidOrders} printed book${t.minPaidOrders === 1 ? "" : "s"}`}</p>
+                <p className="body-s mt-1">
                   {t.limits.character} character sets and {t.limits.theme} custom theme{t.limits.theme === 1 ? "" : "s"} {t.window === "30d" ? "a month" : "to start"}.
                 </p>
               </li>
@@ -120,32 +135,35 @@ export default async function CreditsPage({ searchParams }: { searchParams: Prom
       </section>
 
       <section>
-        <h2 className="font-display text-xl font-medium">History</h2>
+        <h2 className="title">History</h2>
         {history.length === 0 ? (
-          <p className="text-[color:var(--muted)]">Nothing yet.</p>
+          <p className="mt-1 text-ink-muted">Nothing yet.</p>
         ) : (
-          <table className="mt-2 w-full overflow-hidden rounded-xl bg-white text-sm ring-1 ring-[color:var(--line)]" data-testid="credit-history">
-            <tbody className="divide-y divide-[color:var(--line)]">
-              {history.map((h) => (
-                <tr key={h.id}>
-                  <td className="whitespace-nowrap px-4 py-2 text-[color:var(--muted)]">{date(h.createdAt)}</td>
-                  <td className="px-4 py-2">
-                    {h.kind === "usage" ? NOTE[(h.note ?? "").replace(" (failed try)", "")] ?? h.note : h.note}
-                    {h.note?.endsWith("(failed try)") && <span className="text-[color:var(--muted)]"> (a try that didn&apos;t finish)</span>}
-                    {h.bookId && titles.get(h.bookId) && (
-                      <>
-                        {" "}
-                        <Link href={`/books/${h.bookId}`} className="text-cobalt underline">
-                          {titles.get(h.bookId)}
-                        </Link>
-                      </>
-                    )}
-                  </td>
-                  <td className={`whitespace-nowrap px-4 py-2 text-right font-semibold ${h.amountUsd < 0 ? "" : "text-olive"}`}>{money(Math.round(h.amountUsd * 10000) / 10000)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="mt-3 overflow-x-auto rounded-[var(--radius-md)] border border-line bg-paper-raised">
+            <table className="w-full text-[15px] leading-[22px]" data-testid="credit-history">
+              <tbody className="divide-y divide-line">
+                {history.map((h) => (
+                  <tr key={h.id}>
+                    <td className="hidden whitespace-nowrap px-4 py-3 align-top text-ink-muted sm:table-cell">{date(h.createdAt)}</td>
+                    <td className="px-4 py-3 align-top sm:min-w-[10rem]">
+                      <span className="block text-ink-muted sm:hidden">{date(h.createdAt)}</span>
+                      {h.kind === "usage" ? NOTE[(h.note ?? "").replace(" (failed try)", "")] ?? h.note : h.note}
+                      {h.note?.endsWith("(failed try)") && <span className="text-ink-muted"> (a try that didn&apos;t finish)</span>}
+                      {h.bookId && titles.get(h.bookId) && (
+                        <>
+                          {" "}
+                          <Link href={`/books/${h.bookId}`} className="ss-link">
+                            {titles.get(h.bookId)}
+                          </Link>
+                        </>
+                      )}
+                    </td>
+                    <td className={`whitespace-nowrap px-4 py-3 text-right align-top font-semibold ${h.amountUsd < 0 ? "" : "text-delft"}`}>{money(Math.round(h.amountUsd * 10000) / 10000)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </section>
     </div>

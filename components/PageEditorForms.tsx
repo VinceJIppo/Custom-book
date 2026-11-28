@@ -3,9 +3,10 @@
 import { startTransition, useActionState } from "react";
 import { artAction, layoutAction, reviseTextAction, updateTextAction, type EditState } from "@/app/actions";
 
-const input = "mt-1 w-full rounded-xl border border-[color:var(--line)] bg-white px-3 py-2.5 outline-none focus:border-cobalt focus:ring-2 focus:ring-sky";
-const btn = "btn btn-primary btn-sm";
-const btnAlt = "btn btn-secondary btn-sm";
+const input = "ss-input mt-1";
+// "Save text" is the one primary action on the page editor; everything else is secondary.
+const btn = "ss-btn ss-btn--primary ss-btn--sm";
+const btnAlt = "ss-btn ss-btn--secondary ss-btn--sm";
 
 function keep(action: (fd: FormData) => void) {
   return (e: React.FormEvent<HTMLFormElement>) => {
@@ -20,7 +21,7 @@ function keep(action: (fd: FormData) => void) {
 function Status({ state }: { state: EditState | null }) {
   if (!state?.message) return null;
   return (
-    <p role="status" className={`text-sm ${state.ok ? "text-emerald-700" : "text-red-700"}`}>
+    <p role="status" className={`ss-note py-2 ${state.ok ? "ss-note--success" : "ss-note--error"}`}>
       {state.message}
     </p>
   );
@@ -42,11 +43,11 @@ export function TextEditor({ bookId, pageId, text }: { bookId: string; pageId: s
     <div className="space-y-4">
       <form onSubmit={keep(save)} className="space-y-2" key={text}>
         <Hidden bookId={bookId} pageId={pageId} />
-        <label className="block font-semibold" htmlFor="page-text">
+        <label className="title block" htmlFor="page-text">
           Page text
         </label>
         <textarea id="page-text" name="text" defaultValue={text} rows={4} maxLength={900} className={input} data-testid="page-text" />
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <button disabled={saving} className={btn}>
             {saving ? "Saving..." : "Save text"}
           </button>
@@ -55,12 +56,12 @@ export function TextEditor({ bookId, pageId, text }: { bookId: string; pageId: s
       </form>
       <form onSubmit={keep(revise)} className="space-y-2">
         <Hidden bookId={bookId} pageId={pageId} />
-        <label className="block text-sm font-semibold" htmlFor="revise">
+        <label className="label block" htmlFor="revise">
           Or ask for a rewrite
         </label>
-        <div className="flex flex-col gap-2 sm:flex-row">
-          <input id="revise" name="instruction" maxLength={300} placeholder="make it rhyme, mention Grandma, make it shorter" className={`${input} mt-0`} />
-          <button disabled={revising} className={btnAlt}>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <input id="revise" name="instruction" maxLength={300} placeholder="make it rhyme, mention Grandma, make it shorter" className="ss-input min-w-0" />
+          <button disabled={revising} className={`${btnAlt} shrink-0`}>
             {revising ? "Rewriting..." : "Rewrite"}
           </button>
         </div>
@@ -75,19 +76,19 @@ export function ArtEditor({ bookId, pageId, busy, hasImage }: { bookId: string; 
   return (
     <form onSubmit={keep(action)} className="space-y-2">
       <Hidden bookId={bookId} pageId={pageId} />
-      <label className="block font-semibold" htmlFor="art-note">
+      <label className="title block" htmlFor="art-note">
         Change the picture
       </label>
       <input id="art-note" name="note" maxLength={300} placeholder={'"make him smile", "add the dog", "nighttime"'} className={input} data-testid="art-note" />
       <div className="flex flex-wrap items-center gap-2">
-        <button name="mode" value="edit" disabled={pending || busy || !hasImage} className={btn} data-testid="art-edit">
+        <button name="mode" value="edit" disabled={pending || busy || !hasImage} className={btnAlt} data-testid="art-edit">
           Change this picture
         </button>
         <button name="mode" value="redraw" disabled={pending || busy} className={btnAlt} data-testid="art-redraw">
           Redraw from scratch
         </button>
       </div>
-      <p className="text-xs text-[color:var(--muted)]">Only this page is redrawn. Your current picture is kept in the history.</p>
+      <p className="text-xs text-ink-muted">Only this page is redrawn. Your current picture is kept in the history.</p>
       <Status state={state} />
     </form>
   );
@@ -105,9 +106,9 @@ export function LayoutEditor({ bookId, pageId, layout, textZone }: { bookId: str
   return (
     <form onSubmit={keep(action)} className="space-y-2" key={`${layout}-${textZone}`}>
       <Hidden bookId={bookId} pageId={pageId} />
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid gap-3 sm:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <label className="block">
-          <span className="font-semibold">Layout</span>
+          <span className="label">Layout</span>
           <select name="layout" defaultValue={layout} className={input} data-testid="layout-select">
             {LAYOUTS.map(([v, l]) => (
               <option key={v} value={v}>
@@ -117,7 +118,7 @@ export function LayoutEditor({ bookId, pageId, layout, textZone }: { bookId: str
           </select>
         </label>
         <label className="block">
-          <span className="font-semibold">Text position</span>
+          <span className="label">Text position</span>
           <select name="textZone" defaultValue={textZone} className={input}>
             <option value="top">Top</option>
             <option value="bottom">Bottom</option>
@@ -126,7 +127,7 @@ export function LayoutEditor({ bookId, pageId, layout, textZone }: { bookId: str
           </select>
         </label>
       </div>
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <button disabled={pending} className={btnAlt}>
           Apply layout
         </button>

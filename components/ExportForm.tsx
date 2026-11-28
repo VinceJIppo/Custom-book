@@ -17,21 +17,25 @@ export function ExportForm({ bookId, products, disabled }: { bookId: string; pro
       <input type="hidden" name="bookId" value={bookId} />
       <div className="grid gap-3 sm:grid-cols-2">
         {products.map((p, i) => (
-          <label key={p.id} className="flex cursor-pointer items-start gap-3 rounded-lg bg-cream p-3 ring-1 ring-[color:var(--line)] has-[:checked]:bg-tint has-[:checked]:ring-cobalt">
-            <input type="radio" name="productId" value={p.id} defaultChecked={i === 0} className="mt-1 accent-[color:var(--color-cobalt)]" />
-            <span>
+          <label key={p.id} className="ss-option group min-w-0">
+            <input type="radio" name="productId" value={p.id} defaultChecked={i === 0} className="ss-check mt-0.5 shrink-0" />
+            <span className="min-w-0">
               <span className="block font-semibold">{p.label}</span>
-              <span className="text-sm text-[color:var(--muted)]">{p.detail}</span>
+              <span className="body-s text-ink-muted group-has-checked:text-ink">{p.detail}</span>
             </span>
           </label>
         ))}
       </div>
       <div className="flex flex-wrap items-center gap-3">
-        <button disabled={pending || !!disabled} data-testid="make-print-files" className="btn btn-primary">
+        <button disabled={pending || !!disabled} data-testid="make-print-files" className="ss-btn ss-btn--primary">
           {pending ? "Starting..." : "Make print files"}
         </button>
-        {disabled && <span className="text-sm text-amber-800">{disabled}</span>}
-        {state?.message && <span role="status" className={`text-sm ${state.ok ? "text-emerald-700" : "text-red-700"}`}>{state.message}</span>}
+        {disabled && <span className="body-s text-ink-muted">{disabled}</span>}
+        {state?.message && (
+          <span role="status" className={`body-s ${state.ok ? "text-delft" : "text-persimmon"}`}>
+            {state.message}
+          </span>
+        )}
       </div>
     </form>
   );

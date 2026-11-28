@@ -31,9 +31,17 @@ test("create a profile, pick a theme, and read a 16-page book in the flipbook", 
   await expect(page.getByTestId("book-title")).toContainText(name, { timeout: 60_000 });
   await expect(page.getByTestId("progress")).toBeHidden({ timeout: 90_000 });
 
+  if (await page.getByTestId("phone-reader").isVisible()) {
+    // Phones swipe one page at a time; a two-page picture stays together on one slide.
+    await expect(page.getByTestId("page-indicator")).toHaveText(/^1 \/ \d+$/);
+    await expect(page.getByTestId("phone-reader").getByText("This book belongs to")).toBeAttached();
+    await page.getByRole("button", { name: "Next page" }).click();
+    await expect(page.getByTestId("page-indicator")).toHaveText(/^2 \//);
+    return;
+  }
   // 1 cover + 1 inside cover + 24 interior pages (16 story + front/back matter + padding) + 1 inside cover + 1 back.
   await expect(page.getByTestId("page-indicator")).toHaveText(/^1 \/ 28$/);
-  // Desktop shows two pages at a time, phones one; page forward until page 1 is in view.
+  // Desktop shows two pages at a time; page forward until page 1 is in view.
   const belongsTo = page.getByTestId("flipbook").getByText("This book belongs to");
   for (let i = 0; i < 3 && !(await belongsTo.isVisible()); i++) {
     await page.getByRole("button", { name: "Next page" }).click();

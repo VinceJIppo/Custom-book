@@ -12,6 +12,20 @@ import { db } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
+function Chevron({ dir }: { dir: "left" | "right" }) {
+  return (
+    <svg aria-hidden viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <path d={dir === "left" ? "M15 5l-7 7 7 7" : "M9 5l7 7-7 7"} />
+    </svg>
+  );
+}
+
+/** A history note in plain words: story rewrites carry an internal undo tag, which stays hidden. */
+function historyLabel(note: string | null) {
+  if (!note) return "a change";
+  return note.replace(/^Story rewrite [a-z0-9]+/, "Story rewrite");
+}
+
 export default async function EditPage({ params }: { params: Promise<{ id: string; pageId: string }> }) {
   const user = await requireOnboardedUser();
   const { id, pageId } = await params;
@@ -35,35 +49,35 @@ export default async function EditPage({ params }: { params: Promise<{ id: strin
     <div className="space-y-6">
       <AutoRefresh active={pending} />
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <Link href={`/books/${book.id}/edit`} className="text-sm font-semibold text-cobalt">
+        <Link href={`/books/${book.id}/edit`} className="ss-link body-s inline-flex min-h-11 items-center">
           ← All pages
         </Link>
-        <div className="flex gap-2 text-sm font-semibold">
+        <div className="flex flex-wrap gap-2">
           {prev && (
-            <Link href={`/books/${book.id}/pages/${prev.id}`} className="btn btn-secondary btn-sm">
-              ◀ Page {prev.storyNumber}
+            <Link href={`/books/${book.id}/pages/${prev.id}`} className="ss-btn ss-btn--secondary ss-btn--sm gap-1 pl-3">
+              <Chevron dir="left" /> Page {prev.storyNumber}
             </Link>
           )}
           {next && (
-            <Link href={`/books/${book.id}/pages/${next.id}`} className="btn btn-secondary btn-sm">
-              Page {next.storyNumber} ▶
+            <Link href={`/books/${book.id}/pages/${next.id}`} className="ss-btn ss-btn--secondary ss-btn--sm gap-1 pr-3">
+              Page {next.storyNumber} <Chevron dir="right" />
             </Link>
           )}
         </div>
       </div>
-      <h1 className="font-display text-3xl font-medium">{page.kind === "story" ? `Page ${page.storyNumber}` : page.kind}</h1>
+      <h1 className="heading first-letter:uppercase">{page.kind === "story" ? `Page ${page.storyNumber}` : page.kind}</h1>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
         <div className="space-y-3">
-          <div className={`grid gap-0 overflow-hidden rounded-lg ring-1 ring-black/10 ${physical.length > 1 ? "grid-cols-2" : ""}`}>
+          <div className={`grid gap-0 overflow-hidden rounded-[var(--radius-book)] shadow-lift ring-1 ring-line ${physical.length > 1 ? "grid-cols-2" : ""}`}>
             {physical.map((p) => (
               <BookPage key={p.number} page={p} book={view} mode="screen" />
             ))}
           </div>
-          {pending && <p className="animate-pulse text-sm text-cobalt">Drawing a new picture for this page...</p>}
-          {!pending && lastJob?.status === "failed" && <p className="text-sm text-red-700">The last picture change didn&apos;t work: {lastJob.error}. Your previous picture is kept.</p>}
+          {pending && <p className="animate-pulse text-sm font-semibold text-delft">Drawing a new picture for this page...</p>}
+          {!pending && lastJob?.status === "failed" && <p className="ss-note ss-note--error break-words">The last picture change didn&apos;t work: {lastJob.error}. Your previous picture is kept.</p>}
           {page.imageStatus === "flagged" && (
-            <div className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900 ring-1 ring-amber-200" data-testid="flagged">
+            <div className="ss-note ss-note--warn" data-testid="flagged">
               <p className="font-semibold">
                 {storyIssues.length && !likenessIssues.length
                   ? "This picture may not match the words on the page."
@@ -74,46 +88,49 @@ export default async function EditPage({ params }: { params: Promise<{ id: strin
               {storyIssues.length > 0 && <p>The words say: {storyIssues.join("; ")}.</p>}
               {likenessIssues.length > 0 && <p>Likeness: {likenessIssues.join("; ")}.</p>}
               <p className="mt-1">Change or redraw the picture, or keep it if it looks right to you.</p>
-              <form action={acceptFlaggedAction} className="mt-2">
+              <form action={acceptFlaggedAction} className="mt-3">
                 <input type="hidden" name="bookId" value={book.id} />
                 <input type="hidden" name="pageId" value={page.id} />
-                <button className="btn btn-secondary btn-sm">Looks fine, keep it</button>
+                <button className="ss-btn ss-btn--secondary ss-btn--sm">Keep this picture</button>
               </form>
             </div>
           )}
           {page.scene != null && (
-            <p className="text-xs text-[color:var(--muted)]">Scene: {(page.scene as { action?: string }).action}</p>
+            <p className="text-xs text-ink-muted">Scene: {(page.scene as { action?: string }).action}</p>
           )}
         </div>
 
         <div className="space-y-6">
-          <section className="rounded-lg bg-white p-4 ring-1 ring-[color:var(--line)]">
+          <section className="ss-card ss-card--piped">
             <TextEditor bookId={book.id} pageId={page.id} text={page.text} />
           </section>
           {page.kind === "story" && (
             <>
-              <section className="rounded-lg bg-white p-4 ring-1 ring-[color:var(--line)]">
+              <section className="ss-card">
                 <ArtEditor bookId={book.id} pageId={page.id} busy={pending} hasImage={!!page.imageKey} />
               </section>
-              <section className="rounded-lg bg-white p-4 ring-1 ring-[color:var(--line)]">
+              <section className="ss-card">
                 <LayoutEditor bookId={book.id} pageId={page.id} layout={page.layout} textZone={page.textZone} />
               </section>
             </>
           )}
           {versions.length > 0 && (
-            <section className="rounded-lg bg-white p-4 ring-1 ring-[color:var(--line)]">
-              <p className="font-semibold">History</p>
-              <ul className="mt-2 space-y-1 text-sm" data-testid="history">
+            <section className="ss-card">
+              <h2 className="title">History</h2>
+              <ul className="body-s mt-3 space-y-3" data-testid="history">
                 {versions.map((v) => (
-                  <li key={v.id} className="flex items-center justify-between gap-2">
-                    <span className="truncate">
-                      v{v.version}, before: {v.note ?? "change"} · <span className="text-[color:var(--muted)]">{v.createdAt.toLocaleString()}</span>
+                  <li key={v.id} className="flex items-center justify-between gap-3">
+                    <span className="min-w-0 break-words">
+                      <span className="block">
+                        Version {v.version}, before: {historyLabel(v.note)}
+                      </span>
+                      <span className="block text-ink-muted">{v.createdAt.toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" })}</span>
                     </span>
-                    <form action={restoreVersionAction}>
+                    <form action={restoreVersionAction} className="shrink-0">
                       <input type="hidden" name="bookId" value={book.id} />
                       <input type="hidden" name="pageId" value={page.id} />
                       <input type="hidden" name="versionId" value={v.id} />
-                      <button className="btn btn-secondary btn-sm">Restore</button>
+                      <button className="ss-btn ss-btn--secondary ss-btn--sm">Restore</button>
                     </form>
                   </li>
                 ))}

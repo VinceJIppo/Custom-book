@@ -13,23 +13,23 @@ export default async function MockCheckout({ params }: { params: Promise<{ sessi
   const sessionId = (await params).session;
   const session = payment.session(sessionId);
   return (
-    <div className="mx-auto max-w-md space-y-5 rounded-2xl bg-white p-6 ring-1 ring-[color:var(--line)]">
-      <p className="eyebrow text-coral">Test checkout</p>
-      <h1 className="font-display text-3xl font-medium">Pay for your book</h1>
+    <div className="ss-card ss-card--piped mx-auto max-w-md min-w-0 space-y-5">
+      <p className="eyebrow">Test checkout</p>
+      <h1 className="heading">Pay for your book</h1>
       {!session || session.status === "expired" ? (
         <p>This test checkout has expired (the app may have restarted). Go back to the book and start the order again.</p>
       ) : session.paid ? (
         <p>Already paid.</p>
       ) : (
         <>
-          <p className="font-display text-2xl">{formatMoney(session.amountCents ?? 0)}</p>
-          <p className="text-sm text-[color:var(--muted)]">This is the offline test checkout: no card is needed and nothing is charged. Add Stripe test keys to use Stripe&apos;s real checkout page.</p>
-          <form action={mockPayAction} className="flex gap-3">
+          <p className="text-2xl font-bold">{formatMoney(session.amountCents ?? 0)}</p>
+          <p className="body-s text-ink-muted">This is the offline test checkout: no card is needed and nothing is charged. Add Stripe test keys to use Stripe&apos;s real checkout page.</p>
+          <form action={mockPayAction} className="flex flex-wrap gap-3">
             <input type="hidden" name="sessionId" value={sessionId} />
-            <button name="choice" value="pay" className="btn btn-primary" data-testid="mock-pay">
+            <button name="choice" value="pay" className="ss-btn ss-btn--primary" data-testid="mock-pay">
               Pay (test)
             </button>
-            <button name="choice" value="cancel" className="btn btn-secondary">
+            <button name="choice" value="cancel" className="ss-btn ss-btn--secondary">
               Cancel
             </button>
           </form>

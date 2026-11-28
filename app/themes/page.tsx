@@ -15,20 +15,20 @@ export default async function Themes({ searchParams }: { searchParams: Promise<{
   const builtIn = themes.filter((t) => t.isBuiltIn);
   const samples = await themeSamples(user.id, themes.map((t) => ({ id: t.id, slug: t.slug })));
   const Card = ({ t, own }: { t: (typeof themes)[number]; own: boolean }) => (
-    <li className="overflow-hidden rounded-xl bg-white ring-1 ring-[color:var(--line)]">
+    <li className="ss-card min-w-0 overflow-hidden p-0">
       <ThemeSamples samples={samples[t.id]} palette={t.config.artDirection.palette} name={t.config.name} tall />
       <div className="space-y-2 p-4">
-        <p className="font-display text-lg font-medium">{t.config.name}</p>
-        <p className="text-sm text-[color:var(--muted)]">{t.config.pitch}</p>
-        <div className="flex gap-2 pt-1 text-sm font-semibold">
+        <p className="title">{t.config.name}</p>
+        <p className="text-sm text-ink-muted">{t.config.pitch}</p>
+        <div className="flex flex-wrap gap-2 pt-1">
           {own && (
-            <Link href={`/themes/${t.id}`} className="btn btn-primary btn-sm">
+            <Link href={`/themes/${t.id}`} className="ss-btn ss-btn--secondary ss-btn--sm">
               Edit
             </Link>
           )}
           <form action={duplicateThemeAction}>
             <input type="hidden" name="themeId" value={t.id} />
-            <button className="btn btn-secondary btn-sm">Duplicate</button>
+            <button className="ss-btn ss-btn--secondary ss-btn--sm">Duplicate</button>
           </form>
         </div>
       </div>
@@ -38,18 +38,22 @@ export default async function Themes({ searchParams }: { searchParams: Promise<{
     <div className="space-y-8">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="font-display text-3xl font-medium">Themes</h1>
-          <p className="text-[color:var(--muted)]">Use any theme for any child and any book.</p>
+          <h1 className="heading">Themes</h1>
+          <p className="mt-1 text-ink-muted">Use any theme for any child and any book.</p>
         </div>
-        <Link href="/themes/new" className="btn btn-primary self-start">
-          + Create a custom theme
+        <Link href="/themes/new" className="ss-btn ss-btn--primary self-start">
+          Create a theme
         </Link>
       </div>
-      {deleted && <p className="rounded-xl bg-emerald-50 px-4 py-3 text-emerald-900 ring-1 ring-emerald-200">Theme deleted.</p>}
+      {deleted && (
+        <p className="ss-note ss-note--success" role="status">
+          Theme deleted.
+        </p>
+      )}
       <section>
-        <h2 className="font-display text-xl font-medium">My themes</h2>
+        <h2 className="title">My themes</h2>
         {mine.length === 0 ? (
-          <p className="mt-2 text-[color:var(--muted)]">None yet. Create one, or duplicate a built-in theme to make it your own.</p>
+          <p className="mt-2 text-ink-muted">None yet. Create one, or duplicate a built-in theme to make it your own.</p>
         ) : (
           <ul className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {mine.map((t) => (
@@ -59,7 +63,7 @@ export default async function Themes({ searchParams }: { searchParams: Promise<{
         )}
       </section>
       <section>
-        <h2 className="font-display text-xl font-medium">Built-in themes</h2>
+        <h2 className="title">Built-in themes</h2>
         <ul className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {builtIn.map((t) => (
             <Card key={t.id} t={t} own={false} />

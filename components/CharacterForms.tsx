@@ -5,7 +5,7 @@ import { saveBibleAction, startSheetAction, uploadPhotosAction } from "@/app/act
 import type { CharacterBible } from "@/lib/schemas/story";
 import { cropToJpeg, headAndShoulders, openPhoto, PhotoCropper, type Box } from "./PhotoCropper";
 
-const input = "mt-1 w-full rounded-xl border border-[color:var(--line)] bg-white px-3 py-2.5 outline-none focus:border-cobalt focus:ring-2 focus:ring-sky";
+const input = "ss-input mt-1";
 
 function submitKeeping(action: (fd: FormData) => void) {
   return (e: React.FormEvent<HTMLFormElement>) => {
@@ -41,7 +41,7 @@ function toOriginal(face: Box, applied: Box | null): Box {
  * MAX_SIDE in the browser first. When the check finds several faces (or a tiny
  * one), the cropper opens around the main face so one click fixes it.
  */
-export function PhotoUpload({ childId, consentGiven, remaining, grownUp = false }: { childId: string; consentGiven: boolean; remaining: number; grownUp?: boolean }) {
+export function PhotoUpload({ childId, consentGiven, remaining, grownUp = false, primary = true }: { childId: string; consentGiven: boolean; remaining: number; grownUp?: boolean; /** False when the page already shows its main (persimmon) action. */ primary?: boolean }) {
   const [state, action, pending] = useActionState(uploadPhotosAction, null);
   const [picked, setPicked] = useState<Picked[]>([]);
   const [cropping, setCropping] = useState<{ id: number; initial: Box | null; reason?: string } | null>(null);
@@ -92,7 +92,7 @@ export function PhotoUpload({ childId, consentGiven, remaining, grownUp = false 
     startTransition(() => action(fd));
   };
 
-  if (remaining <= 0) return <p className="text-sm text-[color:var(--muted)]">You have 3 photos, the most we use. Remove one to add another.</p>;
+  if (remaining <= 0) return <p className="body-s text-ink-muted">You have 3 photos, the most we use. Remove one to add another.</p>;
 
   const current = cropping ? (picked.find((p) => p.id === cropping.id) ?? Object.values(sent).find((p) => p.id === cropping.id)) : null;
   if (current?.bitmap && cropping) {
@@ -116,38 +116,49 @@ export function PhotoUpload({ childId, consentGiven, remaining, grownUp = false 
 
   return (
     <div className="space-y-3" data-testid="photo-upload">
-      <input
-        type="file"
-        name="photos"
-        multiple
-        accept="image/jpeg,image/png,image/heic,image/heif,.heic,.heif"
-        onChange={(e) => {
-          void choose(e.currentTarget.files);
-          e.currentTarget.value = "";
-        }}
-        className="block w-full text-sm file:mr-3 file:rounded-md file:border-0 file:bg-sky file:px-4 file:py-2 file:text-xs file:font-semibold file:uppercase file:tracking-wider file:text-navy"
-      />
+      {picked.length < remaining && (
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          {/* The real file input is hidden; the label is the brand button that opens it. */}
+          <label className={`ss-btn ${picked.length === 0 && primary ? "ss-btn--primary" : "ss-btn--secondary"} cursor-pointer focus-within:shadow-[0_0_0_3px_var(--paper),0_0_0_5px_var(--focus-ring)]`}>
+            {picked.length ? "Add another photo" : "Choose photos"}
+            <input
+              type="file"
+              name="photos"
+              multiple
+              accept="image/jpeg,image/png,image/heic,image/heif,.heic,.heif"
+              className="sr-only"
+              onChange={(e) => {
+                void choose(e.currentTarget.files);
+                e.currentTarget.value = "";
+              }}
+            />
+          </label>
+          <span className="body-s text-ink-muted">
+            Up to {remaining} photo{remaining > 1 ? "s" : ""}, JPG, PNG or HEIC
+          </span>
+        </div>
+      )}
       {picked.length > 0 && (
         <ul className="flex flex-wrap gap-3">
           {picked.map((p) => (
-            <li key={p.id} className="w-32 space-y-1 text-center text-xs">
+            <li key={p.id} className="w-32 space-y-1 text-center text-sm">
               {p.thumb ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={p.thumb} alt="" className="mx-auto h-28 w-28 rounded-lg object-cover ring-1 ring-black/10" />
+                <img src={p.thumb} alt="" className="mx-auto h-28 w-28 rounded-[var(--radius-sm)] object-cover ring-1 ring-line" />
               ) : (
-                <div className="mx-auto flex h-28 w-28 items-center justify-center rounded-lg bg-cream p-2 ring-1 ring-black/10">{p.file.name}</div>
+                <div className="mx-auto flex h-28 w-28 items-center justify-center break-all rounded-[var(--radius-sm)] bg-paper-sunk p-2 text-xs ring-1 ring-line">{p.file.name}</div>
               )}
-              <div className="flex justify-center gap-2">
+              <div className="flex justify-center gap-1">
                 {p.bitmap ? (
-                  <button type="button" className="font-semibold text-cobalt" onClick={() => setCropping({ id: p.id, initial: p.box })} data-testid="crop-photo">
+                  <button type="button" className="ss-link min-h-11 px-1" onClick={() => setCropping({ id: p.id, initial: p.box })} data-testid="crop-photo">
                     {p.box ? "Re-crop" : "Crop"}
                   </button>
                 ) : (
-                  <span className="text-[color:var(--muted)]" title="This browser can't show this photo type, so it can't be cropped here.">
+                  <span className="inline-flex min-h-11 items-center text-ink-muted" title="This browser can't show this photo type, so it can't be cropped here.">
                     No preview
                   </span>
                 )}
-                <button type="button" className="text-[color:var(--muted)]" onClick={() => setPicked((x) => x.filter((y) => y.id !== p.id))}>
+                <button type="button" className="min-h-11 px-1 font-semibold text-ink-muted underline underline-offset-4" aria-label={`Remove ${p.file.name}`} onClick={() => setPicked((x) => x.filter((y) => y.id !== p.id))}>
                   Remove
                 </button>
               </div>
@@ -156,8 +167,8 @@ export function PhotoUpload({ childId, consentGiven, remaining, grownUp = false 
         </ul>
       )}
       {!consentGiven && (
-        <label className="flex items-start gap-3 text-sm">
-          <input type="checkbox" name="consent" checked={consent} onChange={(e) => setConsent(e.currentTarget.checked)} className="mt-0.5 size-5 accent-[color:var(--color-cobalt)]" />
+        <label className="ss-option body-s">
+          <input type="checkbox" name="consent" checked={consent} onChange={(e) => setConsent(e.currentTarget.checked)} className="ss-check mt-0.5 shrink-0" />
           <span>
             {grownUp
               ? "These are photos of me, or this person has given me permission to upload them."
@@ -165,25 +176,31 @@ export function PhotoUpload({ childId, consentGiven, remaining, grownUp = false 
           </span>
         </label>
       )}
-      <button type="button" disabled={pending || picked.length === 0} className="btn btn-primary" onClick={() => void upload(picked)}>
-        {pending ? "Checking photos..." : picked.length ? `Upload ${picked.length} photo${picked.length > 1 ? "s" : ""}` : `Choose up to ${remaining} photo${remaining > 1 ? "s" : ""}`}
-      </button>
+      {(picked.length > 0 || pending) && (
+        <button type="button" disabled={pending} className={primary ? "ss-btn ss-btn--primary" : "ss-btn ss-btn--secondary"} onClick={() => void upload(picked)}>
+          {pending ? "Checking photos..." : `Upload ${picked.length} photo${picked.length > 1 ? "s" : ""}`}
+        </button>
+      )}
       {note && (
-        <p role="alert" className="rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-900 ring-1 ring-amber-200">
+        <p role="alert" className="ss-note ss-note--warn">
           {note}
         </p>
       )}
       {state?.drawing && (
-        <p role="status" className="rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-900 ring-1 ring-emerald-200" data-testid="drawing-started">
+        <p role="status" className="ss-note ss-note--success" data-testid="drawing-started">
           Photos added. We&apos;re drawing 3 options now (about a minute); pick your favorite below.
         </p>
       )}
-      {state?.drawNote && <p role="alert" className="rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-900 ring-1 ring-amber-200">{state.drawNote}</p>}
+      {state?.drawNote && (
+        <p role="alert" className="ss-note ss-note--warn">
+          {state.drawNote}
+        </p>
+      )}
       {state?.results.map((r, i) => {
         const original = sent[r.name];
         const canCrop = !r.ok && r.crop && original?.bitmap;
         return (
-          <div key={i} role="status" className={`rounded-xl px-3 py-2 text-sm ring-1 ${r.ok ? "bg-emerald-50 text-emerald-900 ring-emerald-200" : "bg-amber-50 text-amber-900 ring-amber-200"}`}>
+          <div key={i} role="status" className={`ss-note break-words ${r.ok ? "ss-note--success" : "ss-note--warn"}`}>
             <b>{original?.file.name ?? (r.name || "Photo")}:</b> {r.ok ? "added." : r.message}
             {r.problems && r.problems.length > 0 && (
               <ul className="mt-1 list-disc pl-5">
@@ -195,7 +212,7 @@ export function PhotoUpload({ childId, consentGiven, remaining, grownUp = false 
             {canCrop && (
               <button
                 type="button"
-                className="btn btn-primary btn-sm mt-2"
+                className="ss-btn ss-btn--secondary ss-btn--sm mt-2"
                 data-testid="crop-suggested"
                 onClick={() => {
                   const bmp = original.bitmap!;
@@ -214,26 +231,30 @@ export function PhotoUpload({ childId, consentGiven, remaining, grownUp = false 
 }
 
 /** Draws (more) options in the house style. Every book uses this one style, so a character is made once. */
-export function StartSheetForm({ childId, style, cost, used, maxRounds, disabled, again }: { childId: string; style: string; cost: number; used: number; maxRounds: number; disabled: boolean; again: boolean }) {
+export function StartSheetForm({ childId, style, used, maxRounds, disabled, again }: { childId: string; style: string; used: number; maxRounds: number; disabled: boolean; again: boolean }) {
   const [state, action, pending] = useActionState(startSheetAction, null);
   return (
     <form onSubmit={submitKeeping(action)} className="space-y-3">
       <input type="hidden" name="childId" value={childId} />
       <input type="hidden" name="style" value={style} />
-      <details className="text-sm">
-        <summary className="cursor-pointer font-semibold">Choose an outfit (optional)</summary>
-        <input name="outfit" maxLength={160} placeholder="e.g. yellow raincoat and red boots" className={input} />
+      <details>
+        <summary className="ss-summary font-semibold">Choose an outfit (optional)</summary>
+        <input name="outfit" maxLength={160} placeholder="e.g. yellow raincoat and red boots" aria-label="Outfit" className={input} />
       </details>
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm text-[color:var(--muted)]">
-          We draw 3 options (about ${cost.toFixed(2)}). {used} of {maxRounds} sets used.
+        <p className="body-s text-ink-muted">
+          {disabled ? "Add a photo first, then we draw 3 options to choose from." : `We draw 3 options to choose from. ${used} of ${maxRounds} sets used.`}
         </p>
-        <button disabled={pending || disabled || used >= maxRounds} data-testid="start-sheet" className={again ? "btn btn-secondary" : "btn btn-primary"}>
+        <button
+          disabled={pending || disabled || used >= maxRounds}
+          data-testid="start-sheet"
+          className={again || disabled ? "ss-btn ss-btn--secondary shrink-0" : "ss-btn ss-btn--primary shrink-0"}
+        >
           {pending ? "Starting..." : again ? "Draw new options" : "Draw character options"}
         </button>
       </div>
       {state?.message && (
-        <p role="alert" className="rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-900 ring-1 ring-amber-200 sm:col-span-2">
+        <p role="alert" className="ss-note ss-note--error">
           {state.message}
         </p>
       )}
@@ -259,16 +280,20 @@ export function BibleForm({ childId, sheetId, bible }: { childId: string; sheetI
       <input type="hidden" name="childId" value={childId} />
       <input type="hidden" name="sheetId" value={sheetId} />
       {BIBLE_FIELDS.map(([k, label, hint]) => (
-        <label key={k} className="block">
-          <span className="font-semibold">{label}</span> {hint && <span className="text-sm text-[color:var(--muted)]">{hint}</span>}
+        <label key={k} className="block min-w-0">
+          <span className="label">{label}</span> {hint && <span className="body-s text-ink-muted">{hint}</span>}
           <input name={k} defaultValue={bible[k]} required={k !== "otherDetails"} maxLength={240} className={input} />
         </label>
       ))}
-      <div className="flex items-center gap-3 sm:col-span-2">
-        <button disabled={pending} className="btn btn-primary">
+      <div className="flex flex-wrap items-center gap-3 sm:col-span-2">
+        <button disabled={pending} className="ss-btn ss-btn--secondary">
           {pending ? "Saving..." : "Save details"}
         </button>
-        {state?.message && <span className={`text-sm ${state.ok ? "text-emerald-700" : "text-red-700"}`}>{state.message}</span>}
+        {state?.message && (
+          <span role={state.ok ? "status" : "alert"} className={`body-s ${state.ok ? "text-ink" : "text-persimmon"}`}>
+            {state.message}
+          </span>
+        )}
       </div>
     </form>
   );

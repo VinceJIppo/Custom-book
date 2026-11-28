@@ -36,8 +36,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // Parents don't pick themes any more (one house theme); the Themes pages stay for admins.
   const admin = !!user && isAdminEmail(user.email);
   return (
-    // data-theme is set before first paint by the script below, so React leaves it alone.
-    <html lang="en" data-theme="daytime" suppressHydrationWarning>
+    // data-theme is set before first paint by the script below (Daytime is the CSS default without it).
+    // It is left out of the markup so React never writes it back; the header restores it if React redraws <html>.
+    <html lang="en" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
       </head>

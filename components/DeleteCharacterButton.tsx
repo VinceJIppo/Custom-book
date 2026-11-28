@@ -13,7 +13,7 @@ export function DeleteCharacterButton({ childId, sheetId, label, confirmText }: 
     >
       <input type="hidden" name="childId" value={childId} />
       <input type="hidden" name="sheetId" value={sheetId} />
-      <button className="btn btn-danger-outline btn-sm" data-testid="delete-character">
+      <button className="ss-btn ss-btn--danger ss-btn--sm" data-testid="delete-character">
         {label}
       </button>
     </form>

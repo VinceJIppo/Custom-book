@@ -28,28 +28,32 @@ export default async function OrderBook({ params, searchParams }: { params: Prom
   const providers = activeProviderNames();
   return (
     <div className="space-y-6">
-      <Link href={`/books/${book.id}`} className="text-sm font-semibold text-cobalt">
+      <Link href={`/books/${book.id}`} className="ss-link body-s inline-flex min-h-11 items-center">
         ← Back to the book
       </Link>
-      <div>
-        <h1 className="font-display text-3xl font-medium">Order a printed copy of {book.title}</h1>
-        <p className="text-[color:var(--muted)]">
+      <div className="min-w-0">
+        <h1 className="heading break-words">Order a printed copy of {book.title}</h1>
+        <p className="mt-2 text-ink-muted">
           Printed and shipped by {providers.print === "lulu" ? "Lulu" : "the test printer (offline mock)"}. Payment: {providers.payment === "stripe" ? "Stripe (test mode)" : "test checkout (no card needed)"}.
         </p>
       </div>
-      {sp.cancelled && <p className="rounded-xl bg-sky px-4 py-3 text-navy">Checkout was cancelled. Nothing was charged; you can try again below.</p>}
+      {sp.cancelled && (
+        <p className="ss-note" role="status">
+          Checkout was cancelled. Nothing was charged; you can try again below.
+        </p>
+      )}
       {exports.length === 0 ? (
-        <section className="rounded-xl bg-white p-5 ring-1 ring-[color:var(--line)]" data-testid="needs-print-files">
+        <section className="ss-card" data-testid="needs-print-files">
           <AutoRefresh active={files?.state === "making"} everyMs={3000} />
           {files?.state === "failed" ? (
             <>
               <p className="font-semibold">We couldn&apos;t get the book ready to print yet.</p>
-              <p className="text-[color:var(--muted)]">{files.message}</p>
+              <p className="mt-1 text-ink-muted">{files.message}</p>
             </>
           ) : (
             <>
               <p className="animate-pulse font-semibold">Getting your book ready for the printer...</p>
-              <p className="text-[color:var(--muted)]">This takes about a minute. The page updates on its own.</p>
+              <p className="mt-1 text-ink-muted">This takes about a minute. The page updates on its own.</p>
             </>
           )}
         </section>

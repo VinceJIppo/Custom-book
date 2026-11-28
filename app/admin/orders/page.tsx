@@ -4,6 +4,7 @@ import { requireOnboardedUser } from "@/lib/session";
 import { db } from "@/lib/db";
 import { isAdmin, quoteOf } from "@/lib/orders/service";
 import { formatMoney } from "@/lib/orders/pricing";
+import { STATUS_LABELS, type OrderStatus } from "@/lib/orders/status";
 import { OrderStatusBadge } from "@/components/OrderStatus";
 import { checkStatusAction, refundOrderAction, resendOrderAction } from "@/app/orders/actions";
 import type { ShippingAddress } from "@/lib/providers/print/types";
@@ -28,26 +29,35 @@ export default async function AdminOrders({ searchParams }: { searchParams: Prom
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-display text-3xl font-medium">All orders</h1>
-        <Link href="/admin/users" className="text-sm font-semibold text-cobalt underline">
+        <h1 className="heading">All orders</h1>
+        <Link href="/admin/users" className="ss-link body-s inline-flex min-h-11 items-center">
           Customers and rewards
         </Link>
-        <p className="text-[color:var(--muted)]">
+        <p className="mt-2 text-ink-muted">
           {orders.length} shown · {formatMoney(paidCents)} paid · {formatMoney(marginCents)} margin · {attention.length} need attention
         </p>
       </div>
-      {sp.error && <p className="rounded-xl bg-amber-50 px-4 py-3 text-amber-900 ring-1 ring-amber-200">{sp.error}</p>}
-      {sp.refunded && <p className="rounded-xl bg-emerald-50 px-4 py-3 text-emerald-900 ring-1 ring-emerald-200">Refunded.</p>}
-      <div className="flex flex-wrap gap-2 text-sm">
+      {sp.error && (
+        <p className="ss-note ss-note--warn break-words" role="alert">
+          {sp.error}
+        </p>
+      )}
+      {sp.refunded && (
+        <p className="ss-note ss-note--success" role="status">
+          Refunded.
+        </p>
+      )}
+      <nav className="flex flex-wrap gap-2" aria-label="Filter by status">
         {["", "awaiting_payment", "paid", "created", "in_production", "shipped", "delivered", "rejected", "failed", "refunded"].map((s) => (
-          <Link key={s || "all"} href={s ? `/admin/orders?status=${s}` : "/admin/orders"} className={`chip ${sp.status === s || (!sp.status && !s) ? "ring-cobalt" : ""}`}>
-            {s || "all"}
+          <Link key={s || "all"} href={s ? `/admin/orders?status=${s}` : "/admin/orders"} className={`ss-chip ${sp.status === s || (!sp.status && !s) ? "border-2 border-delft bg-delft-wash" : ""}`} aria-current={sp.status === s || (!sp.status && !s) ? "page" : undefined}>
+            {s ? (STATUS_LABELS[s as OrderStatus] ?? s) : "All"}
           </Link>
         ))}
-      </div>
-      <div className="overflow-x-auto rounded-xl bg-white ring-1 ring-[color:var(--line)]">
-        <table className="w-full text-left text-sm" data-testid="admin-orders">
-          <thead className="bg-cream">
+      </nav>
+      <p className="body-s text-ink-muted sm:hidden">Scroll the table sideways to see every column.</p>
+      <div className="overflow-x-auto rounded-[var(--radius-md)] border border-line bg-paper-raised">
+        <table className="w-full min-w-[56rem] text-left text-sm" data-testid="admin-orders">
+          <thead className="bg-paper-sunk">
             <tr>
               <th className="p-3">Order</th>
               <th className="p-3">Customer / ship to</th>
@@ -62,32 +72,32 @@ export default async function AdminOrders({ searchParams }: { searchParams: Prom
               const a = o.address as unknown as ShippingAddress | null;
               const back = `/admin/orders${sp.status ? `?status=${sp.status}` : ""}`;
               return (
-                <tr key={o.id} className="border-t border-[color:var(--line)] align-top">
+                <tr key={o.id} className="border-t border-line align-top">
                   <td className="p-3">
-                    <Link href={`/orders/${o.id}`} className="font-semibold text-cobalt underline">
+                    <Link href={`/orders/${o.id}`} className="ss-link">
                       {o.id.slice(-8).toUpperCase()}
                     </Link>
                     <div>{o.bookTitle}</div>
-                    <div className="text-[color:var(--muted)]">{o.createdAt.toLocaleString()}</div>
+                    <div className="text-ink-muted">{o.createdAt.toLocaleString()}</div>
                   </td>
                   <td className="p-3">
                     <div>{o.user.email}</div>
-                    <div className="text-[color:var(--muted)]">
+                    <div className="text-ink-muted">
                       {a?.name}, {a?.city} {a?.countryCode}
                     </div>
                   </td>
                   <td className="p-3">
                     {formatMoney(o.totalCents, o.currency)}
-                    <div className="text-[color:var(--muted)]">{o.paymentProvider}{o.paymentRef ? ` · ${o.paymentRef}` : ""}</div>
+                    <div className="text-ink-muted">{o.paymentProvider}{o.paymentRef ? ` · ${o.paymentRef}` : ""}</div>
                   </td>
                   <td className="p-3">
                     <OrderStatusBadge status={o.status} />
-                    {o.statusReason && <div className="mt-1 max-w-xs text-[color:var(--muted)]">{o.statusReason}</div>}
+                    {o.statusReason && <div className="mt-1 max-w-xs text-ink-muted">{o.statusReason}</div>}
                   </td>
                   <td className="p-3">
                     {o.provider}
                     {o.providerOrderId ? ` #${o.providerOrderId}` : ""}
-                    <div className="text-[color:var(--muted)]">{o.providerStatus ?? ""}</div>
+                    <div className="text-ink-muted">{o.providerStatus ?? ""}</div>
                     {o.trackingNumber && <div>Tracking {o.trackingNumber}</div>}
                   </td>
                   <td className="space-y-2 p-3">
@@ -95,20 +105,20 @@ export default async function AdminOrders({ searchParams }: { searchParams: Prom
                       <form action={checkStatusAction}>
                         <input type="hidden" name="orderId" value={o.id} />
                         <input type="hidden" name="back" value={back} />
-                        <button className="btn btn-secondary btn-sm">Check now</button>
+                        <button className="ss-btn ss-btn--secondary ss-btn--sm whitespace-nowrap">Check now</button>
                       </form>
                     )}
                     {["rejected", "failed", "cancelled"].includes(o.status) && o.paidAt && (
                       <form action={resendOrderAction}>
                         <input type="hidden" name="orderId" value={o.id} />
                         <input type="hidden" name="back" value={back} />
-                        <button className="btn btn-secondary btn-sm">Send again</button>
+                        <button className="ss-btn ss-btn--secondary ss-btn--sm whitespace-nowrap">Send again</button>
                       </form>
                     )}
                     {["paid", "failed", "rejected", "cancelled"].includes(o.status) && o.paymentRef && (
                       <form action={refundOrderAction}>
                         <input type="hidden" name="orderId" value={o.id} />
-                        <button className="btn btn-secondary btn-sm">Refund</button>
+                        <button className="ss-btn ss-btn--danger ss-btn--sm whitespace-nowrap">Refund</button>
                       </form>
                     )}
                   </td>

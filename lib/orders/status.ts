@@ -52,7 +52,19 @@ export function shouldApply(current: string, next: PrintOrderStatus): boolean {
 export interface StatusEvent {
   at: string;
   status: string;
+  /** Plain words for the customer. */
   message?: string;
+  /** The printer's own code and where it came from (shown to admins only). */
+  detail?: string;
+}
+
+/** A history line in plain words. Older entries carry the printer code in brackets in the message itself; it is dropped. */
+export function historyMessage(e: StatusEvent): string {
+  const raw = e.message ?? STATUS_LABELS[e.status as OrderStatus] ?? e.status;
+  return raw
+    .replace(/\s*\((?:status check|print job created|found existing print job|webhook)(?::\s*[A-Z0-9_]+)?\)\s*(?=\S)/g, ". ")
+    .replace(/\s*\((?:status check|print job created|found existing print job|webhook)(?::\s*[A-Z0-9_]+)?\)\s*$/g, "")
+    .replace(/\.\s*\./g, ".");
 }
 
 export function pushHistory(history: unknown, event: Omit<StatusEvent, "at">): StatusEvent[] {

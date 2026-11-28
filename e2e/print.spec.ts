@@ -51,6 +51,9 @@ test("make print files, check them, then order a printed copy and follow its sta
   await expect(options).toContainText("Express (overnight)");
   await options.getByText("Ground", { exact: true }).click();
   await page.locator("textarea[name=giftNote]").fill("Happy birthday from Grandma!");
+  // Pay by card in this test (the local account may have credits, which would pay it all).
+  const useCredits = page.locator("input[name=useCredits]");
+  if ((await useCredits.count()) && (await useCredits.isChecked())) await useCredits.uncheck();
   await page.getByTestId("checkout").click();
   await page.getByTestId("mock-pay").click();
   await expect(page.getByTestId("order-status")).toContainText("With the printer", { timeout: 30_000 });

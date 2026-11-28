@@ -26,7 +26,7 @@ test("photo -> character options -> approve -> book -> edit one page", async ({ 
   await page.locator("input[name=photos]").setInputFiles({ name: "kid.jpg", mimeType: "image/jpeg", buffer: photo });
   await page.locator("input[name=consent]").check();
   await page.getByRole("button", { name: /Upload/ }).click();
-  await expect(page.getByRole("status").filter({ hasText: "added." })).toBeVisible();
+  await expect(page.getByText("kid.jpg: added.")).toBeVisible();
 
   // Drawing starts on its own once there's a photo (no style to pick).
   await expect(page.getByTestId("drawing-started")).toBeVisible();

@@ -129,13 +129,14 @@ export function PhotoCropper({
   };
 
   const pct = (n: number) => `${n * 100}%`;
-  const handle = "absolute size-5 rounded-full border-2 border-white bg-cobalt shadow touch-none";
+  // 20px dot, with an invisible 44px hit area around it for fingers.
+  const handle = "absolute size-5 rounded-full border-2 border-on-delft bg-delft shadow-lift touch-none before:absolute before:-inset-3 before:content-['']";
 
   return (
-    <div className="space-y-3 rounded-xl bg-cream p-4 ring-1 ring-[color:var(--line)]" data-testid="photo-cropper">
+    <div className="ss-card ss-card--sunk space-y-3" data-testid="photo-cropper">
       <div>
-        <p className="font-semibold">{title}</p>
-        <p className="text-sm text-[color:var(--muted)]">{hint}</p>
+        <p className="label">{title}</p>
+        <p className="body-s mt-1 text-ink-muted">{hint}</p>
       </div>
       <div ref={wrapRef} className="relative mx-auto w-fit max-w-full touch-none select-none">
         <canvas ref={canvasRef} className="block max-h-[60vh] max-w-full" />
@@ -144,7 +145,7 @@ export function PhotoCropper({
           <div className="absolute" style={{ left: pct(box.left), top: pct(box.top), width: pct(box.width), height: pct(box.height), boxShadow: "0 0 0 9999px rgba(20,20,40,0.55)" }} />
         </div>
         <div
-          className="absolute cursor-move ring-2 ring-white"
+          className="absolute cursor-move ring-2 ring-on-ceiling"
           style={{ left: pct(box.left), top: pct(box.top), width: pct(box.width), height: pct(box.height) }}
           onPointerDown={(e) => begin("move", e)}
           data-testid="crop-box"
@@ -156,13 +157,13 @@ export function PhotoCropper({
         </div>
       </div>
       <div className="flex flex-wrap gap-2">
-        <button type="button" className="btn btn-primary" onClick={() => onDone(box)} data-testid="use-crop">
+        <button type="button" className="ss-btn ss-btn--primary" onClick={() => onDone(box)} data-testid="use-crop">
           Use this crop
         </button>
-        <button type="button" className="btn btn-secondary" onClick={() => onDone(null)}>
+        <button type="button" className="ss-btn ss-btn--secondary" onClick={() => onDone(null)}>
           Use the whole photo
         </button>
-        <button type="button" className="btn btn-secondary" onClick={onCancel}>
+        <button type="button" className="ss-btn ss-btn--secondary" onClick={onCancel}>
           Cancel
         </button>
       </div>

@@ -47,10 +47,10 @@ export function OrderForm({
   const errors = { ...(quote?.errors ?? {}), ...(checkout?.errors ?? {}) };
 
   const field = (name: keyof Fields, label: string, opts: { required?: boolean; hint?: string; autoComplete?: string; max?: number; wide?: boolean } = {}) => (
-    <label className={`block ${opts.wide ? "sm:col-span-2" : ""}`}>
-      <span className="text-sm font-semibold">
+    <label className={`block min-w-0 ${opts.wide ? "sm:col-span-2" : ""}`}>
+      <span className="label">
         {label}
-        {!opts.required && <span className="font-normal text-[color:var(--muted)]"> (optional)</span>}
+        {!opts.required && <span className="font-normal text-ink-muted"> (optional)</span>}
       </span>
       <input
         name={name}
@@ -59,9 +59,9 @@ export function OrderForm({
         autoComplete={opts.autoComplete}
         onChange={(e) => setV({ ...v, [name]: e.target.value })}
         aria-invalid={!!errors[name]}
-        className="mt-1 w-full rounded-lg border border-[color:var(--line)] bg-white px-3 py-2"
+        className="ss-input mt-1"
       />
-      {errors[name] ? <span className="text-sm text-red-700">{errors[name]}</span> : opts.hint ? <span className="text-xs text-[color:var(--muted)]">{opts.hint}</span> : null}
+      {errors[name] ? <span className="body-s mt-1 block text-persimmon">{errors[name]}</span> : opts.hint ? <span className="body-s mt-1 block text-ink-muted">{opts.hint}</span> : null}
     </label>
   );
 
@@ -69,24 +69,24 @@ export function OrderForm({
     <form className="space-y-6" onSubmit={() => setQuotedFor(key)}>
       <input type="hidden" name="bookId" value={bookId} />
 
-      <section className="rounded-xl bg-white p-5 ring-1 ring-[color:var(--line)]">
-        <h2 className="mb-3 font-display text-xl font-medium">1. The book</h2>
+      <section className="ss-card">
+        <h2 className="title mb-4">1. The book</h2>
         <div className="grid gap-3 sm:grid-cols-2">
           {files.map((f) => (
-            <label key={f.exportId} className="flex cursor-pointer items-start gap-3 rounded-lg bg-cream p-3 ring-1 ring-[color:var(--line)] has-[:checked]:bg-tint has-[:checked]:ring-cobalt">
-              <input type="radio" name="exportId" value={f.exportId} checked={exportId === f.exportId} onChange={() => setExportId(f.exportId)} className="mt-1" />
-              <span>
+            <label key={f.exportId} className="ss-option group min-w-0">
+              <input type="radio" name="exportId" value={f.exportId} checked={exportId === f.exportId} onChange={() => setExportId(f.exportId)} className="ss-check mt-0.5 shrink-0" />
+              <span className="min-w-0">
                 <span className="block font-semibold">{f.label}</span>
-                <span className="text-sm text-[color:var(--muted)]">{f.detail}</span>
+                <span className="body-s text-ink-muted group-has-checked:text-ink">{f.detail}</span>
               </span>
             </label>
           ))}
         </div>
       </section>
 
-      <section className="rounded-xl bg-white p-5 ring-1 ring-[color:var(--line)]">
-        <h2 className="mb-1 font-display text-xl font-medium">2. Ship to</h2>
-        <p className="mb-3 text-sm text-[color:var(--muted)]">Sending a gift? Enter the recipient&apos;s address. The carrier needs a phone number for delivery.</p>
+      <section className="ss-card">
+        <h2 className="title mb-1">2. Ship to</h2>
+        <p className="body-s mb-4 text-ink-muted">Sending a gift? Enter the recipient&apos;s address. The carrier needs a phone number for delivery.</p>
         <div className="grid gap-4 sm:grid-cols-2">
           {field("name", "Recipient's full name", { required: true, autoComplete: "name", max: 35, wide: true })}
           {field("street1", "Street address", { required: true, autoComplete: "address-line1", max: 30, hint: "Up to 30 characters; use line 2 for the rest." })}
@@ -94,9 +94,9 @@ export function OrderForm({
           {field("city", "City", { required: true, autoComplete: "address-level2", max: 30 })}
           {field("stateCode", "State or province code", { required: v.countryCode === "US" || v.countryCode === "CA" || v.countryCode === "AU" || v.countryCode === "MX", autoComplete: "address-level1", max: 3, hint: "For example CA, NY or NSW." })}
           {field("postcode", "ZIP or postcode", { required: true, autoComplete: "postal-code", max: 20 })}
-          <label className="block">
-            <span className="text-sm font-semibold">Country</span>
-            <select name="countryCode" value={v.countryCode} onChange={(e) => setV({ ...v, countryCode: e.target.value })} className="mt-1 w-full rounded-lg border border-[color:var(--line)] bg-white px-3 py-2">
+          <label className="block min-w-0">
+            <span className="label">Country</span>
+            <select name="countryCode" value={v.countryCode} onChange={(e) => setV({ ...v, countryCode: e.target.value })} className="ss-input mt-1">
               {countries.map(([code, name]) => (
                 <option key={code} value={code}>
                   {name}
@@ -108,7 +108,7 @@ export function OrderForm({
           {field("email", "Recipient email for delivery updates", { autoComplete: "email" })}
         </div>
         {quote?.warnings && quote.warnings.length > 0 && (
-          <div className="mt-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-900 ring-1 ring-amber-200" data-testid="address-warnings">
+          <div className="ss-note ss-note--warn mt-4" data-testid="address-warnings">
             <p className="font-semibold">Please check the address:</p>
             <ul className="list-disc pl-5">
               {quote.warnings.map((w, i) => (
@@ -118,7 +118,7 @@ export function OrderForm({
             {quote.suggestion && (
               <button
                 type="button"
-                className="btn btn-secondary btn-sm mt-2"
+                className="ss-btn ss-btn--secondary ss-btn--sm mt-3 h-auto min-h-11 max-w-full py-2 text-center"
                 onClick={() =>
                   setV({
                     ...v,
@@ -137,9 +137,11 @@ export function OrderForm({
         )}
       </section>
 
-      <section className="rounded-xl bg-white p-5 ring-1 ring-[color:var(--line)]">
-        <h2 className="mb-1 font-display text-xl font-medium">3. Gift note</h2>
-        <p className="mb-3 text-sm text-[color:var(--muted)]">
+      <section className="ss-card">
+        <h2 id="gift-note-heading" className="title mb-1">
+          3. Gift note
+        </h2>
+        <p className="body-s mb-4 text-ink-muted">
           Saved with the order so you remember who it was for. The printer can&apos;t put notes in the box; to have a message printed inside the book, edit its dedication page before making the print files.
         </p>
         <textarea
@@ -148,58 +150,67 @@ export function OrderForm({
           maxLength={500}
           rows={3}
           onChange={(e) => setV({ ...v, giftNote: e.target.value })}
-          className="w-full rounded-lg border border-[color:var(--line)] bg-white px-3 py-2"
+          aria-labelledby="gift-note-heading"
+          className="ss-input"
           placeholder="Happy birthday, Oliver! Love, Grandma"
         />
-        {errors.giftNote && <span className="text-sm text-red-700">{errors.giftNote}</span>}
+        {errors.giftNote && <span className="body-s mt-1 block text-persimmon">{errors.giftNote}</span>}
       </section>
 
-      <section className="rounded-xl bg-white p-5 ring-1 ring-[color:var(--line)]">
-        <h2 className="mb-3 font-display text-xl font-medium">4. Shipping and price</h2>
+      <section className="ss-card ss-card--piped">
+        <h2 className="title mb-4">4. Shipping and price</h2>
         {!fresh && (
-          <button formAction={quoteFormAction} disabled={quoting || !exportId} className="btn btn-secondary" data-testid="get-prices">
+          <button formAction={quoteFormAction} disabled={quoting || !exportId} className="ss-btn ss-btn--primary" data-testid="get-prices">
             {quoting ? "Asking the printer..." : quote?.options?.length ? "Update prices for this address" : "See shipping options"}
           </button>
         )}
-        {quote?.message && <p className="mt-3 text-red-700" role="alert">{quote.message}</p>}
+        {quote?.message && (
+          <p className="ss-note ss-note--error mt-4" role="alert">
+            {quote.message}
+          </p>
+        )}
         {fresh && (
           <div className="space-y-3" data-testid="shipping-options">
             {quote!.options!.map((o, i) => (
-              <label key={o.level} className="flex cursor-pointer items-center justify-between gap-3 rounded-lg bg-cream p-3 ring-1 ring-[color:var(--line)] has-[:checked]:bg-tint has-[:checked]:ring-cobalt">
-                <span className="flex items-center gap-3">
-                  <input type="radio" name="shippingLevel" value={o.level} defaultChecked={i === 0} />
-                  <span>
+              <label key={o.level} className="ss-option group min-w-0 items-center justify-between">
+                <span className="flex min-w-0 items-center gap-3">
+                  <input type="radio" name="shippingLevel" value={o.level} defaultChecked={i === 0} className="ss-check shrink-0" />
+                  <span className="min-w-0">
                     <span className="block font-semibold">{SHIPPING_LABELS[o.level] ?? o.level}</span>
-                    <span className="text-sm text-[color:var(--muted)]">{dateRange(o.arrivalMin, o.arrivalMax)}</span>
+                    <span className="body-s text-ink-muted group-has-checked:text-ink">{dateRange(o.arrivalMin, o.arrivalMax)}</span>
                   </span>
                 </span>
-                <span className="font-display text-lg">{o.total}</span>
+                <span className="shrink-0 text-lg font-bold">{o.total}</span>
               </label>
             ))}
-            <p className="text-sm text-[color:var(--muted)]">One total per option: printing, shipping and tax included.</p>
+            <p className="body-s text-ink-muted">One total per option: printing, shipping and tax included.</p>
             {credits && (
-              <label className="flex items-start gap-3 rounded-lg bg-white p-3 ring-1 ring-[color:var(--line)]" data-testid="use-credits">
-                <input type="checkbox" name="useCredits" disabled={credits.redeemableUsd <= 0} defaultChecked={credits.redeemableUsd > 0} className="mt-1" />
-                <span className="text-sm">
+              <label className="ss-option group min-w-0" data-testid="use-credits">
+                <input type="checkbox" name="useCredits" disabled={credits.redeemableUsd <= 0} defaultChecked={credits.redeemableUsd > 0} className="ss-check mt-0.5 shrink-0" />
+                <span className="body-s min-w-0">
                   {credits.redeemableUsd > 0 ? (
                     <>
                       <span className="font-semibold">Use up to ${credits.redeemableUsd.toFixed(2)} of my credits</span>
-                      <span className="block text-[color:var(--muted)]">
+                      <span className="block text-ink-muted group-has-checked:text-ink">
                         You have ${credits.balanceUsd.toFixed(2)}; ${credits.keepUsd.toFixed(2)} stays in your account for making more books. Buying this book also adds new credits.
                       </span>
                     </>
                   ) : (
-                    <span className="text-[color:var(--muted)]">
+                    <span className="text-ink-muted">
                       Credits can pay toward a book when you have more than ${credits.keepUsd.toFixed(2)} (you have ${credits.balanceUsd.toFixed(2)}). Buying this book adds credits.
                     </span>
                   )}
                 </span>
               </label>
             )}
-            <button formAction={checkoutFormAction} disabled={paying} className="btn btn-primary" data-testid="checkout">
+            <button formAction={checkoutFormAction} disabled={paying} className="ss-btn ss-btn--primary" data-testid="checkout">
               {paying ? "Opening checkout..." : paymentName === "mock" ? "Continue to test checkout" : "Continue to secure checkout"}
             </button>
-            {checkout?.message && <p className="text-red-700" role="alert">{checkout.message}</p>}
+            {checkout?.message && (
+              <p className="ss-note ss-note--error" role="alert">
+                {checkout.message}
+              </p>
+            )}
           </div>
         )}
       </section>

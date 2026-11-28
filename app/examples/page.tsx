@@ -33,7 +33,7 @@ export default async function ExamplesPage() {
           Pages from <span className="italic">{SAMPLE.title}</span>, a sample book starring a one-year-old and her big brothers. Every page is illustrated from the family&apos;s photos, with a story written to be read aloud.
         </p>
       </div>
-      <figure className="m-0">
+      <figure>
         <img src={SAMPLE.spread.src} alt={SAMPLE.spread.alt} className="block w-full rounded-[var(--radius-book)] shadow-book" />
       </figure>
       <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-6">

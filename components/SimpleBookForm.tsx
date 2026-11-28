@@ -3,6 +3,7 @@
 import { startTransition, useActionState, useState } from "react";
 import Link from "next/link";
 import { createBookAction } from "@/app/actions";
+import { Star } from "@/components/brand/Star";
 import { CastPicker, type CastOption } from "./CastPicker";
 
 export interface StoryCard {
@@ -15,7 +16,7 @@ export interface StoryCard {
   picture: string | null;
 }
 
-const input = "mt-1 w-full rounded-xl border border-[color:var(--line)] bg-white px-3 py-2.5 outline-none focus:border-cobalt focus:ring-2 focus:ring-sky";
+const input = "ss-input mt-1";
 
 /**
  * Starting a book in two questions: which story, and who's in it. Everything
@@ -70,52 +71,57 @@ export function SimpleBookForm({
       {child.friend && <input type="hidden" name="includeFriend" value="on" />}
 
       {blocked && (
-        <div className="rounded-xl bg-amber-50 px-4 py-3 text-amber-900 ring-1 ring-amber-200" role="alert">
+        <div className="ss-note ss-note--warn" role="alert">
           First, let&apos;s draw {child.name}: it takes a couple of photos and about a minute, and you only do it once.{" "}
-          <Link href={`/children/${child.id}/character`} className="font-semibold underline">
+          <Link href={`/children/${child.id}/character`} className="ss-link">
             Add photos of {child.name}
           </Link>
         </div>
       )}
 
-      <fieldset>
-        <legend className="font-display text-2xl font-medium">1. Pick a story</legend>
-        <div className="mt-4 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3" role="radiogroup" aria-label="Story">
-          {stories.map((s) => (
-            <label
-              key={s.id}
-              data-testid={`story-${s.id}`}
-              className={`flex cursor-pointer flex-col overflow-hidden rounded-2xl bg-white ring-1 transition ${storyId === s.id ? "ring-4 ring-cobalt" : "ring-[color:var(--line)] hover:ring-cobalt/50"}`}
-            >
-              <input type="radio" name="starterId" value={s.id} checked={storyId === s.id} onChange={() => setStoryId(s.id)} className="sr-only" />
-              {s.picture ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={s.picture} alt="" className="aspect-square w-full object-cover" />
-              ) : (
-                <div className="aspect-square w-full bg-cream" />
-              )}
-              <span className="block p-3 sm:p-4">
-                <span className="block font-display text-base font-medium leading-snug sm:text-lg">{s.title}</span>
-                <span className="mt-1 block text-xs text-[color:var(--muted)] sm:text-sm">{s.summary}</span>
-                <span className="chip chip-sun mt-2 hidden sm:inline-block">{s.voiceLabel}</span>
-              </span>
-            </label>
-          ))}
+      <fieldset className="min-w-0">
+        <legend className="title">1. Pick a story</legend>
+        <div className="mt-4 grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-3" role="radiogroup" aria-label="Story">
+          {stories.map((s) => {
+            const selected = storyId === s.id;
+            return (
+              <label
+                key={s.id}
+                data-testid={`story-${s.id}`}
+                className={`ss-book relative w-auto cursor-pointer gap-2 sm:gap-3 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-[3px] has-[:focus-visible]:outline-[color:var(--focus-ring)] ${selected ? "border-2 border-delft p-[9px] sm:p-[15px]" : "p-2.5 hover:border-delft sm:p-4"}`}
+              >
+                <input type="radio" name="starterId" value={s.id} checked={selected} onChange={() => setStoryId(s.id)} className="sr-only" />
+                <span className="relative block">
+                  {s.picture ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={s.picture} alt="" className="block aspect-square w-full rounded-[var(--radius-book)] object-cover" />
+                  ) : (
+                    <span className="block aspect-square w-full rounded-[var(--radius-book)] bg-paper-sunk" />
+                  )}
+                  {selected && (
+                    <span className="absolute right-2 top-2 grid size-8 place-items-center rounded-full bg-paper-raised text-persimmon shadow-lift">
+                      <Star />
+                    </span>
+                  )}
+                </span>
+                <span className="ss-book__title block px-1 text-[17px] leading-[23px] sm:text-[21px] sm:leading-[27px]">{s.title}</span>
+                <span className="ss-book__detail block text-sm sm:text-[15px]">{s.summary}</span>
+                <span className="ss-pill mx-1 hidden self-start sm:inline-flex">{s.voiceLabel}</span>
+              </label>
+            );
+          })}
         </div>
       </fieldset>
 
-      <div>
-        <p className="mb-2 text-sm font-semibold uppercase tracking-wider text-[color:var(--muted)]">2. {child.name} is the star</p>
-        <CastPicker heroId={child.id} heroName={child.name} people={people} style={style} needsCharacter={needsCharacter} showAbout={false} />
-      </div>
+      <CastPicker heroId={child.id} heroName={child.name} people={people} style={style} needsCharacter={needsCharacter} showAbout={false} step={2} />
 
-      <details className="rounded-xl bg-white p-5 ring-1 ring-[color:var(--line)]">
-        <summary className="cursor-pointer font-display text-lg font-medium">
-          Add a personal touch <span className="font-sans text-sm font-normal text-[color:var(--muted)]">optional</span>
+      <details className="ss-card">
+        <summary className="ss-summary title">
+          Add a personal touch <span className="font-sans text-sm text-ink-muted">optional</span>
         </summary>
         <div className="mt-4 grid gap-4">
           <label className="block">
-            <span className="font-semibold">Dedication</span> <span className="text-sm text-[color:var(--muted)]">or we&apos;ll write one</span>
+            <span className="font-semibold">Dedication</span> <span className="text-sm text-ink-muted">or we&apos;ll write one</span>
             <input name="dedication" maxLength={300} placeholder={`For ${child.name}, with love`} className={input} />
           </label>
           <label className="block">
@@ -126,16 +132,17 @@ export function SimpleBookForm({
       </details>
 
       {state && !state.ok && (
-        <div className="rounded-xl bg-amber-50 px-4 py-3 text-amber-900 ring-1 ring-amber-200" role="alert">
+        <div className="ss-note ss-note--error" role="alert">
           {state.message}
         </div>
       )}
 
       <div className="flex flex-col items-start gap-2">
-        <button disabled={!story || pending || blocked} data-testid="create-book" className="btn btn-primary btn-lg">
-          {pending ? "Starting..." : "Write my story ✨"}
+        <button disabled={!story || pending || blocked} data-testid="create-book" className="ss-btn ss-btn--primary w-full sm:w-auto">
+          {!pending && <Star />}
+          {pending ? "Starting..." : "Write my story"}
         </button>
-        <p className="text-sm text-[color:var(--muted)]">We write the story first (about two minutes). You read it before any pictures are drawn.</p>
+        <p className="text-sm text-ink-muted">We write the story first (about two minutes). You read it before any pictures are drawn.</p>
       </div>
     </form>
   );

@@ -11,11 +11,23 @@ import { ExportForm } from "@/components/ExportForm";
 import { AutoRefresh } from "@/components/AutoRefresh";
 import { validateExportAction } from "@/app/actions";
 import type { FileValidation } from "@/lib/providers/print/types";
+import { Star } from "@/components/brand/Star";
 
 export const dynamic = "force-dynamic";
 
 const ICON = { error: "✕", warning: "!", pass: "✓" } as const;
-const COLOR = { error: "text-red-700", warning: "text-amber-700", pass: "text-emerald-700" } as const;
+const COLOR = { error: "text-persimmon", warning: "text-ink", pass: "text-delft" } as const;
+
+/** Rounded line download icon (1.75px stroke, currentColor), decorative. */
+function DownloadIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false" className="shrink-0">
+      <path d="M12 4v11" />
+      <path d="m7 10 5 5 5-5" />
+      <path d="M5 19h14" />
+    </svg>
+  );
+}
 
 function slug(s: string) {
   return s.replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60) || "book";
@@ -53,20 +65,24 @@ export default async function PrintFiles({ params, searchParams }: { params: Pro
   return (
     <div className="space-y-6">
       <AutoRefresh active={busy} everyMs={2500} />
-      <Link href={`/books/${book.id}`} className="text-sm font-semibold text-cobalt">
+      <Link href={`/books/${book.id}`} className="ss-link body-s inline-flex min-h-11 items-center">
         ← Back to the book
       </Link>
-      <div>
-        <h1 className="font-display text-3xl font-medium">Print files for {book.title}</h1>
-        <p className="text-[color:var(--muted)]">
+      <div className="min-w-0">
+        <h1 className="heading break-words">Print files for {book.title}</h1>
+        <p className="mt-2 text-ink-muted">
           We make two PDFs a printer needs: the interior (every page, with bleed) and the wraparound cover. Then we check them against the printer&apos;s rules.
           {providerName === "mock" && " Printer: offline mock (add Lulu sandbox keys to check files with Lulu)."}
         </p>
       </div>
-      {sp.error && <p className="rounded-xl bg-amber-50 px-4 py-3 text-amber-900 ring-1 ring-amber-200">{sp.error}</p>}
+      {sp.error && (
+        <p className="ss-note ss-note--error" role="alert">
+          {sp.error}
+        </p>
+      )}
 
-      <section className="rounded-xl bg-white p-5 ring-1 ring-[color:var(--line)]">
-        <h2 className="mb-3 font-display text-xl font-medium">1. Choose the book type</h2>
+      <section className="ss-card ss-card--piped">
+        <h2 className="title mb-4">1. Choose the book type</h2>
         <ExportForm
           bookId={book.id}
           products={products.map((p) => ({ id: p.id, label: p.label, detail: `${p.paper} · ${p.pageRules.minPages} to ${p.pageRules.maxPages} pages` }))}
@@ -75,55 +91,59 @@ export default async function PrintFiles({ params, searchParams }: { params: Pro
       </section>
 
       {rows.map(({ e, report, interiorUrl, coverUrl, product, stale, validation, dims }) => (
-        <section key={e.id} className="space-y-4 rounded-xl bg-white p-5 ring-1 ring-[color:var(--line)]" data-testid="export">
+        <section key={e.id} className="ss-card min-w-0 space-y-4" data-testid="export">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <h2 className="font-display text-xl font-medium">{product?.label ?? e.productId}</h2>
-            <span className="text-sm text-[color:var(--muted)]">
-              {e.createdAt.toLocaleString()} · {e.sku}
+            <h2 className="title min-w-0">{product?.label ?? e.productId}</h2>
+            <span className="body-s min-w-0 wrap-anywhere text-ink-muted">
+              {e.createdAt.toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" })}
+              {isAdminEmail(user.email) && ` · printer code ${e.sku}`}
             </span>
           </div>
-          {stale && e.status === "ready" && <p className="rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-900 ring-1 ring-amber-200">The book changed after these files were made. Make new files before ordering.</p>}
-          {e.status === "rendering" && <p className="animate-pulse text-cobalt">Making the PDFs. This takes about a minute...</p>}
-          {e.status === "failed" && <p className="text-red-700">Making the files failed: {e.error}</p>}
+          {stale && e.status === "ready" && <p className="ss-note ss-note--warn">The book changed after these files were made. Make new files before ordering.</p>}
+          {e.status === "rendering" && <p className="animate-pulse text-delft">Making the PDFs. This takes about a minute...</p>}
+          {e.status === "failed" && <p className="ss-note ss-note--error">Making the files failed: {e.error}</p>}
 
           {e.status === "ready" && (
             <>
               {e.preflightOk && !stale && e.validationStatus !== "failed" && (
-                <Link href={`/books/${book.id}/order`} className="btn btn-order self-start" data-testid="order-from-print">
+                <Link href={`/books/${book.id}/order`} className="ss-btn ss-btn--secondary" data-testid="order-from-print">
+                  <Star className="h-3.5 w-3.5 text-persimmon" />
                   Order a printed copy
                 </Link>
               )}
               <div className="flex flex-wrap gap-3">
                 {interiorUrl && (
-                  <a href={interiorUrl} className="btn btn-primary" data-testid="download-interior">
-                    ⬇ Interior PDF ({e.pageCount} pages)
+                  <a href={interiorUrl} className="ss-btn ss-btn--secondary ss-btn--sm h-auto min-h-11 max-w-full py-2 text-center" data-testid="download-interior">
+                    <DownloadIcon />
+                    Interior PDF ({e.pageCount} pages)
                   </a>
                 )}
                 {coverUrl && (
-                  <a href={coverUrl} className="btn btn-primary" data-testid="download-cover">
-                    ⬇ Cover PDF{dims ? ` (${dims.widthIn} x ${dims.heightIn} in, spine ${dims.spineIn} in)` : ""}
+                  <a href={coverUrl} className="ss-btn ss-btn--secondary ss-btn--sm h-auto min-h-11 max-w-full py-2 text-center" data-testid="download-cover">
+                    <DownloadIcon />
+                    Cover PDF{dims ? ` (${dims.widthIn} x ${dims.heightIn} in, spine ${dims.spineIn} in)` : ""}
                   </a>
                 )}
               </div>
 
               {report && (
                 <div>
-                  <p className={`font-semibold ${report.ok ? "text-emerald-700" : "text-red-700"}`} data-testid="preflight-summary">
+                  <p className={`font-semibold ${report.ok ? "text-delft" : "text-persimmon"}`} data-testid="preflight-summary">
                     Preflight: {report.ok ? "ready to print" : `${report.errors} problem(s) to fix`}
                     {report.warnings > 0 && `, ${report.warnings} warning(s)`}
                   </p>
-                  <ul className="mt-2 space-y-1 text-sm" data-testid="preflight">
+                  <ul className="body-s mt-2 space-y-1" data-testid="preflight">
                     {report.items.map((it, i) => (
                       <li key={i} className="flex gap-2">
                         <span className={`w-4 shrink-0 font-bold ${COLOR[it.level]}`} aria-label={it.level}>
                           {ICON[it.level]}
                         </span>
-                        <span>
+                        <span className="min-w-0 break-words">
                           {it.message}
                           {it.page && it.level !== "pass" && (
                             <>
                               {" "}
-                              <Link href={`/books/${book.id}/edit`} className="text-cobalt underline">
+                              <Link href={`/books/${book.id}/edit`} className="ss-link">
                                 Fix
                               </Link>
                             </>
@@ -135,28 +155,29 @@ export default async function PrintFiles({ params, searchParams }: { params: Pro
                 </div>
               )}
 
-              <div className="rounded-lg bg-cream p-4">
-                <p className="font-semibold">2. Check with the printer ({e.provider === "mock" ? "mock" : e.provider})</p>
+              <div className="ss-card ss-card--sunk">
+                <h3 className="title">2. Check with the printer</h3>
+                {e.provider === "mock" && <p className="body-s text-ink-muted">Test printer: nothing is sent anywhere.</p>}
                 {e.validationStatus === "none" && (
-                  <form action={validateExportAction} className="mt-2">
+                  <form action={validateExportAction} className="mt-3 flex flex-wrap items-center gap-3">
                     <input type="hidden" name="bookId" value={book.id} />
                     <input type="hidden" name="exportId" value={e.id} />
-                    <button disabled={!e.preflightOk} className="btn btn-secondary" data-testid="validate">
+                    <button disabled={!e.preflightOk} className="ss-btn ss-btn--secondary" data-testid="validate">
                       {e.provider === "lulu" ? "Validate with Lulu" : "Run printer check"}
                     </button>
-                    {!e.preflightOk && <span className="ml-3 text-sm text-[color:var(--muted)]">Fix the preflight problems first.</span>}
+                    {!e.preflightOk && <span className="body-s text-ink-muted">Fix the preflight problems first.</span>}
                   </form>
                 )}
-                {e.validationStatus === "running" && <p className="mt-2 animate-pulse text-cobalt">{e.validationProgress ?? "Checking..."} (Lulu can take a few minutes)</p>}
+                {e.validationStatus === "running" && <p className="mt-2 animate-pulse text-delft">{e.validationProgress ?? "Checking..."} (Lulu can take a few minutes)</p>}
                 {e.validationStatus === "passed" && (
-                  <p className="mt-2 text-emerald-700" data-testid="validation-passed">
+                  <p className="ss-note ss-note--success mt-3" data-testid="validation-passed">
                     ✓ Passed. Interior: {validation?.interior?.status ?? "ok"}. Cover: {validation?.cover?.status ?? "ok"}.
                   </p>
                 )}
                 {e.validationStatus === "failed" && (
-                  <div className="mt-2 text-red-700">
+                  <div className="ss-note ss-note--error mt-3">
                     <p>✕ The printer found problems:</p>
-                    <ul className="list-disc pl-5 text-sm">
+                    <ul className="list-disc pl-5">
                       {(validation?.problems?.length ? validation.problems : [e.error ?? "Unknown problem"]).map((p) => (
                         <li key={p}>{p}</li>
                       ))}

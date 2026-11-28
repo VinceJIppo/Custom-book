@@ -23,17 +23,17 @@ export default async function NewBook({ searchParams }: { searchParams: Promise<
     const kids = (await listPeople(user.id)).filter((p) => p.kind !== "grownup");
     return (
       <div className="space-y-4">
-        <h1 className="font-display text-3xl font-medium">Whose book is it?</h1>
-        <p className="text-[color:var(--muted)]">Every book stars a child. Pick one, then add grown-ups to the story in the next step.</p>
+        <h1 className="heading">Whose book is it?</h1>
+        <p className="text-ink-muted">Every book stars a child. Pick one, then add grown-ups to the story in the next step.</p>
         {kids.length === 0 ? (
           <p>
-            Add a child first: <Link href="/children/new" className="text-cobalt underline">tell us about your child</Link>.
+            Add a child first: <Link href="/children/new" className="ss-link">tell us about your child</Link>.
           </p>
         ) : (
           <ul className="flex flex-wrap gap-3">
             {kids.map((k) => (
               <li key={k.id}>
-                <Link href={`/books/new?childId=${k.id}`} className="btn btn-secondary">
+                <Link href={`/books/new?childId=${k.id}`} className="ss-btn ss-btn--secondary">
                   {k.nickname || k.firstName}
                 </Link>
               </li>
@@ -46,7 +46,7 @@ export default async function NewBook({ searchParams }: { searchParams: Promise<
   const child = await getChild(user.id, childId);
   if (!child) notFound();
   if (child.kind === "grownup") {
-    return <p>Books are made for a child. Start a book from a child&apos;s page and add {child.nickname || child.firstName} to the story there.</p>;
+    return <p className="ss-note">Books are made for a child. Start a book from a child&apos;s page and add {child.nickname || child.firstName} to the story there.</p>;
   }
   const people = await Promise.all(
     (await listPeople(user.id))
@@ -72,9 +72,9 @@ export default async function NewBook({ searchParams }: { searchParams: Promise<
     return (
       <div className="space-y-6">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <h1 className="font-display text-3xl font-medium">A new book for {child.nickname || child.firstName}</h1>
+          <h1 className="heading">A new book for {child.nickname || child.firstName}</h1>
           {isAdminEmail(user.email) && (
-            <Link href={`/books/new?childId=${child.id}&advanced=1`} className="text-sm text-[color:var(--muted)] underline">
+            <Link href={`/books/new?childId=${child.id}&advanced=1`} className="ss-link text-sm">
               All options (admin)
             </Link>
           )}
@@ -100,7 +100,7 @@ export default async function NewBook({ searchParams }: { searchParams: Promise<
 
   return (
     <div className="space-y-6">
-      <h1 className="font-display text-3xl font-medium">A new book for {child.nickname || child.firstName}</h1>
+      <h1 className="heading">A new book for {child.nickname || child.firstName}</h1>
       <BookWizard
         child={{ id: child.id, name: child.nickname || child.firstName, age: child.age, petName: child.petName, friend: friends[0] ?? null, lesson: child.lesson }}
         themes={themes.map((t) => ({

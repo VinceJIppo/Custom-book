@@ -20,7 +20,7 @@ export default async function BookPageRoute({ params, searchParams }: { params: 
     const pages = book.pages.filter((p) => p.kind === "story").map((p) => ({ id: p.id, storyNumber: p.storyNumber ?? p.index, text: p.text }));
     return (
       <div className="space-y-4">
-        <Link href={`/children/${book.childId}`} className="text-sm font-semibold text-cobalt">
+        <Link href={`/children/${book.childId}`} className="ss-link body-s inline-flex min-h-11 items-center">
           ← {book.child.nickname || book.child.firstName}
         </Link>
         <StoryReview bookId={book.id} title={book.title ?? "Your story"} dedication={book.dedication} pages={pages} speed={pictureSpeedOf(book)} error={(await searchParams).error} />
@@ -31,13 +31,13 @@ export default async function BookPageRoute({ params, searchParams }: { params: 
   const [view, progress] = await Promise.all([book.pages.length ? buildBookView(book) : null, getBookProgress(book.id, (book.options as { length?: number }).length ?? 16, { withProblems: isAdminEmail(user.email) })]);
   return (
     <div className="space-y-4">
-      <Link href={`/children/${book.childId}`} className="text-sm font-semibold text-cobalt">
+      <Link href={`/children/${book.childId}`} className="ss-link body-s inline-flex min-h-11 items-center">
         ← {book.child.nickname || book.child.firstName}
       </Link>
       <BookLive bookId={book.id} initial={{ status: book.status, title: book.title, progress, view }} admin={isAdminEmail(user.email)} />
       {creditUse > 0 && (
-        <p className="text-sm text-[color:var(--muted)]" data-testid="book-credit-use">
-          This book has used ${creditUse.toFixed(2)} of credits so far. <Link href="/credits" className="underline">See your credits</Link>
+        <p className="body-s text-ink-muted" data-testid="book-credit-use">
+          This book has used ${creditUse.toFixed(2)} of credits so far. <Link href="/credits" className="ss-link">See your credits</Link>
         </p>
       )}
     </div>

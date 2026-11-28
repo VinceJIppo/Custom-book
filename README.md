@@ -305,7 +305,7 @@ Browser ── Next.js App Router (server actions, API routes)
   dedications and instructions, with original-theme suggestions. Child, pet and friend
   names are never checked (a real child can be called Elsa).
 - Moderation check on all parent free text (mock word list for now).
-- All files encrypted at rest (AES-256-GCM) and served only via short-lived HMAC-signed URLs.
+- All files are encrypted at rest: by the app (AES-256-GCM) with the local driver, and by the storage provider with R2. Files are served only via short-lived signed URLs.
 - "Delete this child and everything about them" removes their files and all DB rows.
 - Logs strip image data and base64 (`lib/log.ts`).
 - Daily cost and book caps; a cost estimate is shown before every book.

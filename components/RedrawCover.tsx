@@ -9,7 +9,7 @@ export function RedrawCover({ bookId }: { bookId: string }) {
   const [state, redraw, pending] = useActionState(redrawCoverAction, null);
   if (!open)
     return (
-      <button type="button" className="btn btn-secondary" onClick={() => setOpen(true)} data-testid="redraw-cover">
+      <button type="button" className="ss-btn ss-btn--secondary" onClick={() => setOpen(true)} data-testid="redraw-cover">
         Redraw the cover
       </button>
     );
@@ -20,26 +20,27 @@ export function RedrawCover({ bookId }: { bookId: string }) {
         const fd = new FormData(e.currentTarget);
         startTransition(() => redraw(fd));
       }}
-      className="flex w-full flex-col gap-2 rounded-xl bg-white p-3 ring-1 ring-[color:var(--line)] sm:w-auto sm:flex-row sm:items-center">
+      className="flex w-full min-w-0 flex-col gap-2 rounded-[var(--radius-md)] bg-paper-raised p-3 ring-1 ring-line sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
       <input type="hidden" name="bookId" value={bookId} />
       <input
         name="note"
         maxLength={300}
         placeholder="Optional: what should change? (e.g. show Charlie waving by the stream)"
-        className="w-full rounded-lg border border-[color:var(--line)] px-3 py-2 sm:w-80"
+        className="ss-input min-w-0 sm:w-80"
         aria-label="What should change on the cover"
         data-testid="redraw-cover-note"
       />
       <div className="flex items-center gap-2">
-        <button disabled={pending} className="btn btn-primary btn-sm" data-testid="redraw-cover-submit">
+        {/* Secondary: "Order a printed copy" stays the one primary action on the book page. */}
+        <button disabled={pending} className="ss-btn ss-btn--secondary ss-btn--sm" data-testid="redraw-cover-submit">
           {pending ? "Starting..." : "Redraw"}
         </button>
-        <button type="button" className="btn btn-secondary btn-sm" onClick={() => setOpen(false)}>
+        <button type="button" className="ss-link inline-flex min-h-11 cursor-pointer items-center px-2 text-[15px]" onClick={() => setOpen(false)}>
           Cancel
         </button>
       </div>
       {state?.message && (
-        <p role="status" className="text-sm text-red-700">
+        <p role="status" className="ss-note ss-note--error">
           {state.message}
         </p>
       )}

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { CreditBadge } from "@/components/CreditBadge";
-import { THEME_KEY } from "./theme";
+import { preferredTheme, THEME_KEY } from "./theme";
 import { StarBand } from "./StarBand";
 
 export interface NavLink {
@@ -22,6 +22,18 @@ const readTheme = () => (document.documentElement.getAttribute("data-theme") ===
 /** The moon button (a sun in Bedtime). Flips the theme and remembers the choice. */
 function ThemeToggle() {
   const theme = useSyncExternalStore(subscribeTheme, readTheme, () => "daytime");
+  // If React ever redraws <html> (it can after a "not found" in the middle of a page), the
+  // attribute the head script set is gone: put the reader's theme back.
+  useEffect(() => {
+    const root = document.documentElement;
+    const restore = () => {
+      if (!root.hasAttribute("data-theme")) root.setAttribute("data-theme", preferredTheme());
+    };
+    restore();
+    const obs = new MutationObserver(restore);
+    obs.observe(root, { attributes: true, attributeFilter: ["data-theme"] });
+    return () => obs.disconnect();
+  }, []);
   const next = theme === "bedtime" ? "daytime" : "bedtime";
   return (
     <button

@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "
 import type { PageFlip } from "page-flip";
 import { BookPage, CoverBack, CoverFront, InsideCover } from "@/components/book/BookPage";
 import type { BookView } from "@/lib/books/viewTypes";
-import { PhoneReader } from "./PhoneReader";
+import { PhoneReader, ReaderIcon } from "./PhoneReader";
 
 /**
  * Animated flipbook. React renders every page once into a hidden "source"
@@ -41,6 +41,7 @@ function PageTurner({ book }: { book: BookView }) {
   const flipRef = useRef<PageFlip | null>(null);
   const [current, setCurrent] = useState(0);
   const [total, setTotal] = useState(0);
+  const [landscape, setLandscape] = useState(false);
   const [speaking, setSpeaking] = useState(false);
   // False on the server and during hydration, true in browsers with speech synthesis.
   const canSpeak = useSyncExternalStore(
@@ -93,7 +94,9 @@ function PageTurner({ book }: { book: BookView }) {
       });
       flip.loadFromHTML(nodes);
       flip.on("flip", (e) => setCurrent(Number(e.data)));
+      flip.on("changeOrientation", (e) => setLandscape(e.data === "landscape"));
       flipRef.current = flip;
+      setLandscape(flip.getOrientation() === "landscape");
       setTotal(flip.getPageCount());
       setCurrent(flip.getCurrentPageIndex());
     });
@@ -156,24 +159,32 @@ function PageTurner({ book }: { book: BookView }) {
   return (
     <div className="w-full">
       <div ref={stageRef} className="flip-stage mx-auto w-full max-w-5xl">
-        <div ref={hostRef} className="mx-auto w-full" data-testid="flipbook" />
-        <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-sm">
-          <button onClick={prev} className="btn btn-secondary" aria-label="Previous page">
-            ◀ Back
+        {/* A closed book (front or back cover alone) sits in the middle instead of on one half of the spread. */}
+        <div
+          ref={hostRef}
+          className="mx-auto w-full transition-transform duration-500 ease-out motion-reduce:transition-none"
+          style={{ transform: landscape && total && current === 0 ? "translateX(-25%)" : landscape && total && current >= total - 1 ? "translateX(25%)" : undefined }}
+          data-testid="flipbook"
+        />
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-2 text-sm">
+          <button onClick={prev} className="ss-btn ss-btn--secondary ss-btn--sm gap-1 pl-3" aria-label="Previous page">
+            <ReaderIcon name="prev" /> Back
           </button>
-          <span className="min-w-28 text-center tabular-nums text-[color:var(--muted)]" data-testid="page-indicator">
+          <span className="min-w-28 text-center font-semibold tabular-nums text-ink-muted" data-testid="page-indicator">
             {total ? `${current + 1} / ${total}` : "Loading..."}
           </span>
-          <button onClick={next} className="btn btn-secondary" aria-label="Next page">
-            Next ▶
+          <button onClick={next} className="ss-btn ss-btn--secondary ss-btn--sm gap-1 pr-3" aria-label="Next page">
+            Next <ReaderIcon name="next" />
           </button>
           {canSpeak && (
-            <button onClick={readAloud} className="btn btn-secondary">
-              {speaking ? "■ Stop" : "🔊 Read aloud"}
+            <button onClick={readAloud} className="ss-btn ss-btn--secondary ss-btn--sm">
+              <ReaderIcon name={speaking ? "stop" : "speaker"} />
+              {speaking ? "Stop" : "Read aloud"}
             </button>
           )}
-          <button onClick={fullscreen} className="btn btn-secondary">
-            ⛶ Fullscreen
+          <button onClick={fullscreen} className="ss-btn ss-btn--secondary ss-btn--sm">
+            <ReaderIcon name="expand" />
+            Fullscreen
           </button>
         </div>
       </div>

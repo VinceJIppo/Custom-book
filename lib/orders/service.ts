@@ -319,7 +319,8 @@ export async function applyPrintState(order: Order, state: PrintOrderState, sour
   if (status !== order.status || changes.length) {
     data.statusHistory = pushHistory(order.statusHistory, {
       status,
-      message: [STATUS_LABELS[status as OrderStatus] ?? status, state.providerStatus ? `(${source}: ${state.providerStatus})` : `(${source})`, state.reason].filter(Boolean).join(" "),
+      message: [STATUS_LABELS[status as OrderStatus] ?? status, state.reason].filter(Boolean).join(". "),
+      detail: state.providerStatus ? `${source}: ${state.providerStatus}` : source,
     }) as unknown as Prisma.InputJsonValue;
   }
   const updated = await db.order.update({ where: { id: order.id }, data });

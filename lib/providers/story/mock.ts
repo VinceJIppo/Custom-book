@@ -714,6 +714,9 @@ function slugify(s: string) {
   return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 50);
 }
 
+/** Genre words that read naturally before "adventure". */
+const GENRE_ADJ: Record<string, string> = { dinosaurs: "dinosaur", vehicles: "rumbling", superheroes: "superhero", ocean: "ocean", space: "space", fantasy: "fairy-tale" };
+
 export function mockDraftTheme(req: ThemeDraftRequest): ThemeConfig {
   const g = MOCK_GENRES.find((x) => x.match.test(req.description)) ?? DEFAULT_GENRE;
   const age = req.childAge ?? 5;
@@ -723,7 +726,7 @@ export function mockDraftTheme(req: ThemeDraftRequest): ThemeConfig {
     name: g.name,
     genre: g.genre,
     ageRange: [Math.max(2, age - 2), Math.min(10, age + 2)],
-    pitch: `The child sets off on a gentle ${g.genre} adventure inspired by what they love: ${loves}`,
+    pitch: `The child sets off on a gentle ${g.genre === "adventure" ? "" : `${GENRE_ADJ[g.genre] ?? g.genre} `}adventure inspired by what they love: ${loves}`,
     setting: g.setting,
     supportingCast: g.cast,
     storyBeats: ["cozy morning", "a surprise", "setting off", "a tricky moment", "a clever idea", "teamwork", "the big moment", "cozy ending"],
@@ -749,5 +752,5 @@ function titleNoun(themeName: string): string {
     "Construction Crew": "Brand-New Playground",
     "Topsy-Turvy Town": "Great Giggle-Bell Muddle",
   };
-  return map[themeName] ?? `${themeName} Adventure`;
+  return map[themeName] ?? `${themeName.replace(/^the\s+/i, "")} Adventure`;
 }

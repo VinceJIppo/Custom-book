@@ -8,14 +8,14 @@ export function SignInForm() {
   if (state?.sent) {
     return (
       <div className="space-y-3" data-testid="link-sent">
-        <p className="font-semibold">Check your email</p>
-        <p className="text-[color:var(--muted)]">
-          We sent a sign-in link to <strong>{state.email}</strong>. It works once and expires in 15 minutes. No email? Check your spam folder, or try again.
+        <p className="title">Check your email</p>
+        <p className="break-words text-ink-muted">
+          We sent a sign-in link to <strong className="text-ink">{state.email}</strong>. It works once and expires in 15 minutes. No email? Check your spam folder, or try again.
         </p>
         {state.devLink && (
-          <p className="rounded-lg bg-cream p-3 text-sm">
+          <p className="ss-note">
             Development mode (no email service set up), so here is the link:{" "}
-            <a href={state.devLink} className="font-semibold text-cobalt underline" data-testid="dev-link">
+            <a href={state.devLink} className="ss-link" data-testid="dev-link">
               open the sign-in link
             </a>
           </p>
@@ -27,17 +27,17 @@ export function SignInForm() {
     <form action={action} className="space-y-4">
       <label className="block">
         <span className="text-sm font-semibold">Your email</span>
-        <input name="email" type="email" required autoComplete="email" defaultValue={state?.email} className="mt-1 w-full rounded-lg border border-[color:var(--line)] bg-white px-3 py-2" placeholder="you@example.com" />
+        <input name="email" type="email" required autoComplete="email" defaultValue={state?.email} className="ss-input mt-1" placeholder="you@example.com" />
       </label>
       {state?.message && (
-        <p className="text-sm text-red-700" role="alert">
+        <p className="ss-note ss-note--error" role="alert">
           {state.message}
         </p>
       )}
-      <button disabled={pending} className="btn btn-primary w-full" data-testid="send-link">
+      <button disabled={pending} className="ss-btn ss-btn--primary ss-btn--block" data-testid="send-link">
         {pending ? "Sending..." : "Email me a sign-in link"}
       </button>
-      <p className="text-xs text-[color:var(--muted)]">No password needed. New here? The same link creates your account.</p>
+      <p className="text-center text-sm text-ink-muted">No password needed. New here? The same link creates your account.</p>
     </form>
   );
 }

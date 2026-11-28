@@ -7,6 +7,7 @@ import { ART_STYLES, ART_STYLE_LABELS, type ArtStyle } from "@/lib/schemas/theme
 import { READING_LEVELS, READING_LEVEL_RULES, STORY_LENGTHS, type ReadingLevel } from "@/lib/schemas/book";
 import { DEFAULT_VOICE, VOICES, VOICE_IDS, type VoiceId } from "@/lib/schemas/voices";
 import type { CostEstimate } from "@/lib/cost/estimate";
+import { Star } from "@/components/brand/Star";
 import { CastPicker, type CastOption } from "./CastPicker";
 import { ThemeSamples } from "./ThemeSamples";
 
@@ -39,7 +40,7 @@ export interface WizardProps {
   people: CastOption[];
 }
 
-const input = "mt-1 w-full rounded-xl border border-[color:var(--line)] bg-white px-3 py-2.5 outline-none focus:border-cobalt focus:ring-2 focus:ring-sky";
+const input = "ss-input mt-1";
 
 export function BookWizard({ child, themes, defaultReadingLevel, estimates, storyProvider, approvedStyles, needsCharacter, people }: WizardProps) {
   const [state, action, pending] = useActionState(createBookAction, null);
@@ -65,9 +66,9 @@ export function BookWizard({ child, themes, defaultReadingLevel, estimates, stor
       <input type="hidden" name="themeId" value={themeId ?? ""} />
 
       <section>
-        <div className="flex items-baseline justify-between gap-2">
-          <h2 className="font-display text-xl font-medium">1. Pick a theme</h2>
-          <Link href="/themes/new" className="text-sm font-semibold text-cobalt underline">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="title">1. Pick a theme</h2>
+          <Link href="/themes/new" className="ss-link text-sm">
             or create your own
           </Link>
         </div>
@@ -86,16 +87,16 @@ export function BookWizard({ child, themes, defaultReadingLevel, estimates, stor
                   setThemeId(t.id);
                   setStyle((s) => s ?? ((approvedStyles[0] as ArtStyle | undefined) ?? t.defaultStyle));
                 }}
-                className={`overflow-hidden rounded-xl bg-white text-left ring-2 transition ${selected ? "ring-cobalt" : "ring-[color:var(--line)] hover:ring-sky"}`}
+                className={`min-w-0 overflow-hidden rounded-[var(--radius-md)] border-2 bg-paper-raised text-left transition ${selected ? "border-delft" : "border-line hover:border-delft"}`}
               >
                 <ThemeSamples samples={t.samples} palette={t.palette} name={t.name} />
                 <div className="p-4">
-                  <div className="flex items-center justify-between">
-                    <span className="font-display text-lg font-medium">{t.name}</span>
-                    {selected && <span className="text-cobalt">✔</span>}
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="title">{t.name}</span>
+                    {selected && <Star className="text-persimmon" />}
                   </div>
-                  <p className="mt-1 text-sm text-[color:var(--muted)]">{t.pitch.replace(/^The child/, child.name)}</p>
-                  <p className="mt-2 text-xs text-[color:var(--muted)]">
+                  <p className="mt-1 text-sm text-ink-muted">{t.pitch.replace(/^The child/, child.name)}</p>
+                  <p className="mt-2 text-xs text-ink-muted">
                     With {t.cast.join(", ")} · ages {t.ageRange[0]} to {t.ageRange[1]}
                     {!ageOk && " · may not fit this age"}
                   </p>
@@ -107,28 +108,28 @@ export function BookWizard({ child, themes, defaultReadingLevel, estimates, stor
       </section>
 
       {theme?.starters?.length ? (
-        <fieldset key={theme.id} data-testid="starters">
-          <legend className="font-display text-xl font-medium">Pick a story</legend>
-          <p className="mt-1 text-sm text-[color:var(--muted)]">
+        <fieldset key={theme.id} data-testid="starters" className="min-w-0">
+          <legend className="title">Pick a story</legend>
+          <p className="mt-1 text-sm text-ink-muted">
             A ready-made story is written faster and has been tried and tested. Either way it&apos;s written fresh around {child.name} and everyone you add.
           </p>
           <div className="mt-3 grid gap-3 sm:grid-cols-3">
             {theme.starters.map((st, i) => (
-              <label key={st.id} className={`flex cursor-pointer items-start gap-3 bg-white p-4 ring-1 ring-[color:var(--line)] has-[:checked]:bg-tint has-[:checked]:ring-2 has-[:checked]:ring-cobalt ${["pipe-pink", "pipe-blue", "pipe-olive"][i % 3]}`}>
-                <input type="radio" name="starterId" value={st.id} defaultChecked={i === 0} className="mt-1" data-testid={`starter-${st.id}`} />
-                <span>
+              <label key={st.id} className="ss-option min-w-0">
+                <input type="radio" name="starterId" value={st.id} defaultChecked={i === 0} className="ss-check mt-0.5 shrink-0" data-testid={`starter-${st.id}`} />
+                <span className="min-w-0">
                   <span className="block font-semibold">{st.title}</span>
-                  <span className="mt-1 block text-sm text-[color:var(--muted)]">{st.idea.replace(/\bthe child\b/gi, child.name)}</span>
+                  <span className="mt-1 block text-sm text-ink-muted">{st.idea.replace(/\bthe child\b/gi, child.name)}</span>
                 </span>
               </label>
             ))}
-            <label className="flex cursor-pointer items-start gap-3 bg-white p-4 ring-1 ring-[color:var(--line)] has-[:checked]:bg-tint has-[:checked]:ring-2 has-[:checked]:ring-cobalt pipe-sun">
-              <input type="radio" name="starterId" value="" className="mt-1" data-testid="starter-new" />
-              <span>
+            <label className="ss-option min-w-0">
+              <input type="radio" name="starterId" value="" className="ss-check mt-0.5 shrink-0" data-testid="starter-new" />
+              <span className="min-w-0">
                 <span className="flex flex-wrap items-center gap-2 font-semibold">
-                  A brand-new story <span className="chip chip-sun">Experimental</span>
+                  A brand-new story <span className="ss-pill ss-pill--attention">Experimental</span>
                 </span>
-                <span className="mt-1 block text-sm text-[color:var(--muted)]">We invent a new plot just for {child.name}. Takes a little longer, and results can vary more than a ready-made story.</span>
+                <span className="mt-1 block text-sm text-ink-muted">We invent a new plot just for {child.name}. Takes a little longer, and results can vary more than a ready-made story.</span>
               </span>
             </label>
           </div>
@@ -137,11 +138,11 @@ export function BookWizard({ child, themes, defaultReadingLevel, estimates, stor
 
       <CastPicker heroId={child.id} heroName={child.name} people={people} style={style ?? theme?.defaultStyle ?? null} needsCharacter={needsCharacter} />
 
-      <fieldset disabled={!theme} className={theme ? "" : "opacity-40"}>
-        <legend className="font-display text-xl font-medium">2. Book options</legend>
-        <div className="mt-3 grid gap-5 rounded-xl bg-white p-5 ring-1 ring-[color:var(--line)] sm:grid-cols-2">
-          <div className="sm:col-span-2" role="radiogroup" aria-label="Story voice">
-            <span className="font-semibold">Story voice</span> <span className="text-sm text-[color:var(--muted)]">how the book sounds read aloud</span>
+      <fieldset disabled={!theme} className={`min-w-0 ${theme ? "" : "opacity-40"}`}>
+        <legend className="title">2. Book options</legend>
+        <div className="ss-card mt-3 grid min-w-0 gap-5 sm:grid-cols-2">
+          <div className="min-w-0 sm:col-span-2" role="radiogroup" aria-label="Story voice">
+            <span className="font-semibold">Story voice</span> <span className="text-sm text-ink-muted">how the book sounds read aloud</span>
             <div className="mt-2 grid gap-3 sm:grid-cols-2">
               {VOICE_IDS.map((id) => {
                 const v = VOICES[id];
@@ -149,15 +150,15 @@ export function BookWizard({ child, themes, defaultReadingLevel, estimates, stor
                   <label
                     key={id}
                     data-testid={`voice-${id}`}
-                    className="flex cursor-pointer gap-3 rounded-lg bg-cream p-3 ring-1 ring-[color:var(--line)] has-[:checked]:bg-tint has-[:checked]:ring-cobalt"
+                    className="ss-option min-w-0"
                   >
-                    <input type="radio" name="voice" value={id} checked={voice === id} onChange={() => setVoice(id)} className="mt-1 accent-[color:var(--color-cobalt)]" />
-                    <span>
+                    <input type="radio" name="voice" value={id} checked={voice === id} onChange={() => setVoice(id)} className="ss-check mt-0.5 shrink-0" />
+                    <span className="min-w-0">
                       <span className="block font-semibold">
                         {v.label}
-                        {id === DEFAULT_VOICE && <span className="chip chip-sun ml-2">default</span>}
+                        {id === DEFAULT_VOICE && <span className="ss-pill ml-2">default</span>}
                       </span>
-                      <span className="block text-sm text-[color:var(--muted)]">{v.description}</span>
+                      <span className="block text-sm text-ink-muted">{v.description}</span>
                       <span className="mt-1 block whitespace-pre-line text-sm italic">{v.sample}</span>
                     </span>
                   </label>
@@ -184,7 +185,7 @@ export function BookWizard({ child, themes, defaultReadingLevel, estimates, stor
                 </option>
               ))}
             </select>
-            <span className="mt-1 block text-xs text-[color:var(--muted)]" data-testid="reading-rule">
+            <span className="mt-1 block text-xs text-ink-muted" data-testid="reading-rule">
               {VOICES[voice].readingLevels?.[level] ?? READING_LEVEL_RULES[level].rule}
             </span>
           </label>
@@ -199,11 +200,11 @@ export function BookWizard({ child, themes, defaultReadingLevel, estimates, stor
                 </option>
               ))}
             </select>
-            <span className="mt-1 block text-xs text-[color:var(--muted)]">The style is locked for the whole book.</span>
+            <span className="mt-1 block text-xs text-ink-muted">The style is locked for the whole book.</span>
             {style && !approvedStyles.includes(style) && (
-              <span className={`mt-1 block text-xs ${needsCharacter ? "font-semibold text-amber-800" : "text-[color:var(--muted)]"}`}>
+              <span className={needsCharacter ? "ss-note ss-note--warn mt-2" : "mt-1 block text-xs text-ink-muted"}>
                 {needsCharacter ? "No approved character in this style yet. " : "Tip: create a character in this style so the hero looks like your child. "}
-                <Link href={`/children/${child.id}/character`} className="underline">
+                <Link href={`/children/${child.id}/character`} className="ss-link">
                   Create one
                 </Link>
               </span>
@@ -217,33 +218,33 @@ export function BookWizard({ child, themes, defaultReadingLevel, estimates, stor
             </select>
           </label>
           <div className="space-y-2 sm:col-span-2">
-            <label className={`flex items-center gap-3 ${child.petName ? "" : "opacity-50"}`}>
-              <input type="checkbox" name="includePet" defaultChecked={!!child.petName} disabled={!child.petName} className="size-5 accent-[color:var(--color-cobalt)]" />
+            <label className={`flex min-h-11 items-center gap-3 ${child.petName ? "cursor-pointer" : "opacity-50"}`}>
+              <input type="checkbox" name="includePet" defaultChecked={!!child.petName} disabled={!child.petName} className="ss-check shrink-0" />
               Include {child.petName ?? "a pet (add one to the profile first)"}
             </label>
-            <label className={`flex items-center gap-3 ${child.friend ? "" : "opacity-50"}`}>
-              <input type="checkbox" name="includeFriend" defaultChecked={!!child.friend} disabled={!child.friend} className="size-5 accent-[color:var(--color-cobalt)]" />
+            <label className={`flex min-h-11 items-center gap-3 ${child.friend ? "cursor-pointer" : "opacity-50"}`}>
+              <input type="checkbox" name="includeFriend" defaultChecked={!!child.friend} disabled={!child.friend} className="ss-check shrink-0" />
               Include best friend {child.friend ?? "(add one to the profile first)"}
             </label>
           </div>
           <label className="block">
-            <span className="font-semibold">Lesson</span> <span className="text-sm text-[color:var(--muted)]">optional</span>
+            <span className="font-semibold">Lesson</span> <span className="text-sm text-ink-muted">optional</span>
             <input name="lesson" defaultValue={child.lesson ?? ""} placeholder="bravery, sharing..." className={input} />
           </label>
           <label className="block">
-            <span className="font-semibold">Dedication</span> <span className="text-sm text-[color:var(--muted)]">optional, or we&apos;ll write one</span>
+            <span className="font-semibold">Dedication</span> <span className="text-sm text-ink-muted">optional, or we&apos;ll write one</span>
             <input name="dedication" maxLength={300} placeholder={`For ${child.name}, with love`} className={input} />
           </label>
           <label className="block sm:col-span-2">
-            <span className="font-semibold">Anything else?</span> <span className="text-sm text-[color:var(--muted)]">optional</span>
+            <span className="font-semibold">Anything else?</span> <span className="text-sm text-ink-muted">optional</span>
             <textarea name="instructions" maxLength={500} rows={2} placeholder="Grandma's garden should appear. Make it rhyme." className={input} />
           </label>
         </div>
       </fieldset>
 
-      <fieldset>
-        <legend className="font-display text-xl font-medium">When should we draw the pictures?</legend>
-        <p className="mt-1 text-sm text-[color:var(--muted)]">You&apos;ll read the story first either way. Pictures start after you approve it.</p>
+      <fieldset className="min-w-0">
+        <legend className="title">When should we draw the pictures?</legend>
+        <p className="mt-1 text-sm text-ink-muted">You&apos;ll read the story first either way. Pictures start after you approve it.</p>
         <div className="mt-3 grid gap-3 sm:grid-cols-2" role="radiogroup" aria-label="Picture speed">
           {(
             [
@@ -251,11 +252,11 @@ export function BookWizard({ child, themes, defaultReadingLevel, estimates, stor
               { id: "overnight", title: "Overnight, about half the cost", text: "Pictures are drawn in Google's slower queue, usually within a few hours and always within a day. We'll email you when your book is ready." },
             ] as const
           ).map((o) => (
-            <label key={o.id} className={`flex cursor-pointer gap-3 rounded-xl bg-white p-4 ring-1 ${speed === o.id ? "ring-2 ring-cobalt" : "ring-[color:var(--line)]"}`}>
-              <input type="radio" name="pictureSpeed" value={o.id} checked={speed === o.id} onChange={() => setSpeed(o.id)} className="mt-1" data-testid={`speed-${o.id}`} />
-              <span>
+            <label key={o.id} className="ss-option min-w-0">
+              <input type="radio" name="pictureSpeed" value={o.id} checked={speed === o.id} onChange={() => setSpeed(o.id)} className="ss-check mt-0.5 shrink-0" data-testid={`speed-${o.id}`} />
+              <span className="min-w-0">
                 <span className="block font-semibold">{o.title}</span>
-                <span className="block text-sm text-[color:var(--muted)]">{o.text}</span>
+                <span className="block text-sm text-ink-muted">{o.text}</span>
               </span>
             </label>
           ))}
@@ -263,12 +264,12 @@ export function BookWizard({ child, themes, defaultReadingLevel, estimates, stor
       </fieldset>
 
       {state && !state.ok && (
-        <div className="rounded-xl bg-amber-50 px-4 py-3 text-amber-900 ring-1 ring-amber-200" role="alert">
+        <div className="ss-note ss-note--error" role="alert">
           <p>{state.message}</p>
           {suggested.length > 0 && (
             <div className="mt-2 flex flex-wrap gap-2">
               {suggested.map((t) => (
-                <button type="button" key={t.id} onClick={() => setThemeId(t.id)} className="btn btn-secondary btn-sm">
+                <button type="button" key={t.id} onClick={() => setThemeId(t.id)} className="ss-btn ss-btn--secondary ss-btn--sm">
                   Try {t.name}
                 </button>
               ))}
@@ -286,25 +287,26 @@ export function BookWizard({ child, themes, defaultReadingLevel, estimates, stor
         </div>
       )}
 
-      <section className="flex flex-col gap-4 rounded-xl bg-white p-5 ring-1 ring-[color:var(--line)] sm:flex-row sm:items-center sm:justify-between">
-        <div className="text-sm">
+      <section className="ss-card ss-card--piped flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0 text-sm">
           <p className="font-semibold">
-            Estimated generation cost: <span data-testid="estimate">${est.totalUsd.toFixed(2)}</span>
+            Estimated cost to make: <span data-testid="estimate">${est.totalUsd.toFixed(2)}</span>
           </p>
-          <ul className="mt-1 text-[color:var(--muted)]">
+          <ul className="mt-1 text-ink-muted">
             {est.lines.map((l) => (
               <li key={l.label}>
                 {l.label}: ${l.usd.toFixed(2)}
               </li>
             ))}
           </ul>
-          <p className="mt-1 text-xs text-[color:var(--muted)]">
+          <p className="mt-1 text-xs text-ink-muted">
             High-side estimate. With a real image provider this book would be about ${est.withRealImagesUsd.toFixed(2)}.
             {storyProvider === "mock" && " Stories are written by the offline mock until an Anthropic key is added."}
           </p>
         </div>
-        <button disabled={!theme || pending} data-testid="create-book" className="btn btn-primary btn-lg">
-          {pending ? "Starting..." : "Make my book ✨"}
+        <button disabled={!theme || pending} data-testid="create-book" className="ss-btn ss-btn--primary w-full shrink-0 sm:w-auto">
+          {!pending && <Star />}
+          {pending ? "Starting..." : "Make my book"}
         </button>
       </section>
     </form>

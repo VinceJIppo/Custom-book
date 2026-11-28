@@ -20,15 +20,15 @@ export interface ChildFormValues {
   lesson: string;
 }
 
-const input = "mt-1 w-full rounded-xl border border-[color:var(--line)] bg-white px-3 py-2.5 text-base outline-none focus:border-cobalt focus:ring-2 focus:ring-sky";
+const input = "ss-input mt-1";
 
 function Field({ label, hint, error, children }: { label: string; hint?: string; error?: string; children: React.ReactNode }) {
   return (
-    <label className="block">
-      <span className="font-semibold">{label}</span>
-      {hint && <span className="ml-2 text-sm text-[color:var(--muted)]">{hint}</span>}
+    <label className="block min-w-0">
+      <span className="label">{label}</span>
+      {hint && <span className="body-s ml-2 text-ink-muted">{hint}</span>}
       {children}
-      {error && <span className="mt-1 block text-sm text-red-700">{error}</span>}
+      {error && <span className="body-s mt-1 block text-persimmon">{error}</span>}
     </label>
   );
 }
@@ -48,49 +48,51 @@ export function ChildForm({ initial }: { initial: ChildFormValues }) {
       className="space-y-6">
       {initial.id && <input type="hidden" name="id" value={initial.id} />}
       {state && !state.ok && state.message && (
-        <div className="rounded-xl bg-amber-50 px-4 py-3 text-amber-900 ring-1 ring-amber-200" role="alert">
+        <div className="ss-note ss-note--error" role="alert">
           {state.message}
         </div>
       )}
 
-      <fieldset className="grid gap-4 rounded-xl bg-white p-5 ring-1 ring-[color:var(--line)] sm:grid-cols-2">
-        <legend className="px-1 font-display text-lg font-medium">About your child</legend>
-        <Field label="First name" error={errors.firstName}>
-          <input name="firstName" required defaultValue={initial.firstName} className={input} autoComplete="off" />
-        </Field>
-        <Field label="Nickname" hint="optional, used in the story" error={errors.nickname}>
-          <input name="nickname" defaultValue={initial.nickname} className={input} autoComplete="off" />
-        </Field>
-        <Field label="Age" error={errors.age}>
-          <input name="age" type="number" min={1} max={12} required defaultValue={initial.age} className={input} />
-        </Field>
-        <div>
-          <span className="font-semibold">Male or female</span>
-          <div className="mt-2 flex gap-2" role="radiogroup" aria-label="Male or female">
-            {[
-              ["he", "Male"],
-              ["she", "Female"],
-            ].map(([v, l]) => (
-              <label key={v} className="flex cursor-pointer items-center gap-2 rounded-md bg-cream px-3 py-2 ring-1 ring-[color:var(--line)] has-[:checked]:bg-sky has-[:checked]:ring-cobalt">
-                <input type="radio" name="pronouns" value={v} defaultChecked={initial.pronouns === v} required className="accent-[color:var(--color-cobalt)]" />
-                {l}
-              </label>
-            ))}
+      <div className="ss-card ss-card--piped">
+        <fieldset className="grid gap-4 sm:grid-cols-2">
+          <legend className="title mb-4">About your child</legend>
+          <Field label="First name" error={errors.firstName}>
+            <input name="firstName" required defaultValue={initial.firstName} className={input} autoComplete="off" />
+          </Field>
+          <Field label="Nickname" hint="optional, used in the story" error={errors.nickname}>
+            <input name="nickname" defaultValue={initial.nickname} className={input} autoComplete="off" />
+          </Field>
+          <Field label="Age" error={errors.age}>
+            <input name="age" type="number" min={1} max={12} required defaultValue={initial.age} className={input} />
+          </Field>
+          <div className="min-w-0">
+            <span className="label">Male or female</span>
+            <div className="mt-2 flex flex-wrap gap-2" role="radiogroup" aria-label="Male or female">
+              {[
+                ["he", "Male"],
+                ["she", "Female"],
+              ].map(([v, l]) => (
+                <label key={v} className="ss-option min-h-11 items-center">
+                  <input type="radio" name="pronouns" value={v} defaultChecked={initial.pronouns === v} required className="ss-check" />
+                  {l}
+                </label>
+              ))}
+            </div>
+            {errors.pronouns && <span className="body-s mt-1 block text-persimmon">{errors.pronouns}</span>}
           </div>
-          {errors.pronouns && <span className="mt-1 block text-sm text-red-700">{errors.pronouns}</span>}
-        </div>
-      </fieldset>
+        </fieldset>
+      </div>
 
       <details
         open={!!initial.id || Object.keys(errors).some((k) => !["firstName", "nickname", "age", "pronouns"].includes(k))}
-        className="group space-y-4 rounded-xl bg-white p-5 ring-1 ring-[color:var(--line)]"
+        className="ss-card group space-y-4"
       >
-        <summary className="cursor-pointer font-display text-lg font-medium">
-          More about them <span className="font-sans text-sm font-normal text-[color:var(--muted)]">optional: favorite things, a pet, friends, a lesson</span>
+        <summary className="ss-summary title">
+          More about them <span className="body-s text-ink-muted">optional: favorite things, a pet, friends, a lesson</span>
         </summary>
       <fieldset className="mt-4 grid gap-4 sm:grid-cols-2">
-        <legend className="px-1 font-display text-lg font-medium">Favorite things</legend>
-        <p className="text-sm text-[color:var(--muted)] sm:col-span-2">Separate with commas. These get woven into the story.</p>
+        <legend className="title mb-2">Favorite things</legend>
+        <p className="body-s text-ink-muted sm:col-span-2">Separate with commas. These get woven into the story.</p>
         <Field label="Colors" error={errors["favorites.colors"]}>
           <input name="colors" defaultValue={initial.colors} placeholder="purple, gold" className={input} />
         </Field>
@@ -105,8 +107,8 @@ export function ChildForm({ initial }: { initial: ChildFormValues }) {
         </Field>
       </fieldset>
 
-      <fieldset className="grid gap-4 sm:grid-cols-2">
-        <legend className="px-1 font-display text-lg font-medium">Pets, friends and a lesson</legend>
+      <fieldset className="mt-8 grid gap-4 sm:grid-cols-2">
+        <legend className="title mb-4">Pets, friends and a lesson</legend>
         <Field label="Pet's name" hint="optional" error={errors.petName}>
           <input name="petName" defaultValue={initial.petName} className={input} />
         </Field>
@@ -126,12 +128,12 @@ export function ChildForm({ initial }: { initial: ChildFormValues }) {
             ))}
             <option value="__other">Something else...</option>
           </select>
-          <input name="lessonOther" defaultValue={isPresetLesson ? "" : initial.lesson} placeholder="If something else, describe it" className={`${input} mt-2`} />
+          <input name="lessonOther" defaultValue={isPresetLesson ? "" : initial.lesson} placeholder="If something else, describe it" aria-label="Another lesson" className={`${input} mt-2`} />
         </Field>
       </fieldset>
       </details>
 
-      <button disabled={pending} className="btn btn-primary btn-lg">
+      <button disabled={pending} className="ss-btn ss-btn--primary">
         {pending ? "Saving..." : initial.id ? "Save changes" : "Next: add photos"}
       </button>
     </form>

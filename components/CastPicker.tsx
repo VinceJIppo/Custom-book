@@ -42,8 +42,7 @@ function examplePart(p: CastOption, index: number, hero: string) {
     .replaceAll("{H}", hero);
 }
 
-const input =
-  "mt-1 w-full rounded-xl border border-[color:var(--line)] bg-white px-3 py-2.5 outline-none focus:border-cobalt focus:ring-2 focus:ring-sky";
+const input = "ss-input mt-1";
 
 /** Pick other real people for the book, their part, who the story centers on, and what it's about. */
 export function CastPicker({
@@ -53,6 +52,7 @@ export function CastPicker({
   style,
   needsCharacter,
   showAbout = true,
+  step,
 }: {
   heroId: string;
   heroName: string;
@@ -60,6 +60,7 @@ export function CastPicker({
   style: string | null;
   needsCharacter: boolean;
   /** The simple book form picks a ready-made story, so it leaves this out. */ showAbout?: boolean;
+  /** A step number to put before the heading, when the picker is one numbered step of a form. */ step?: number;
 }) {
   const [picked, setPicked] = useState<string[]>([]);
   const [about, setAbout] = useState("");
@@ -76,18 +77,16 @@ export function CastPicker({
   return (
     <section className="space-y-4">
       <div>
-        <h2 className="font-display text-xl font-medium">
-          Who else is in the story?
-        </h2>
-        <p className="text-sm text-[color:var(--muted)]">
-          Optional. Add a parent, grandparent or sibling.{" "}
-          <Link href="/people/new" className="text-cobalt underline">
+        <h2 className="title">{step ? `${step}. ` : ""}Who else is in the story?</h2>
+        <p className="body-s text-ink-muted">
+          {step ? `${heroName} is the star. ` : ""}Optional. Add a parent, grandparent or sibling.{" "}
+          <Link href="/people/new" className="ss-link">
             Add a grown-up
           </Link>
         </p>
       </div>
       {people.length === 0 ? (
-        <p className="rounded-xl bg-cream p-4 text-sm">
+        <p className="ss-card ss-card--sunk text-sm">
           No one else yet. Add a grown-up (like Mom or Grandpa) to make a story
           about them and {heroName} together.
         </p>
@@ -103,9 +102,9 @@ export function CastPicker({
             return (
               <div
                 key={p.id}
-                className={`rounded-xl p-3 ring-1 ${on ? "bg-tint ring-cobalt" : "bg-white ring-[color:var(--line)]"}`}
+                className="ss-option min-w-0 cursor-default flex-col items-stretch gap-2"
               >
-                <label className="flex cursor-pointer items-center gap-3">
+                <label className="flex min-h-11 cursor-pointer items-center gap-3">
                   <input
                     type="checkbox"
                     name="cast"
@@ -119,20 +118,20 @@ export function CastPicker({
                           : picked.filter((x) => x !== p.id),
                       )
                     }
-                    className="size-5"
+                    className="ss-check shrink-0"
                     data-testid={`cast-${p.name}`}
                   />
-                  <span>
+                  <span className="min-w-0">
                     <span className="font-semibold">{p.name}</span>{" "}
-                    <span className="text-sm text-[color:var(--muted)]">
+                    <span className="text-sm text-ink-muted">
                       {p.label}
                     </span>
                   </span>
                 </label>
                 {on && (
-                  <label className="mt-2 block text-sm">
+                  <label className="block text-sm">
                     Their part in this story{" "}
-                    <span className="text-[color:var(--muted)]">
+                    <span className="text-ink-muted">
                       (optional)
                     </span>
                     <textarea
@@ -145,12 +144,12 @@ export function CastPicker({
                   </label>
                 )}
                 {on && missingArt && (
-                  <p className="mt-2 text-sm text-amber-800">
+                  <p className="ss-note ss-note--warn">
                     {p.name} needs a character in this art style, or a short
                     description of how they look.{" "}
                     <Link
                       href={`/children/${p.id}/character`}
-                      className="underline"
+                      className="ss-link"
                     >
                       Create one
                     </Link>
@@ -165,13 +164,13 @@ export function CastPicker({
         <button
           type="button"
           onClick={() => setShowAll(true)}
-          className="text-sm font-semibold text-cobalt underline"
+          className="ss-link min-h-11 text-sm"
         >
           Show all {sorted.length} people
         </button>
       )}
       {chosen.length > 0 && (
-        <fieldset className="space-y-2">
+        <fieldset className="min-w-0 space-y-2">
           <legend className="font-semibold">
             Who is the story mostly about?
           </legend>
@@ -179,13 +178,14 @@ export function CastPicker({
             {[{ id: heroId, name: heroName }, ...chosen].map((p, i) => (
               <label
                 key={p.id}
-                className="flex items-center gap-2 rounded-full bg-white px-3 py-1.5 ring-1 ring-[color:var(--line)] has-[:checked]:bg-tint has-[:checked]:ring-cobalt"
+                className="ss-option min-h-11 items-center gap-2 rounded-full py-1.5 font-semibold"
               >
                 <input
                   type="radio"
                   name="spotlightId"
                   value={p.id}
                   defaultChecked={i === 0}
+                  className="ss-check"
                 />
                 {p.name}
               </label>
@@ -199,7 +199,7 @@ export function CastPicker({
             <span className="font-semibold">
               What should the story be about?
             </span>{" "}
-            <span className="text-sm text-[color:var(--muted)]">
+            <span className="text-sm text-ink-muted">
               optional; otherwise the theme decides
             </span>
             <textarea
@@ -217,7 +217,7 @@ export function CastPicker({
               <button
                 type="button"
                 key={idea}
-                className="chip text-left normal-case tracking-normal"
+                className="ss-chip h-auto min-h-11 whitespace-normal py-2 text-left"
                 onClick={() => setAbout(idea)}
               >
                 {idea}

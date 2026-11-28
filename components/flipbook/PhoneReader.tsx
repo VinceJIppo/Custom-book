@@ -7,6 +7,25 @@ import type { BookView, PageView } from "@/lib/books/viewTypes";
 
 const noopSubscribe = () => () => {};
 
+const ICON_PATHS = {
+  prev: ["M15 5l-7 7 7 7"],
+  next: ["M9 5l7 7-7 7"],
+  speaker: ["M4 9.5h3.5L12 5.5v13l-4.5-4H4z", "M15.5 9a4 4 0 0 1 0 6", "M18 6.5a7.5 7.5 0 0 1 0 11"],
+  stop: ["M7 7h10v10H7z"],
+  expand: ["M4 9V4h5", "M15 4h5v5", "M20 15v5h-5", "M9 20H4v-5"],
+} as const;
+
+/** Reader control icons: the brand's rounded line set (1.75px stroke, currentColor). Decorative; the button carries the label. */
+export function ReaderIcon({ name }: { name: keyof typeof ICON_PATHS }) {
+  return (
+    <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      {ICON_PATHS[name].map((d) => (
+        <path key={d} d={d} />
+      ))}
+    </svg>
+  );
+}
+
 /** One swipe = one slide: the cover, a single page, or a two-page picture spread kept together. */
 type Slide = { key: string; kind: "front" } | { key: string; kind: "back" } | { key: string; kind: "pages"; pages: PageView[] };
 
@@ -102,7 +121,7 @@ export function PhoneReader({ book }: { book: BookView }) {
   };
 
   return (
-    <div className="-mx-4 sm:mx-0" data-testid="phone-reader">
+    <div className="-mx-5 sm:mx-0" data-testid="phone-reader">
       <div
         ref={trackRef}
         className="flex snap-x snap-mandatory overflow-x-auto overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
@@ -110,7 +129,7 @@ export function PhoneReader({ book }: { book: BookView }) {
       >
         {slides.map((s) => (
           <div key={s.key} className="flex w-full shrink-0 snap-center items-center justify-center px-4 py-2">
-            <div className={`w-full overflow-hidden rounded-sm shadow-[0_6px_24px_rgba(30,20,60,0.18)] ring-1 ring-black/5 ${s.kind === "pages" && s.pages.length === 2 ? "flex" : ""}`}>
+            <div className={`w-full overflow-hidden rounded-[var(--radius-book)] shadow-lift ring-1 ring-line ${s.kind === "pages" && s.pages.length === 2 ? "flex" : ""}`}>
               {s.kind === "front" && <CoverFront book={book} mode="screen" />}
               {s.kind === "back" && <CoverBack book={book} mode="screen" />}
               {s.kind === "pages" &&
@@ -123,23 +142,24 @@ export function PhoneReader({ book }: { book: BookView }) {
           </div>
         ))}
       </div>
-      <div className="mt-3 flex items-center justify-center gap-2 px-4 text-sm">
-        <button onClick={() => go(current - 1)} disabled={current === 0} className="btn btn-secondary btn-sm" aria-label="Previous page">
-          ◀
+      <div className="mt-4 flex flex-wrap items-center justify-center gap-2 px-5 text-sm">
+        <button onClick={() => go(current - 1)} disabled={current === 0} className="ss-btn ss-btn--secondary ss-btn--sm w-11 px-0" aria-label="Previous page">
+          <ReaderIcon name="prev" />
         </button>
-        <span className="min-w-20 text-center tabular-nums text-[color:var(--muted)]" data-testid="page-indicator">
+        <span className="min-w-20 text-center font-semibold tabular-nums text-ink-muted" data-testid="page-indicator">
           {current + 1} / {slides.length}
         </span>
-        <button onClick={() => go(current + 1)} disabled={current >= slides.length - 1} className="btn btn-secondary btn-sm" aria-label="Next page">
-          ▶
+        <button onClick={() => go(current + 1)} disabled={current >= slides.length - 1} className="ss-btn ss-btn--secondary ss-btn--sm w-11 px-0" aria-label="Next page">
+          <ReaderIcon name="next" />
         </button>
         {canSpeak && (
-          <button onClick={readAloud} className="btn btn-secondary btn-sm">
-            {speaking ? "■ Stop" : "🔊 Read"}
+          <button onClick={readAloud} className="ss-btn ss-btn--secondary ss-btn--sm">
+            <ReaderIcon name={speaking ? "stop" : "speaker"} />
+            {speaking ? "Stop" : "Read"}
           </button>
         )}
       </div>
-      <p className="mt-2 text-center text-xs text-[color:var(--muted)]">Swipe to turn the page.</p>
+      <p className="mt-2 text-center text-xs text-ink-muted">Swipe to turn the page.</p>
     </div>
   );
 }

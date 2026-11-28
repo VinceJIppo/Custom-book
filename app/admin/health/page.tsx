@@ -77,38 +77,46 @@ export default async function AdminHealth({ searchParams }: { searchParams: Prom
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-display text-3xl font-medium">System check</h1>
-        <p className="text-[color:var(--muted)]">Secrets are never shown, only whether they look right. Reload the page to run it again.</p>
+        <h1 className="heading">System check</h1>
+        <p className="mt-1 text-ink-muted">Secrets are never shown, only whether they look right. Reload the page to run it again.</p>
       </div>
       {sp.moved !== undefined && (
-        <p className="rounded-xl bg-emerald-50 px-4 py-3 text-emerald-900 ring-1 ring-emerald-200">
+        <p className="ss-note ss-note--success" role="status">
           Moved {sp.moved} file(s) back into place{Number(sp.skipped) > 0 && ` (${sp.skipped} already had a newer copy, so the old one was removed)`}. Pictures made before the endpoint fix should show again.
         </p>
       )}
-      {sp.error && <p className="rounded-xl bg-amber-50 px-4 py-3 text-amber-900 ring-1 ring-amber-200">Moving files didn&apos;t finish: {sp.error}. You can press the button again; it carries on where it stopped.</p>}
+      {sp.error && (
+        <p className="ss-note ss-note--warn break-words" role="alert">
+          Moving files didn&apos;t finish: {sp.error}. You can press the button again; it carries on where it stopped.
+        </p>
+      )}
       {misplaced && misplaced.count > 0 && (
-        <section className="rounded-xl bg-amber-50 p-5 ring-1 ring-amber-200">
-          <h2 className="font-display text-xl font-medium text-amber-950">Files saved in the wrong folder</h2>
-          <p className="mt-1 text-sm text-amber-900">
+        <section className="ss-card ss-card--piped">
+          <h2 className="title">Files saved in the wrong folder</h2>
+          <p className="mt-1 text-sm">
             {misplaced.count}
             {misplaced.more && "+"} file(s) were saved while S3_ENDPOINT ended in the bucket name, so the app can&apos;t find them (they show as broken pictures). Moving them puts them back where the app looks. Nothing is redrawn and it costs nothing.
           </p>
-          <form action={moveMisplacedAction} className="mt-3">
-            <button className="btn btn-primary">Move {misplaced.count}{misplaced.more && "+"} file(s) into place</button>
+          <form action={moveMisplacedAction} className="mt-4">
+            <button className="ss-btn ss-btn--primary">Move {misplaced.count}{misplaced.more && "+"} file(s) into place</button>
           </form>
         </section>
       )}
-      {misplaced && misplaced.count === 0 && <p className="text-sm text-[color:var(--muted)]">No files are in the wrong folder.</p>}
-      {misplacedError && <p className="text-sm text-amber-900">Couldn&apos;t look for misplaced files: {misplacedError}</p>}
-      <ul className="divide-y divide-[color:var(--line)] rounded-xl bg-white ring-1 ring-[color:var(--line)]">
+      {misplaced && misplaced.count === 0 && <p className="text-sm text-ink-muted">No files are in the wrong folder.</p>}
+      {misplacedError && <p className="ss-note ss-note--warn break-words">Couldn&apos;t look for misplaced files: {misplacedError}</p>}
+      <ul className="divide-y divide-line overflow-hidden rounded-[var(--radius-md)] border border-line bg-paper-raised">
         {checks.map((ch) => (
           <li key={ch.name} className="flex gap-3 px-4 py-3">
-            <span className={ch.ok ? "text-emerald-700" : "text-red-700"} aria-label={ch.ok ? "ok" : "problem"}>
+            <span
+              role="img"
+              className={`mt-0.5 inline-flex size-6 shrink-0 items-center justify-center rounded-full text-sm font-bold ${ch.ok ? "bg-sage text-on-accent" : "bg-persimmon text-on-persimmon"}`}
+              aria-label={ch.ok ? "ok" : "problem"}
+            >
               {ch.ok ? "✓" : "✗"}
             </span>
-            <span>
-              <span className="font-semibold">{ch.name}</span>
-              <span className="block break-words text-sm text-[color:var(--muted)]">{ch.detail}</span>
+            <span className="min-w-0">
+              <span className="block break-words font-semibold">{ch.name}</span>
+              <span className="block break-words text-sm text-ink-muted">{ch.detail}</span>
             </span>
           </li>
         ))}
