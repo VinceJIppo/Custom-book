@@ -26,7 +26,7 @@ export function SiteFooter({ signedIn }: { signedIn: boolean }) {
     ...(signedIn ? [{ href: "/orders", label: "Your orders" }, { href: "/account", label: "Your account" }] : []),
   ];
   const help: FooterItem[] = [{ href: "/#how", label: "How it works" }, { href: "/examples", label: "Peek inside" }, { placeholder: "Shipping" }, { placeholder: "Contact us" }];
-  const about: FooterItem[] = [{ placeholder: "Our story" }, { href: "/photo-privacy", label: "Photo privacy" }, { placeholder: "Terms" }];
+  const about: FooterItem[] = [{ href: "/our-story", label: "Our story" }, { href: "/photo-privacy", label: "Photo privacy" }, { placeholder: "Terms" }];
   return (
     <footer className="ss-footer ss-scallop-top">
       <div className="ss-container ss-footer__inner">
