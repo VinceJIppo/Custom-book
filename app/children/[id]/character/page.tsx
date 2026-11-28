@@ -56,12 +56,16 @@ export default async function CharacterPage({ params, searchParams }: { params: 
   // Every new book uses the house style; characters in other styles only serve books made earlier.
   const approved = sheets.filter((s) => s.status === "approved" && s.style === HOUSE_STYLE);
   const older = sheets.filter((s) => s.status === "approved" && s.style !== HOUSE_STYLE);
-  const drafts = sheets.filter((s) => s.status === "draft" || s.status === "generating" || s.status === "failed").slice(0, 3);
+  // Every try still waiting for a decision, plus the newest failed try if it came after them.
+  const live = sheets.filter((s) => s.status === "draft" || s.status === "generating");
+  const lastFailed = sheets.find((s) => s.status === "failed");
+  const drafts = lastFailed && (!live[0] || lastFailed.createdAt > live[0].createdAt) ? [lastFailed, ...live] : live;
   const busy = sheets.some((s) => s.status === "generating" || (s.status === "approved" && s.bibleStatus === "pending"));
   const rounds: Record<string, number> = {};
   // Deleted characters still count (deleting isn't a way to get more tries).
   // (Sets made before an admin reset the account's character count don't count either.)
   for (const s of child.characterSheets) if (s.status !== "failed" && (!user.characterResetAt || s.createdAt >= user.characterResetAt)) rounds[s.style] = (rounds[s.style] ?? 0) + 1;
+  const canDrawAgain = photos.length > 0 && (rounds[HOUSE_STYLE] ?? 0) < cfg.CHARACTER_SHEET_MAX_ROUNDS;
 
   return (
     <div className="space-y-8">
@@ -74,7 +78,7 @@ export default async function CharacterPage({ params, searchParams }: { params: 
         <h1 className="heading mt-1 break-words">{sp.new ? `Photos of ${name}` : `${name}'s character`}</h1>
         <p className="mt-2 text-ink-muted">
           {sp.new
-            ? `Add 1 to 3 photos. We start drawing ${name} as soon as they're added, and you choose whether to use it or draw again. You only do this once: ${name} looks the same in every book.`
+            ? `Add 1 to 3 photos. We start drawing ${name} as soon as they're added. Then use the drawing or draw again. You only do this once: ${name} looks the same in every book.`
             : grownUp
             ? `We turn a few photos of ${name} into an illustrated character, then draw that same character whenever ${name} appears in a child\u2019s book.`
             : "We turn a few photos into an illustrated character, then draw that same character on every page."}
@@ -177,7 +181,7 @@ export default async function CharacterPage({ params, searchParams }: { params: 
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <p className="font-semibold">
                   {ART_STYLE_LABELS[s.style as ArtStyle]} · try {s.round}
-                  {s.status === "draft" && <span className="font-normal text-ink-muted"> · {s.urls.length > 1 ? "pick your favorite" : "use it, or draw again"}</span>}
+                  {s.status === "draft" && <span className="font-normal text-ink-muted"> · {s.urls.length > 1 ? "pick your favorite" : canDrawAgain ? "use it or draw again" : "use it"}</span>}
                 </p>
                 {s.status === "draft" && (
                   <DeleteCharacterButton
@@ -193,7 +197,7 @@ export default async function CharacterPage({ params, searchParams }: { params: 
                   {cfg.CHARACTER_SHEET_OPTIONS > 1 ? `Drawing ${cfg.CHARACTER_SHEET_OPTIONS} options.` : `Drawing ${name}.`} This takes about a minute...
                 </p>
               )}
-              {s.status === "failed" && <p className="ss-note ss-note--error mt-2">This set didn&apos;t work: {s.error ?? "unknown error"}. It doesn&apos;t count toward the limit; try again.</p>}
+              {s.status === "failed" && <p className="ss-note ss-note--error mt-2">This try didn&apos;t work: {s.error ?? "unknown error"}. It doesn&apos;t count as one of your tries, so draw again.</p>}
               {s.status === "draft" && (
                 <div className={`mt-3 grid gap-4 ${s.urls.length > 1 ? "sm:grid-cols-3" : "max-w-xl"}`}>
                   {s.urls.map((u, i) => (

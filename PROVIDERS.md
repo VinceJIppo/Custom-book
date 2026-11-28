@@ -190,7 +190,7 @@ and couldn't be read from this environment, so it wasn't built.
 
 These assume every page at 4K, a likeness check per page, and a redraw on a quarter of
 pages. Typical real cost is lower: roughly $2 for a 16-page Gemini book.
-A character sheet set (3 options) costs about $0.16 with Gemini.
+One character drawing costs about $0.05 to $0.06 with Gemini (CHARACTER_SHEET_OPTIONS=1; each extra option adds the same).
 
 ## Comparison script
 

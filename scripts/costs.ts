@@ -149,7 +149,7 @@ async function main() {
       n +
       Math.max(
         Number((j.usage as { imageCalls?: number } | null)?.imageCalls ?? 0),
-        j.status === "succeeded" ? 3 : 0,
+        j.status === "succeeded" ? Number((j.result as { options?: number } | null)?.options ?? 1) : 0,
       ),
     0,
   );

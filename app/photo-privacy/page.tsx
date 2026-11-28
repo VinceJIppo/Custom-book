@@ -82,8 +82,8 @@ export default function PhotoPrivacyPage() {
 
       <Section id="drawing" title="Drawing the character with Google">
         <p>
-          Once a photo is accepted, we send your stored photos to Google&apos;s Gemini API to draw three character options for you to choose from. This is the only time the photos themselves are sent to Google, and the only time
-          they are used for drawing. Every page and the cover are drawn from the character you approved, never from the photos.
+          Once a photo is accepted, we send your stored photos to Google&apos;s Gemini API to draw the character for you to approve, and again each time you choose Draw again. These are the only times the photos
+          themselves are sent to Google, and the only times they are used for drawing. Every page and the cover are drawn from the character you approved, never from the photos.
         </p>
         <p>
           We use the paid Gemini API. Google&apos;s{" "}

@@ -158,7 +158,7 @@ export async function startCharacterSheet(userId: string, childId: string, input
   }
   if (overLimit) return { ok: false, message: overLimit };
   if (await db.characterSheet.count({ where: { childId, status: "generating" } })) {
-    return { ok: false, message: "Characters are already being drawn. Give it a minute." };
+    return { ok: false, message: "This character is already being drawn. Give it a minute." };
   }
   const today = await dailyUsage(userId);
   if (today.costUsd + sheetOptionCost() > cfg.DAILY_COST_CAP_USD) {
@@ -184,18 +184,22 @@ export async function startCharacterSheet(userId: string, childId: string, input
  */
 export async function approveSheetOption(userId: string, sheetId: string, index: number) {
   const sheet = await db.characterSheet.findFirst({ where: { id: sheetId, child: { userId } }, include: { child: true } });
-  if (!sheet || sheet.status !== "draft") return { ok: false as const, message: "That set of characters can't be approved." };
+  if (!sheet || sheet.status !== "draft") return { ok: false as const, message: "That drawing can't be used any more." };
   const imageKeys = sheet.imageKeys as string[];
   if (!Number.isInteger(index) || index < 0 || index >= imageKeys.length) return { ok: false as const, message: "Pick one of the options." };
 
+  // Each try is its own sheet, so the drawings from earlier tries are retired along with any old character.
+  const passedOver = await db.characterSheet.findMany({ where: { childId: sheet.childId, style: sheet.style, status: "draft", id: { not: sheet.id } } });
   await db.$transaction(async (tx) => {
     await tx.characterSheet.updateMany({ where: { childId: sheet.childId, style: sheet.style, status: "approved" }, data: { status: "rejected" } });
+    await tx.characterSheet.updateMany({ where: { id: { in: passedOver.map((s) => s.id) }, status: "draft" }, data: { status: "rejected" } });
     await tx.characterSheet.update({ where: { id: sheet.id }, data: { status: "approved", selectedIndex: index, approvedAt: new Date(), bibleStatus: "pending" } });
     await tx.childProfile.update({ where: { id: sheet.childId }, data: { activeCharacterSheetId: sheet.id } });
     await enqueue("character.bible", { sheetId: sheet.id }, { userId, childId: sheet.childId }, tx);
   });
-  // Unchosen options are no longer needed.
+  // Unchosen options and the earlier tries' drawings are no longer needed (they still count as tries).
   for (const [i, key] of imageKeys.entries()) if (i !== index) await getStorage().delete(key);
+  for (const s of passedOver) for (const key of s.imageKeys as string[]) await getStorage().delete(key).catch(() => undefined);
   let deletedPhotos = 0;
   if (sheet.child.deleteOriginalsAfterApproval) deletedPhotos = await deleteAllPhotos(sheet.childId);
   return { ok: true as const, deletedPhotos };

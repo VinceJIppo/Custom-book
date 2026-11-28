@@ -229,6 +229,28 @@ describe("character likeness pipeline", () => {
     expect(variants).toEqual([0, 1]);
   });
 
+  it("approving one try retires the earlier tries and erases their drawings (they still count)", async () => {
+    const img = fakeImage();
+    resetProviders({ image: img.p, vision: fakeVision(() => 1).v, upscaler: new MockUpscaler(), story: new MockStoryProvider(), moderation: new MockModerationProvider() });
+    const child = await createChild(userId, childInput);
+    if (!child.ok) throw new Error("child");
+    expect((await addPhoto(userId, child.id, await photo(), true)).ok).toBe(true);
+    const first = await startCharacterSheet(userId, child.id, { style: "crayon" });
+    if (!first.ok) throw new Error(first.message);
+    await drainQueue();
+    const second = await startCharacterSheet(userId, child.id, { style: "crayon" });
+    if (!second.ok) throw new Error(second.message);
+    await drainQueue();
+    const firstKeys = (await db.characterSheet.findUniqueOrThrow({ where: { id: first.sheetId } })).imageKeys as string[];
+    expect(await getStorage().exists(firstKeys[0])).toBe(true);
+    expect((await approveSheetOption(userId, second.sheetId, 0)).ok).toBe(true);
+    expect((await db.characterSheet.findUniqueOrThrow({ where: { id: first.sheetId } })).status).toBe("rejected");
+    expect(await getStorage().exists(firstKeys[0])).toBe(false);
+    expect((await db.characterSheet.findUniqueOrThrow({ where: { id: second.sheetId } })).status).toBe("approved");
+    // An earlier try can't be approved once it's retired.
+    expect((await approveSheetOption(userId, first.sheetId, 0)).ok).toBe(false);
+  });
+
   it("photos -> 3 options -> approve -> bible; originals deleted, unchosen options removed", async () => {
     process.env.CHARACTER_SHEET_OPTIONS = "3";
     resetConfigCache();

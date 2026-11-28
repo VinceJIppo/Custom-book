@@ -44,7 +44,7 @@ made earlier keep their theme and style.
    optional (folded under "More about them").
 2. **Photos:** the next screen. Upload 1 to 3 photos (JPG, PNG or HEIC; crop around the face if
    there are other people). Location data is stripped and each photo is checked for one clear
-   face. **Drawing starts by itself** as soon as a photo is added; pick your favorite of 3. The
+   face. **Drawing starts by itself** as soon as a photo is added; use the drawing or draw again (up to 3 tries). The
    character details can be fixed under "Fix a detail". Grown-ups work the same way.
 3. **New book, two questions:** pick one of **six ready-made stories** (each has its own voice),
    then who else is in it. An optional "personal touch" holds a dedication and anything to
@@ -77,7 +77,7 @@ See **DEPLOY.md**: Cloudflare (domain and R2 storage), Render (web app, worker, 
 - **Email:** Resend (`RESEND_API_KEY`, `EMAIL_FROM` on a domain you verified in Resend).
 - **Rewards:** making books costs real money, so allowances grow with printed orders:
 
-  | Tier | How | New books | Character sets | Picture redraws | AI rewrites | Custom themes |
+  | Tier | How | New books | Character tries | Picture redraws | AI rewrites | Custom themes |
   |---|---|---|---|---|---|---|
   | Starter | first visit | 1 | 4 | 8 | 15 | 1 (to try, for life) |
   | Member | 1+ printed orders | 3 | 8 | 40 | 60 | 5 (every 30 days) |

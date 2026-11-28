@@ -45,7 +45,7 @@ export default async function AdminUsers({ searchParams }: { searchParams: Promi
       {sp.error && <p className="ss-note ss-note--warn" role="alert">{sp.error === "amount" ? "Enter an amount from $0.01 to $500." : "That customer wasn't found."}</p>}
       {sp.reset && (
         <p className="ss-note ss-note--success" role="status">
-          Character count reset for {sp.reset}. Their earlier character sets no longer count toward their limits.
+          Character count reset for {sp.reset}. Their earlier character tries no longer count toward their limits.
         </p>
       )}
       {sp.saved && (
@@ -80,7 +80,7 @@ export default async function AdminUsers({ searchParams }: { searchParams: Promi
                   {a.used.book}/{a.limits.book} · {a.used.character}/{a.limits.character} · {a.used.redraw}/{a.limits.redraw}
                   <form action={resetCharactersAction} className="mt-2">
                     <input type="hidden" name="userId" value={u.id} />
-                    <button className="ss-btn ss-btn--secondary ss-btn--sm" data-testid={`reset-characters-${u.email}`} title="Character sets made before now stop counting toward this account's limits">
+                    <button className="ss-btn ss-btn--secondary ss-btn--sm" data-testid={`reset-characters-${u.email}`} title="Character tries made before now stop counting toward this account's limits">
                       Reset characters
                     </button>
                   </form>

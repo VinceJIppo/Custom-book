@@ -132,7 +132,7 @@ const EnvSchema = z.object({
   ORDER_POLL_MINUTES: z.coerce.number().int().min(1).default(30),
 
   CHARACTER_SHEET_OPTIONS: z.coerce.number().int().min(1).max(4).default(1),
-  /** How many times a parent may generate a new set of character options. */
+  /** How many tries (drawings, or sets when options are raised) a parent gets per art style. */
   CHARACTER_SHEET_MAX_ROUNDS: z.coerce.number().int().min(1).max(10).default(3),
 
   /** Rewards: limit books, characters and edits by tier (first-time vs repeat customers). Admins are unlimited. */

@@ -19,7 +19,7 @@ const NOTE: Record<string, string> = {
   "page.illustrate": "Painting a picture",
   "page.edit": "Changing a picture",
   "book.cover": "Painting a cover",
-  "character.sheet": "Drawing character options",
+  "character.sheet": "Drawing a character",
   "character.bible": "Describing a character",
   "page.revise": "Rewriting words",
   "theme.draft": "Designing a theme",
@@ -126,7 +126,7 @@ export default async function CreditsPage({ searchParams }: { searchParams: Prom
                 </h3>
                 <p className="body-s text-ink-muted">{t.minPaidOrders === 0 ? "Everyone starts here" : `After ${t.minPaidOrders} printed book${t.minPaidOrders === 1 ? "" : "s"}`}</p>
                 <p className="body-s mt-1">
-                  {t.limits.character} character sets and {t.limits.theme} custom theme{t.limits.theme === 1 ? "" : "s"} {t.window === "30d" ? "a month" : "to start"}.
+                  {t.limits.character} character tries and {t.limits.theme} custom theme{t.limits.theme === 1 ? "" : "s"} {t.window === "30d" ? "a month" : "to start"}.
                 </p>
               </li>
             );

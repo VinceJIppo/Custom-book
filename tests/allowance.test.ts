@@ -103,7 +103,7 @@ describe("allowances in the app", () => {
     expect(rewrite.ok).toBe(false);
   });
 
-  it("first-timers can try a few character sets (more than one child is fine)", async () => {
+  it("first-timers can try a few character drawings (more than one child is fine)", async () => {
     const photo = await sharp({ create: { width: 800, height: 1000, channels: 3, background: "#d0b090" } }).jpeg().toBuffer();
     await addPhoto(userId, childId, photo, true);
     for (let i = 0; i < TIERS.starter.limits.character; i++) {
@@ -114,7 +114,7 @@ describe("allowances in the app", () => {
     }
     const over = await startCharacterSheet(userId, childId, { style: "watercolor-storybook" });
     expect(over.ok).toBe(false);
-    if (!over.ok) expect(over.message).toMatch(/character sets/);
+    if (!over.ok) expect(over.message).toMatch(/character tries/);
   });
 
   it("an admin reset starts the character count again, for the account and for each person", async () => {

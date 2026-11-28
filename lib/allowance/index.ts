@@ -46,7 +46,7 @@ export const TIERS: Record<TierId, Tier> = {
     minPaidOrders: 1,
     window: "30d",
     limits: { book: 3, character: 8, redraw: 40, rewrite: 60, theme: 5 },
-    pitch: "3 new books, 8 character sets and 40 picture redraws every month.",
+    pitch: "3 new books, 8 character tries and 40 picture redraws every month.",
   },
   star: {
     id: "star",
@@ -54,13 +54,13 @@ export const TIERS: Record<TierId, Tier> = {
     minPaidOrders: 3,
     window: "30d",
     limits: { book: 8, character: 20, redraw: 120, rewrite: 200, theme: 15 },
-    pitch: "8 new books, 20 character sets and 120 picture redraws every month.",
+    pitch: "8 new books, 20 character tries and 120 picture redraws every month.",
   },
 };
 
 export const ACTION_LABELS: Record<AllowanceAction, { one: string; many: string }> = {
   book: { one: "new book", many: "new books" },
-  character: { one: "character set", many: "character sets" },
+  character: { one: "character try", many: "character tries" },
   redraw: { one: "picture redraw", many: "picture redraws" },
   rewrite: { one: "AI text rewrite", many: "AI text rewrites" },
   theme: { one: "custom theme", many: "custom themes" },
@@ -168,7 +168,7 @@ export function unlockMessage(a: Allowance, action: AllowanceAction): string {
 export async function checkAllowance(userId: string, action: AllowanceAction, count = 1): Promise<string | null> {
   if (!allowancesEnabled()) return null;
   // With usage credits on, books, redraws and rewrites are limited by the credit balance instead;
-  // tiers still unlock more character sets and custom themes.
+  // tiers still unlock more character tries and custom themes.
   if (getConfig().CREDITS_ENABLED && (action === "book" || action === "redraw" || action === "rewrite")) return null;
   const a = await getAllowance(userId);
   if (a.unlimited || a.remaining[action] >= count) return null;
