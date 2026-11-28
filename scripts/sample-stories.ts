@@ -5,7 +5,7 @@
  * Pictures are not drawn. Produces one Markdown file to review, with timings,
  * costs, the plan, the editor's notes, the finished words and a feedback checklist.
  *
- *   npm run sample-stories                       the two default samples (below)
+ *   npm run sample-stories                       all six Wishing Garden stories (the house theme)
  *   npm run sample-stories -- --compare          also writes each as a brand-new story, for comparison
  *   npm run sample-stories -- --stories topsy-turvy-town:sideways-rain,wishing-garden:lumas-glow
  *   npm run sample-stories -- --hero Theo --age 5 --siblings "Oliver:3:he,Charlie:1:she" --grownup "Mom:Mama:she"
@@ -27,7 +27,8 @@ const VOICE_FOR: Record<string, string> = { "topsy-turvy-town": "rhyming-mischie
 async function main() {
   const { values } = parseArgs({
     options: {
-      stories: { type: "string", default: "topsy-turvy-town:giggle-bell,quiet-meadow:where-stream-goes" },
+      // Every ready-made story of the house theme, in its own voice, unless --stories picks some.
+      stories: { type: "string", default: "" },
       hero: { type: "string", default: "Theo" },
       age: { type: "string", default: "5" },
       pronouns: { type: "string", default: "he" },
@@ -66,7 +67,9 @@ async function main() {
   ];
 
   const runs: Array<{ themeId: string; starterId?: string }> = [];
-  for (const pair of values.stories!.split(",")) {
+  const { HOUSE_THEME_ID } = await import("../lib/schemas/theme");
+  const picked = values.stories || (themes.find((t) => t.id === HOUSE_THEME_ID)?.starters ?? []).map((s) => `${HOUSE_THEME_ID}:${s.id}`).join(",");
+  for (const pair of picked.split(",")) {
     const [themeId, starterId] = pair.trim().split(":");
     runs.push({ themeId, starterId });
     if (values.compare) runs.push({ themeId });
@@ -86,7 +89,8 @@ async function main() {
       trimSize: "square-8.5",
       includePet: false,
       includeFriend: false,
-      voice: VOICE_FOR[theme.id] ?? "classic",
+      // The same voice the app uses: the ready-made story's own, else the theme's.
+      voice: starter?.voice ?? VOICE_FOR[theme.id] ?? "classic",
       cast: cast.map((c) => ({ profileId: c.id, part: c.part })),
       starterId: starter?.id,
     });
