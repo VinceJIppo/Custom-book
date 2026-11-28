@@ -65,6 +65,8 @@ export interface CharacterSheetRequest {
   /** A grown-up woman's chosen hair length (key of HAIR_LENGTHS). */
   hairLength?: string;
   count: number;
+  /** Which prompt variant the first drawing uses, so each new try is a different take (default 0). */
+  firstVariant?: number;
 }
 
 export interface EditRequest {

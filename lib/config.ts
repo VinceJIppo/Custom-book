@@ -131,7 +131,7 @@ const EnvSchema = z.object({
   /** How often the worker checks open orders with the printer (webhooks are faster). */
   ORDER_POLL_MINUTES: z.coerce.number().int().min(1).default(30),
 
-  CHARACTER_SHEET_OPTIONS: z.coerce.number().int().min(1).max(4).default(3),
+  CHARACTER_SHEET_OPTIONS: z.coerce.number().int().min(1).max(4).default(1),
   /** How many times a parent may generate a new set of character options. */
   CHARACTER_SHEET_MAX_ROUNDS: z.coerce.number().int().min(1).max(10).default(3),
 

@@ -41,6 +41,8 @@ export async function sheetHandler(job: GenerationJob): Promise<JobOutcome> {
     outfit: sheet.outfit ?? undefined,
     hairLength: sheet.child.kind === "grownup" ? (sheet.child.hairLength ?? undefined) : undefined,
     count: getConfig().CHARACTER_SHEET_OPTIONS,
+    // Each new try starts from the next prompt variant (a different expression, pose or outfit color).
+    firstVariant: Math.max(0, sheet.round - 1),
   });
   const imageKeys: string[] = [];
   for (const [i, img] of value.entries()) {

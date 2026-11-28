@@ -197,8 +197,9 @@ describe("character likeness pipeline", () => {
       where: { id: start.sheetId },
     });
     expect(sheet.status).toBe("draft");
-    expect((sheet.imageKeys as string[]).length).toBe(3);
-    const ok = await approveSheetOption(userId, sheet.id, 1);
+    // One drawing per try (CHARACTER_SHEET_OPTIONS defaults to 1).
+    expect((sheet.imageKeys as string[]).length).toBe(1);
+    const ok = await approveSheetOption(userId, sheet.id, 0);
     expect(ok).toMatchObject({ ok: true, deletedPhotos: 1 });
     await drainQueue();
     return { childId: child.id, sheetId: sheet.id };

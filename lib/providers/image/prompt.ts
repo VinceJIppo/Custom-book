@@ -109,7 +109,7 @@ export function buildIllustrationPrompt(req: IllustrationRequest): string {
 
 export function buildCharacterSheetPrompt(opts: { style: ArtStyle; outfit?: string; variant: number; subject?: "child" | "grownup"; hairLength?: string }): string {
   if (opts.subject === "grownup") {
-    const variety = ["", "Offer a slightly different interpretation (different expression and pose), keeping the likeness.", "Offer a third interpretation with a different, still neutral outfit color, keeping the likeness."][opts.variant % 3];
+    const variety = ["", "Offer a slightly different interpretation (different expression and pose), keeping the likeness.", "Offer a fresh interpretation with a different, still neutral outfit color, keeping the likeness."][opts.variant % 3];
     return [
       `Create a character turnaround sheet for a children's picture book, in this art style: ${STYLE_DESCRIPTIONS[opts.style]}.`,
       "The attached photos show a real grown-up (a parent or family member). Turn them into a warm, friendly illustrated character who is clearly recognizable as this person: same hair color and style, eye color, skin tone, face shape, glasses, beard or freckles if present, and the same approximate age.",
@@ -128,7 +128,7 @@ export function buildCharacterSheetPrompt(opts: { style: ArtStyle; outfit?: stri
   const variety = [
     "",
     "Offer a slightly different interpretation from a typical first take (different expression and pose), keeping the likeness.",
-    "Offer a third interpretation with a different, still neutral outfit color, keeping the likeness.",
+    "Offer a fresh interpretation with a different, still neutral outfit color, keeping the likeness.",
   ][opts.variant % 3];
   return [
     `Create a character turnaround sheet for a children's picture book, in this art style: ${STYLE_DESCRIPTIONS[opts.style]}.`,

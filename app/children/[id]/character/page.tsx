@@ -74,7 +74,7 @@ export default async function CharacterPage({ params, searchParams }: { params: 
         <h1 className="heading mt-1 break-words">{sp.new ? `Photos of ${name}` : `${name}'s character`}</h1>
         <p className="mt-2 text-ink-muted">
           {sp.new
-            ? `Add 1 to 3 photos. We start drawing ${name} as soon as they're added, and you pick your favorite. You only do this once: ${name} looks the same in every book.`
+            ? `Add 1 to 3 photos. We start drawing ${name} as soon as they're added, and you choose whether to use it or draw again. You only do this once: ${name} looks the same in every book.`
             : grownUp
             ? `We turn a few photos of ${name} into an illustrated character, then draw that same character whenever ${name} appears in a child\u2019s book.`
             : "We turn a few photos into an illustrated character, then draw that same character on every page."}
@@ -165,6 +165,7 @@ export default async function CharacterPage({ params, searchParams }: { params: 
             style={HOUSE_STYLE}
             used={rounds[HOUSE_STYLE] ?? 0}
             maxRounds={cfg.CHARACTER_SHEET_MAX_ROUNDS}
+            options={cfg.CHARACTER_SHEET_OPTIONS}
             disabled={photos.length === 0}
             again={drafts.length > 0 || approved.length > 0}
           />
@@ -175,25 +176,34 @@ export default async function CharacterPage({ params, searchParams }: { params: 
             <div key={s.id} data-testid={`sheet-${s.status}`}>
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <p className="font-semibold">
-                  {ART_STYLE_LABELS[s.style as ArtStyle]} · set {s.round}
-                  {s.status === "draft" && <span className="font-normal text-ink-muted"> · pick your favorite</span>}
+                  {ART_STYLE_LABELS[s.style as ArtStyle]} · try {s.round}
+                  {s.status === "draft" && <span className="font-normal text-ink-muted"> · {s.urls.length > 1 ? "pick your favorite" : "use it, or draw again"}</span>}
                 </p>
                 {s.status === "draft" && (
-                  <DeleteCharacterButton childId={child.id} sheetId={s.id} label="Discard these options" confirmText="Discard all three options? Their pictures will be erased. This still counts as one of your tries." />
+                  <DeleteCharacterButton
+                    childId={child.id}
+                    sheetId={s.id}
+                    label={s.urls.length > 1 ? "Discard these options" : "Discard this drawing"}
+                    confirmText={`Discard ${s.urls.length > 1 ? "these options? Their pictures" : "this drawing? Its picture"} will be erased. This still counts as one of your tries.`}
+                  />
                 )}
               </div>
-              {s.status === "generating" && <p className="mt-2 animate-pulse text-ink-muted">Drawing 3 options. This takes about a minute...</p>}
+              {s.status === "generating" && (
+                <p className="mt-2 animate-pulse text-ink-muted">
+                  {cfg.CHARACTER_SHEET_OPTIONS > 1 ? `Drawing ${cfg.CHARACTER_SHEET_OPTIONS} options.` : `Drawing ${name}.`} This takes about a minute...
+                </p>
+              )}
               {s.status === "failed" && <p className="ss-note ss-note--error mt-2">This set didn&apos;t work: {s.error ?? "unknown error"}. It doesn&apos;t count toward the limit; try again.</p>}
               {s.status === "draft" && (
-                <div className="mt-3 grid gap-4 sm:grid-cols-3">
+                <div className={`mt-3 grid gap-4 ${s.urls.length > 1 ? "sm:grid-cols-3" : "max-w-xl"}`}>
                   {s.urls.map((u, i) => (
                     <form key={u} action={approveSheetAction} className="ss-card ss-card--sunk flex flex-col gap-3 p-3">
                       <input type="hidden" name="sheetId" value={s.id} />
                       <input type="hidden" name="childId" value={child.id} />
                       <input type="hidden" name="index" value={i} />
-                      <Img src={u} alt={`Character option ${i + 1}`} className="aspect-[3/2] w-full rounded-[var(--radius-sm)] bg-paper-raised object-cover" />
+                      <Img src={u} alt={s.urls.length > 1 ? `Character option ${i + 1}` : `${name}'s new character`} className="aspect-[3/2] w-full rounded-[var(--radius-sm)] bg-paper-raised object-cover" />
                       <button className="ss-btn ss-btn--secondary ss-btn--sm ss-btn--block" data-testid={`approve-${i}`}>
-                        Use option {i + 1}
+                        {s.urls.length > 1 ? `Use option ${i + 1}` : "Use this character"}
                       </button>
                     </form>
                   ))}
@@ -206,7 +216,7 @@ export default async function CharacterPage({ params, searchParams }: { params: 
 
       <section className="ss-card ss-card--piped">
         <h2 className="title break-words">3. {name}&apos;s character</h2>
-        {approved.length === 0 && <p className="mt-2 text-ink-muted">None yet. Pick an option above.</p>}
+        {approved.length === 0 && <p className="mt-2 text-ink-muted">None yet. Draw one above and choose it.</p>}
         <div className="mt-4 space-y-8">
           {approved.map((s) => (
             <div key={s.id} className="grid gap-5 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]" data-testid="approved-sheet">

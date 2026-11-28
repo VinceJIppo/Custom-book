@@ -188,7 +188,7 @@ export function PhotoUpload({ childId, consentGiven, remaining, grownUp = false,
       )}
       {state?.drawing && (
         <p role="status" className="ss-note ss-note--success" data-testid="drawing-started">
-          Photos added. We&apos;re drawing 3 options now (about a minute); pick your favorite below.
+          Photos added. We&apos;re drawing the character now (about a minute). Use it below, or draw again.
         </p>
       )}
       {state?.drawNote && (
@@ -230,8 +230,26 @@ export function PhotoUpload({ childId, consentGiven, remaining, grownUp = false,
   );
 }
 
-/** Draws (more) options in the house style. Every book uses this one style, so a character is made once. */
-export function StartSheetForm({ childId, style, used, maxRounds, disabled, again }: { childId: string; style: string; used: number; maxRounds: number; disabled: boolean; again: boolean }) {
+/** Draws a character (another try) in the house style. Every book uses this one style, so a character is made once. */
+export function StartSheetForm({
+  childId,
+  style,
+  used,
+  maxRounds,
+  options = 1,
+  disabled,
+  again,
+}: {
+  childId: string;
+  style: string;
+  used: number;
+  maxRounds: number;
+  /** Drawings per try (CHARACTER_SHEET_OPTIONS). */
+  options?: number;
+  disabled: boolean;
+  again: boolean;
+}) {
+  const each = options > 1 ? `we draw ${options} options to choose from` : "we draw one character";
   const [state, action, pending] = useActionState(startSheetAction, null);
   return (
     <form onSubmit={submitKeeping(action)} className="space-y-3">
@@ -243,14 +261,14 @@ export function StartSheetForm({ childId, style, used, maxRounds, disabled, agai
       </details>
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <p className="body-s text-ink-muted">
-          {disabled ? "Add a photo first, then we draw 3 options to choose from." : `We draw 3 options to choose from. ${used} of ${maxRounds} sets used.`}
+          {disabled ? `Add a photo first, then ${each}.` : `Each try, ${each}. ${used} of ${maxRounds} tries used.`}
         </p>
         <button
           disabled={pending || disabled || used >= maxRounds}
           data-testid="start-sheet"
           className={again || disabled ? "ss-btn ss-btn--secondary shrink-0" : "ss-btn ss-btn--primary shrink-0"}
         >
-          {pending ? "Starting..." : again ? "Draw new options" : "Draw character options"}
+          {pending ? "Starting..." : again ? "Draw again" : "Draw the character"}
         </button>
       </div>
       {state?.message && (

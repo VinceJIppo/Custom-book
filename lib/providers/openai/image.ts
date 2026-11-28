@@ -135,7 +135,7 @@ export class OpenAIImageProvider implements ImageProvider {
     const out: ImageData[] = [];
     let cost = 0;
     for (let i = 0; i < input.count; i++) {
-      const r = await this.call(buildCharacterSheetPrompt({ style: input.style, outfit: input.outfit, variant: i, subject: input.subject, hairLength: input.hairLength }), input.photos.slice(0, 4), 3 / 2, { widthPx: 2048, heightPx: 1365 });
+      const r = await this.call(buildCharacterSheetPrompt({ style: input.style, outfit: input.outfit, variant: (input.firstVariant ?? 0) + i, subject: input.subject, hairLength: input.hairLength }), input.photos.slice(0, 4), 3 / 2, { widthPx: 2048, heightPx: 1365 });
       out.push(r.value);
       cost += r.usage.costUsd;
     }
