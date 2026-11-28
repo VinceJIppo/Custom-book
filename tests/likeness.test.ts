@@ -11,7 +11,7 @@ import { createAndStartBook } from "@/lib/books/service";
 import { drainQueue } from "@/lib/jobs/runner";
 import { getStorage } from "@/lib/storage";
 import { resetProviders } from "@/lib/providers/registry";
-import { resetConfigCache } from "@/lib/config";
+import { getConfig, resetConfigCache } from "@/lib/config";
 import { listThemesForUser, syncBuiltInThemes } from "@/lib/themes";
 import { MockUpscaler } from "@/lib/providers/upscale/mock";
 import { MockStoryProvider } from "@/lib/providers/story/mock";
@@ -173,6 +173,8 @@ describe("character likeness pipeline", () => {
   async function approvedCharacter(
     image: ImageProvider,
     vision: VisionProvider,
+    /** Which option to approve (one option per try unless CHARACTER_SHEET_OPTIONS is raised). */
+    pick = 0,
   ) {
     resetProviders({
       image,
@@ -197,20 +199,48 @@ describe("character likeness pipeline", () => {
       where: { id: start.sheetId },
     });
     expect(sheet.status).toBe("draft");
-    // One drawing per try (CHARACTER_SHEET_OPTIONS defaults to 1).
-    expect((sheet.imageKeys as string[]).length).toBe(1);
-    const ok = await approveSheetOption(userId, sheet.id, 0);
+    // One drawing per try unless CHARACTER_SHEET_OPTIONS is raised.
+    expect((sheet.imageKeys as string[]).length).toBe(getConfig().CHARACTER_SHEET_OPTIONS);
+    const ok = await approveSheetOption(userId, sheet.id, pick);
     expect(ok).toMatchObject({ ok: true, deletedPhotos: 1 });
     await drainQueue();
     return { childId: child.id, sheetId: sheet.id };
   }
 
+  it("photos -> one drawing -> approve -> bible; originals deleted", async () => {
+    const { childId, sheetId } = await approvedCharacter(fakeImage().p, fakeVision(() => 1).v);
+    const sheet = await db.characterSheet.findUniqueOrThrow({ where: { id: sheetId } });
+    expect(sheet).toMatchObject({ status: "approved", bibleStatus: "ready", selectedIndex: 0 });
+    expect((sheet.imageKeys as string[]).length).toBe(1);
+    expect(await getStorage().exists((sheet.imageKeys as string[])[0])).toBe(true);
+    expect(await db.childPhoto.count({ where: { childId } })).toBe(0);
+  });
+
+  it("each new try draws a different take: the next prompt variant", async () => {
+    const img = fakeImage();
+    const variants: Array<number | undefined> = [];
+    const seen = { ...img.p, generateCharacterSheet: (input: Parameters<ImageProvider["generateCharacterSheet"]>[0]) => (variants.push(input.firstVariant), img.p.generateCharacterSheet(input)) } as ImageProvider;
+    const { childId } = await approvedCharacter(seen, fakeVision(() => 1).v);
+    // Approving deleted the photo (the default), so add one again before drawing again.
+    expect((await addPhoto(userId, childId, await photo(), true)).ok).toBe(true);
+    const again = await startCharacterSheet(userId, childId, { style: "crayon" });
+    expect(again).toMatchObject({ ok: true });
+    await drainQueue();
+    expect(variants).toEqual([0, 1]);
+  });
+
   it("photos -> 3 options -> approve -> bible; originals deleted, unchosen options removed", async () => {
+    process.env.CHARACTER_SHEET_OPTIONS = "3";
+    resetConfigCache();
     const img = fakeImage();
     const { childId, sheetId } = await approvedCharacter(
       img.p,
       fakeVision(() => 1).v,
-    );
+      1,
+    ).finally(() => {
+      delete process.env.CHARACTER_SHEET_OPTIONS;
+      resetConfigCache();
+    });
     const sheet = await db.characterSheet.findUniqueOrThrow({
       where: { id: sheetId },
     });

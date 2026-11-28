@@ -149,11 +149,11 @@ export async function startCharacterSheet(userId: string, childId: string, input
   const cfg = getConfig();
   const used = await roundsUsed(childId, style.data);
   if (used >= cfg.CHARACTER_SHEET_MAX_ROUNDS) {
-    return { ok: false, message: `You've made ${used} sets of characters in this style, which is the limit. Pick one of the existing options, or try a different style.` };
+    return { ok: false, message: `You've drawn ${used} characters in this style, which is the limit. Use one of the drawings you have.` };
   }
   const overLimit = await checkAllowance(userId, "character");
   if (!overLimit) {
-    const credit = await creditProblem(userId, (IMAGE_PRICES[imageProviderChoice()] ?? PLANNING_IMAGE_PRICE).perIllustration * 3);
+    const credit = await creditProblem(userId, (IMAGE_PRICES[imageProviderChoice()] ?? PLANNING_IMAGE_PRICE).perIllustration * cfg.CHARACTER_SHEET_OPTIONS);
     if (credit) return { ok: false, message: credit };
   }
   if (overLimit) return { ok: false, message: overLimit };
@@ -165,7 +165,7 @@ export async function startCharacterSheet(userId: string, childId: string, input
     return { ok: false, message: `This would go over today's generation budget of $${cfg.DAILY_COST_CAP_USD.toFixed(2)}.` };
   }
 
-  // "Set N" on the page counts every set ever made, so numbers don't repeat after an admin reset.
+  // "Try N" on the page counts every try ever made, so numbers don't repeat after an admin reset.
   const madeBefore = await db.characterSheet.count({ where: { childId, style: style.data, status: { not: "failed" } } });
   const sheet = await db.$transaction(async (tx) => {
     const s = await tx.characterSheet.create({
