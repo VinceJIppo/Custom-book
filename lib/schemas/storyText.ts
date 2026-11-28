@@ -60,3 +60,8 @@ export function cleanDashes(text: string): string {
     .replace(/,\s*([,.!?;:])/g, "$1")
     .replace(/[ \t]+$/gm, "");
 }
+
+/** A book title: no dashes and no commas (the owner's rule for every title), single-spaced. */
+export function cleanTitle(title: string): string {
+  return cleanDashes(title).replace(/\s*,\s*/g, " ").replace(/\s{2,}/g, " ").trim();
+}

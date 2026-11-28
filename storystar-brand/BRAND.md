@@ -15,7 +15,8 @@ StoryStar makes hardcover picture books starring a real child, built from one ph
 
 - **Name:** "StoryStar" in sentences. The logo is the lowercase wordmark "storystar" with a star; it is an image, never live text.
 - **Tagline:** "Picture books where your child is the star."
-- **Hero line:** "every child, the star" (display lines may be all lowercase).
+- **Hero line:** "every child is the star" (display lines may be all lowercase).
+- **No commas in titles.** Page titles, headings, section and card titles, and book titles never contain a comma (the owner's rule; it overrides any older example in the reference files).
 - **Mood references:** Weezie (approachable luxury, contrast piping, scallops, monograms), Sister Parish's Serendipity print (a happy star print overhead), Riley Sheehey (watercolor storybook art, delft tiles, ribbons). These are mood only: never copy their art, patterns, products or marks.
 
 ## 2. Voice and copy
@@ -198,7 +199,7 @@ Build the homepage in this order. Copy is approved as written; bracketed text is
 
 1. **Header** (`--ceiling`): cream wordmark; nav "Story worlds", "How it works", "Gifts", "Peek inside"; moon toggle; primary "Start a book". Then the star band and a scallop hem.
 2. **Hero** (on `--paper`, two columns, stacks on phones):
-   - Eyebrow "Personalized picture books"; H1 "every child, the star"; lede "Upload one photo and your child becomes the hero of a hardcover storybook, the one they will ask for again tonight."
+   - Eyebrow "Personalized picture books"; H1 "every child is the star"; lede "Upload one photo and your child becomes the hero of a hardcover storybook, the one they will ask for again tonight."
    - Primary "Make their book" (with star icon) and link "See a sample page".
    - Facts row with small persimmon stars: "Hardcover, 32 pages", "From [YOUR PRICE]", "Ships in [X] days".
    - Art: a large cover ("Starring Hazel, The Moon Picnic", New story ribbon) tilted 3 degrees, the photo frame tilted -4 degrees overlapping its lower left, and a few small stars between them.
@@ -208,7 +209,7 @@ Build the homepage in this order. Copy is approved as written; bracketed text is
    - "Write a dedication": A few lines for the first page, signed however you like.
    - "Unwrap it together": A hardcover book in a keepsake box, tied with a ribbon.
 4. **Story worlds** (`--paper`): eyebrow, H2 "Pick where the story goes", link "See all story worlds", chips (Moon picnic, Under the sea, Garden party, Dinosaur parade, All worlds), four book cards. Wire chips to real filtering if the site has a catalog.
-5. **Peek inside** (`--paper-sunk`): copy on the left ("Their name, their face, on every page"), a two-page spread on the right: watercolor art left, story text right with a folio number. Stacks on phones.
+5. **Peek inside** (`--paper-sunk`): copy on the left ("Their own story on every page"), a two-page spread on the right: watercolor art left, story text right with a folio number. Stacks on phones.
 6. **Gifts** (`--ballet` band with scallop hem): "Made to be given", H2 "Wrapped in tissue, tied with a ribbon", body, secondary "Shop gifts"; dedication card on the right.
 7. **Questions grown-ups ask**: three FAQs (photo tips, photo privacy `[YOUR PHOTO PROMISE]`, shipping `[YOUR SHIPPING WINDOW]`).
 8. **Footer** (`--ceiling`, scallop on top): wordmark, tagline, "Bedtime notes in your inbox" signup, columns Shop / Help / About, copyright.

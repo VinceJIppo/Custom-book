@@ -21,7 +21,7 @@ import {
   type StoryPagesResult,
 } from "../../schemas/story";
 import { note } from "../../schemas/story";
-import { cleanDashes, verseProblems, verseShape } from "../../schemas/storyText";
+import { cleanDashes, cleanTitle, verseProblems, verseShape } from "../../schemas/storyText";
 import { ART_STYLES, ThemeConfigSchema, type ThemeConfig } from "../../schemas/theme";
 import { sumUsage, type ImageData, type Usage, type WithUsage } from "../types";
 import { ClaudeJson, imageBlock, type ClaudeOptions } from "./client";
@@ -281,7 +281,7 @@ export class AnthropicStoryProvider implements StoryProvider {
       },
       maxTokens: 48000,
     });
-    return { ...res, value: { ...res.value, title: cleanDashes(res.value.title) } };
+    return { ...res, value: { ...res.value, title: cleanTitle(res.value.title) } };
   }
 
   /**

@@ -6,3 +6,4 @@
 - Two themes: Daytime (default) and Bedtime via `data-theme="bedtime"` on `<html>`. Every change must work in both and at a 390px phone width.
 - One persimmon primary button per view. Ballet pink and buttercup are never text colors. The script font is for the child's name and sign-offs only.
 - Never invent prices, shipping times, reviews, ratings or press. Keep bracketed placeholders like `[YOUR PRICE]` and list them in your summary.
+- Never put a comma in any title or heading (page titles, section and card titles, book titles). This overrides the reference homepage, whose hero line had one.

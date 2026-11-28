@@ -37,3 +37,12 @@ describe("verse line limits", () => {
     expect(verseProblems(pages, "classic", "4-6")).toEqual([]);
   });
 });
+
+describe("book titles", () => {
+  it("never keep a comma or a dash", async () => {
+    const { cleanTitle } = await import("@/lib/schemas/storyText");
+    expect(cleanTitle("Theo, Oliver and the Moon Picnic")).toBe("Theo Oliver and the Moon Picnic");
+    expect(cleanTitle("Theo — and the Rainbow Seed")).toBe("Theo and the Rainbow Seed");
+    expect(cleanTitle("Theo and the Rainbow Seed")).toBe("Theo and the Rainbow Seed");
+  });
+});

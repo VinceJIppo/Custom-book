@@ -88,7 +88,7 @@ export function ChildForm({ initial }: { initial: ChildFormValues }) {
         className="ss-card group space-y-4"
       >
         <summary className="ss-summary title">
-          More about them <span className="body-s text-ink-muted">optional: favorite things, a pet, friends, a lesson</span>
+          More about them <span className="body-s text-ink-muted">optional</span>
         </summary>
       <fieldset className="mt-4 grid gap-4 sm:grid-cols-2">
         <legend className="title mb-2">Favorite things</legend>
@@ -108,7 +108,7 @@ export function ChildForm({ initial }: { initial: ChildFormValues }) {
       </fieldset>
 
       <fieldset className="mt-8 grid gap-4 sm:grid-cols-2">
-        <legend className="title mb-4">Pets, friends and a lesson</legend>
+        <legend className="title mb-4">Pets and friends</legend>
         <Field label="Pet's name" hint="optional" error={errors.petName}>
           <input name="petName" defaultValue={initial.petName} className={input} />
         </Field>

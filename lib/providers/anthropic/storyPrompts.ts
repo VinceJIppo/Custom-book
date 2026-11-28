@@ -216,7 +216,7 @@ export function outlinePrompt(ctx: StoryContext, problems?: string[]): string {
     "",
     `Plan the story spine before any words are written. The book has exactly ${n} story pages.`,
     `- kidSummary: first, the whole story in ${audienceFor(ctx.options.readingLevel).summary} ${audienceFor(ctx.options.readingLevel).listener} could say back,`+" in order, using \"wants\", \"but\", \"because\" and \"so\" (for example: \"Nell loves feeding the ducks. But one day Dot is stuck on the island, because the water is too deep. Grandpa can't wade out. Nell throws bread, but the wind blows it back. So she builds a stone path, and Dot comes home.\"). If you can't say it this simply, the story is too complicated: simplify it before planning the pages.",
-    "- title: short, includes the child's name or nickname, suits the voice. premise: one line.",
+    "- title: short, includes the child's name or nickname, suits the voice, and has no commas or dashes. premise: one line.",
     "- worldRule: how the magic or situation in this world works, in one or two plain sentences, including why the obvious quick fix will not work.",
     "- problem: what goes wrong and WHY, in kid logic. goal: what the hero wants because of it.",
     "- attempts: two or three tries that fail, each with the clear reason it fails. turningPoint: the idea or choice that changes things (it must use something set up earlier). resolution: how the problem is solved by the hero.",
