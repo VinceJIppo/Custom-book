@@ -9,10 +9,10 @@ export const metadata = { title: "Our story | StoryStar", description: "Why Stor
 const BELIEFS = [
   { title: "Every child gets to be the star", text: "A story means more when the hero has your child's name and face." },
   { title: "Reading should be a treat", text: "The best book is the one they ask for again tonight, not one more thing to get through before lights out." },
-  { title: "Kindness can start on the page", text: "Seeing themselves be kind in a story gives children a little practice for the real thing." },
+  { title: "Stories can build character", text: "Seeing themselves be brave, strong or kind in a story gives children a little practice for the real thing." },
 ];
 
-/** Our story: why StoryStar exists. Every fact here comes from the owner; [Your names] is theirs to fill in. */
+/** Our story: why StoryStar exists, told as two young parents (no names, by the owner's wish). Every fact here comes from the owner. */
 export default async function OurStoryPage() {
   const user = await getOptionalUser();
   const startHref = user ? "/books/new" : "/signin";
@@ -28,22 +28,23 @@ export default async function OurStoryPage() {
         <h2 id="started" className="ss-h2">
           The heroes were already tucked in
         </h2>
-        <p>We were young parents who loved telling stories about our kids. At bedtime the hero was always someone in the room, usually the one who was supposed to be asleep.</p>
-        <p>But a story told out loud never stays put. We wanted to see ours written down, with our own kids right there in the pictures.</p>
+        <p>StoryStar started with two young parents who loved telling stories about their kids. At bedtime the hero was always someone in the room, usually the one who was supposed to be asleep.</p>
+        <p>But a story told out loud never stays put. They wanted to see theirs written down, with their own kids right there in the pictures.</p>
         <p>That wish became StoryStar: hardcover picture books starring your child, illustrated from your photos, ready for one more story tomorrow night.</p>
       </section>
 
       <section className="grid items-center gap-10 md:grid-cols-[minmax(0,1fr)_minmax(0,24rem)]" aria-labelledby="kindness">
         <div className="space-y-4 text-[17px] leading-[28px]">
           <h2 id="kindness" className="ss-h2">
-            Kindness makes a good plot
+            Who they are growing into
           </h2>
           <p>
-            We had a second hope too. Anyone who has said &ldquo;share with your sister&rdquo; for the hundredth time knows how far a lecture gets you. We wanted a gentler way to encourage our kids to be loving with each
-            other.
+            They had a second hope too. Every parent has qualities they want to see grow in their children: courage, strength, kindness, the grit to keep going when something is hard. Saying so for the hundredth time
+            only gets you so far.
           </p>
           <p>
-            A book that shows an older brother sharing with his younger sister, or teaching her how to be brave, can be a powerful thing. Kids get to see themselves at their kindest. With any luck, they try it at breakfast.
+            A book that shows an older brother teaching his younger sister how to be brave, standing up for her or sharing with her, can be a powerful thing. Kids get to see themselves at their best, in whatever way
+            matters most to your family. With any luck, they try it out the next day.
           </p>
         </div>
         {/* A sample page: printed-book paper, so it keeps its fixed colors in both themes. */}
@@ -79,13 +80,13 @@ export default async function OurStoryPage() {
         <div className="ss-dedication">
           <img className="ss-dedication__seal" src="/brand/logos/storystar-monogram.svg" alt="" width={76} height={76} />
           <p className="ss-dedication__body mt-4">
-            We started StoryStar because we loved telling stories about our kids and wanted to hold on to them. We hope your book becomes the one someone in your house can recite with their eyes closed, and that a little
-            extra kindness comes with it. Thank you for letting us be part of story time.
+            We started StoryStar because we loved telling stories about our kids and wanted to hold on to them. We hope your book becomes the one someone in your house can recite with their eyes closed, and that it shows
+            your star a little of who they can be. Thank you for letting us be part of story time.
           </p>
           <p className="ss-dedication__from">
             With love,
             <br />
-            [Your names]
+            two young parents
           </p>
         </div>
         <div className="max-w-md space-y-5">
