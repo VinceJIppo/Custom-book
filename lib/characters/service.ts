@@ -117,8 +117,11 @@ export function sheetOptionCost(count = getConfig().CHARACTER_SHEET_OPTIONS) {
   return Math.round(count * p.perSheetOption * 100) / 100;
 }
 
+/** Sets of characters made for this person in this style (since an admin last reset the account's count). */
 export async function roundsUsed(childId: string, style: ArtStyle) {
-  return db.characterSheet.count({ where: { childId, style, status: { not: "failed" } } });
+  const child = await db.childProfile.findUnique({ where: { id: childId }, select: { user: { select: { characterResetAt: true } } } });
+  const since = child?.user.characterResetAt;
+  return db.characterSheet.count({ where: { childId, style, status: { not: "failed" }, ...(since ? { createdAt: { gte: since } } : {}) } });
 }
 
 export type StartSheetResult = { ok: true; sheetId: string } | { ok: false; message: string };
@@ -162,9 +165,11 @@ export async function startCharacterSheet(userId: string, childId: string, input
     return { ok: false, message: `This would go over today's generation budget of $${cfg.DAILY_COST_CAP_USD.toFixed(2)}.` };
   }
 
+  // "Set N" on the page counts every set ever made, so numbers don't repeat after an admin reset.
+  const madeBefore = await db.characterSheet.count({ where: { childId, style: style.data, status: { not: "failed" } } });
   const sheet = await db.$transaction(async (tx) => {
     const s = await tx.characterSheet.create({
-      data: { childId, style: style.data, outfit: outfit ?? null, round: used + 1, status: "generating", imageKeys: [] as unknown as Prisma.InputJsonValue },
+      data: { childId, style: style.data, outfit: outfit ?? null, round: madeBefore + 1, status: "generating", imageKeys: [] as unknown as Prisma.InputJsonValue },
     });
     await enqueue("character.sheet", { sheetId: s.id }, { userId, childId, maxAttempts: 2 }, tx);
     return s;

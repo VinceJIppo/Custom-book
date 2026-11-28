@@ -6,12 +6,12 @@ import { isAdminEmail } from "@/lib/admin";
 import { getAllowance, TIER_IDS, TIERS } from "@/lib/allowance";
 import { randomUUID } from "node:crypto";
 import { creditsEnabled } from "@/lib/credits";
-import { addCreditsAction, saveRewardsAction } from "./actions";
+import { addCreditsAction, resetCharactersAction, saveRewardsAction } from "./actions";
 
 export const dynamic = "force-dynamic";
 
 /** Customers, their tier and usage, and rewards you can grant (family, friends, apologies). */
-export default async function AdminUsers({ searchParams }: { searchParams: Promise<{ saved?: string; credited?: string; error?: string }> }) {
+export default async function AdminUsers({ searchParams }: { searchParams: Promise<{ saved?: string; credited?: string; error?: string; reset?: string }> }) {
   const me = await requireOnboardedUser();
   if (!isAdminEmail(me.email)) notFound();
   const sp = await searchParams;
@@ -43,6 +43,11 @@ export default async function AdminUsers({ searchParams }: { searchParams: Promi
         </p>
       )}
       {sp.error && <p className="ss-note ss-note--warn" role="alert">{sp.error === "amount" ? "Enter an amount from $0.01 to $500." : "That customer wasn't found."}</p>}
+      {sp.reset && (
+        <p className="ss-note ss-note--success" role="status">
+          Character count reset for {sp.reset}. Their earlier character sets no longer count toward their limits.
+        </p>
+      )}
       {sp.saved && (
         <p className="ss-note ss-note--success" role="status">
           Saved.
@@ -73,6 +78,13 @@ export default async function AdminUsers({ searchParams }: { searchParams: Promi
                 </td>
                 <td className="p-3">
                   {a.used.book}/{a.limits.book} · {a.used.character}/{a.limits.character} · {a.used.redraw}/{a.limits.redraw}
+                  <form action={resetCharactersAction} className="mt-2">
+                    <input type="hidden" name="userId" value={u.id} />
+                    <button className="ss-btn ss-btn--secondary ss-btn--sm" data-testid={`reset-characters-${u.email}`} title="Character sets made before now stop counting toward this account's limits">
+                      Reset characters
+                    </button>
+                  </form>
+                  {a.characterResetAt && <div className="mt-1 text-ink-muted">Characters reset {a.characterResetAt.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</div>}
                 </td>
                 <td className="p-3">
                   <form action={saveRewardsAction} className="flex flex-wrap items-end gap-2">

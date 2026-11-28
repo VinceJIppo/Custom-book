@@ -60,7 +60,8 @@ export default async function CharacterPage({ params, searchParams }: { params: 
   const busy = sheets.some((s) => s.status === "generating" || (s.status === "approved" && s.bibleStatus === "pending"));
   const rounds: Record<string, number> = {};
   // Deleted characters still count (deleting isn't a way to get more tries).
-  for (const s of child.characterSheets) if (s.status !== "failed") rounds[s.style] = (rounds[s.style] ?? 0) + 1;
+  // (Sets made before an admin reset the account's character count don't count either.)
+  for (const s of child.characterSheets) if (s.status !== "failed" && (!user.characterResetAt || s.createdAt >= user.characterResetAt)) rounds[s.style] = (rounds[s.style] ?? 0) + 1;
 
   return (
     <div className="space-y-8">

@@ -39,3 +39,17 @@ export async function addCreditsAction(fd: FormData) {
   await grantCredits(userId, amount, "admin", { sourceKey: `admin:${key}`, note });
   redirect(`/admin/users?credited=${encodeURIComponent(`$${amount.toFixed(2)} to ${user.email}`)}`);
 }
+
+/**
+ * Starts an account's character count again from now: character sets made before this no longer
+ * count toward its allowance or each person's "sets used" limit. Nothing is deleted.
+ */
+export async function resetCharactersAction(fd: FormData) {
+  const me = await getCurrentUser();
+  if (!isAdminEmail(me.email)) redirect("/");
+  const userId = String(fd.get("userId") ?? "");
+  const user = await db.user.findFirst({ where: { id: userId, deletedAt: null }, select: { email: true } });
+  if (!user) redirect("/admin/users?error=user");
+  await db.user.update({ where: { id: userId }, data: { characterResetAt: new Date() } });
+  redirect(`/admin/users?reset=${encodeURIComponent(user.email)}`);
+}

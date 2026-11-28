@@ -28,6 +28,9 @@ model User {
   bonusBooks      Int      @default(0)
   bonusCharacters Int      @default(0)
   bonusRedraws    Int      @default(0)
+  /// When an admin last reset this account's character count: character sets made before
+  /// it no longer count toward the account's allowance or each person's "sets used" limit.
+  characterResetAt DateTime?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
   /// Set when the parent deletes their account. The row then only holds paid order and

@@ -117,6 +117,31 @@ describe("allowances in the app", () => {
     if (!over.ok) expect(over.message).toMatch(/character sets/);
   });
 
+  it("an admin reset starts the character count again, for the account and for each person", async () => {
+    const photo = await sharp({ create: { width: 800, height: 1000, channels: 3, background: "#d0b090" } }).jpeg().toBuffer();
+    await addPhoto(userId, childId, photo, true);
+    // Use up the per-person limit in one style (3 sets by default)...
+    for (let i = 0; i < 3; i++) {
+      expect((await startCharacterSheet(userId, childId, { style: "crayon" })).ok).toBe(true);
+      await drainQueue();
+    }
+    const blocked = await startCharacterSheet(userId, childId, { style: "crayon" });
+    expect(blocked.ok).toBe(false);
+    if (!blocked.ok) expect(blocked.message).toMatch(/limit/);
+    expect((await getAllowance(userId)).used.character).toBe(3);
+    // ...then an admin resets the account's character count.
+    await new Promise((r) => setTimeout(r, 5));
+    await db.user.update({ where: { id: userId }, data: { characterResetAt: new Date() } });
+    const after = await getAllowance(userId);
+    expect(after.used.character).toBe(0);
+    expect(after.characterResetAt).toBeInstanceOf(Date);
+    expect((await startCharacterSheet(userId, childId, { style: "crayon" })).ok).toBe(true);
+    await drainQueue();
+    // Earlier sets are still there; only the count starts again.
+    expect(await db.characterSheet.count({ where: { childId } })).toBe(4);
+    expect((await getAllowance(userId)).used.character).toBe(1);
+  });
+
   it("admins are unlimited, and bonus grants add to the tier", async () => {
     const admin = await makeUser("owner@example.com");
     process.env.ADMIN_EMAILS = "owner@example.com";

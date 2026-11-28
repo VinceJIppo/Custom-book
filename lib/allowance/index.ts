@@ -77,6 +77,8 @@ export interface Allowance {
   next: { tier: Tier; ordersNeeded: number } | null;
   /** When a rolling-window allowance frees up its oldest use (30d tiers only). */
   windowDays: number | null;
+  /** When an admin last reset the character count (null = never). */
+  characterResetAt: Date | null;
 }
 
 export function tierFor(paidOrders: number, override?: string | null): Tier {
@@ -88,11 +90,20 @@ export function allowancesEnabled() {
   return getConfig().ALLOWANCES_ENABLED;
 }
 
-async function countUsage(userId: string, since: Date | null): Promise<Record<AllowanceAction, number>> {
+/** The later of two optional dates (a window start and an admin reset). */
+function latest(a: Date | null | undefined, b: Date | null | undefined) {
+  if (!a) return b ?? null;
+  if (!b) return a;
+  return a > b ? a : b;
+}
+
+async function countUsage(userId: string, since: Date | null, characterResetAt?: Date | null): Promise<Record<AllowanceAction, number>> {
   const created = since ? { gte: since } : undefined;
+  // An admin reset starts the character count again from that moment.
+  const charactersFrom = latest(since, characterResetAt);
   const [book, character, edits, illustrateJobs, rewrite, theme] = await Promise.all([
     db.book.count({ where: { userId, status: { not: "failed" }, createdAt: created } }),
-    db.characterSheet.count({ where: { child: { userId }, status: { not: "failed" }, createdAt: created } }),
+    db.characterSheet.count({ where: { child: { userId }, status: { not: "failed" }, createdAt: charactersFrom ? { gte: charactersFrom } : undefined } }),
     db.generationJob.count({ where: { userId, type: "page.edit", status: { not: "failed" }, createdAt: created } }),
     db.generationJob.findMany({ where: { userId, type: { in: ["page.illustrate", "book.cover"] }, status: { not: "failed" }, createdAt: created }, select: { payload: true } }),
     db.generationJob.count({ where: { userId, type: "page.revise", createdAt: created } }),
@@ -103,8 +114,9 @@ async function countUsage(userId: string, since: Date | null): Promise<Record<Al
 }
 
 /** Everything an account has used, ever (saved when an account is deleted). */
-export function lifetimeUsage(userId: string) {
-  return countUsage(userId, null);
+export async function lifetimeUsage(userId: string) {
+  const u = await db.user.findUnique({ where: { id: userId }, select: { characterResetAt: true } });
+  return countUsage(userId, null, u?.characterResetAt);
 }
 
 export async function getAllowance(userId: string): Promise<Allowance> {
@@ -112,11 +124,12 @@ export async function getAllowance(userId: string): Promise<Allowance> {
   const paidOrders = await db.order.count({ where: { userId, paidAt: { not: null }, status: { not: "refunded" } } });
   const tier = tierFor(paidOrders, user.tierOverride);
   const since = tier.window === "30d" ? new Date(Date.now() - 30 * 86400_000) : null;
-  const used = await countUsage(userId, since);
-  // The lifetime "try it" allowance counts what an earlier, deleted account with this email used.
+  const used = await countUsage(userId, since, user.characterResetAt);
+  // The lifetime "try it" allowance counts what an earlier, deleted account with this email used
+  // (characters only until an admin resets them).
   if (!since) {
     const prior = await priorUsage(user.email);
-    for (const a of ALLOWANCE_ACTIONS) used[a] += prior[a] ?? 0;
+    for (const a of ALLOWANCE_ACTIONS) if (a !== "character" || !user.characterResetAt) used[a] += prior[a] ?? 0;
   }
   const limits = {
     ...tier.limits,
@@ -135,6 +148,7 @@ export async function getAllowance(userId: string): Promise<Allowance> {
     remaining,
     next: nextTier && !user.tierOverride ? { tier: nextTier, ordersNeeded: Math.max(1, nextTier.minPaidOrders - paidOrders) } : null,
     windowDays: since ? 30 : null,
+    characterResetAt: user.characterResetAt,
   };
 }
 
