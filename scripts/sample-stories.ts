@@ -10,7 +10,7 @@
  *   npm run sample-stories -- --stories topsy-turvy-town:sideways-rain,wishing-garden:lumas-glow
  *   npm run sample-stories -- --hero Theo --age 5 --siblings "Oliver:3:he,Charlie:1:she" --grownup "Mom:Mama:she"
  *
- * Needs ANTHROPIC_API_KEY in .env.local (about $0.30 to $0.60 per story).
+ * Needs ANTHROPIC_API_KEY in .env.local (in a cloud session: STORYSTAR_ANTHROPIC_API_KEY in the environment) (about $0.30 to $0.60 per story).
  * Without it, the offline mock writer is used (free, formulaic: only for checking the script).
  * Output: story-lab/sample-stories-<time>.md (not committed).
  */

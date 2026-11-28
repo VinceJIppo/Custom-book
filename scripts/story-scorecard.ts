@@ -11,7 +11,7 @@
  *   npm run story-scorecard -- --count 4 --length 16
  *   npm run story-scorecard -- --label after-fix --compare story-lab/scorecard-<earlier>.json
  *
- * Needs ANTHROPIC_API_KEY in .env.local (roughly $0.40 to $0.90 per story; 10 stories
+ * Needs ANTHROPIC_API_KEY in .env.local (in a cloud session: STORYSTAR_ANTHROPIC_API_KEY in the environment) (roughly $0.40 to $0.90 per story; 10 stories
  * is a few dollars). Without it, the offline mock writer is used (only checks the script).
  * Output: story-lab/scorecard-<label or time>.md and .json (not committed).
  */

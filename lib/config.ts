@@ -176,6 +176,9 @@ export function getConfig(): AppConfig {
       ([, v]) => v !== undefined && v.trim() !== "",
     ),
   );
+  // Cloud coding sessions keep the name ANTHROPIC_API_KEY for their own sign-in and never pass it
+  // to commands, so there the key can be given as STORYSTAR_ANTHROPIC_API_KEY instead.
+  if (!env0.ANTHROPIC_API_KEY && env0.STORYSTAR_ANTHROPIC_API_KEY) env0.ANTHROPIC_API_KEY = env0.STORYSTAR_ANTHROPIC_API_KEY;
   const parsed = EnvSchema.safeParse(env0);
   if (!parsed.success) {
     const issues = parsed.error.issues
