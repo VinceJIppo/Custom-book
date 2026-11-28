@@ -46,18 +46,19 @@ async function main() {
         console.log(`${t.name}: sample ${i + 1} already there (skip)`);
         continue;
       }
-      const friend = t.supportingCast[i % t.supportingCast.length];
+      // A real-world base story may bring no made-up characters: then the sample shows just the child.
+      const friend = t.supportingCast.length ? t.supportingCast[i % t.supportingCast.length] : null;
       const req = {
         characterRef: null,
         bible: null,
         childName: "the child",
         scene: {
-          action: `A cheerful young child (about five) and ${friend.name} in a moment of "${beat}"`,
-          characters: ["the child", friend.name],
+          action: `A cheerful young child (about five)${friend ? ` and ${friend.name}` : ""} in a moment of "${beat}"`,
+          characters: ["the child", ...(friend ? [friend.name] : [])],
           setting: t.setting,
           mood: t.artDirection.mood,
           framing: "medium-wide storybook scene, whole figures in view",
-          mustShow: [`${friend.name}: ${friend.look}`],
+          mustShow: friend ? [`${friend.name}: ${friend.look}`] : [],
           continuity: "",
         },
         style: t.artDirection.defaultStyle,

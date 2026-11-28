@@ -11,6 +11,11 @@ import superheroSquad from "./superhero-squad.json";
 import topsyTurvyTown from "./topsy-turvy-town.json";
 import quietMeadow from "./quiet-meadow.json";
 import wishingGarden from "./wishing-garden.json";
+import sunnyClassroom from "./sunny-classroom.json";
+import cottageHens from "./cottage-hens.json";
+import firstBigSnow from "./first-big-snow.json";
+import mistyWoods from "./misty-woods.json";
+import lowTideShore from "./low-tide-shore.json";
 
 export const BUILT_IN_THEME_FILES: Record<string, unknown> = {
   "construction-crew.json": constructionCrew,
@@ -22,4 +27,9 @@ export const BUILT_IN_THEME_FILES: Record<string, unknown> = {
   "topsy-turvy-town.json": topsyTurvyTown,
   "quiet-meadow.json": quietMeadow,
   "wishing-garden.json": wishingGarden,
+  "sunny-classroom.json": sunnyClassroom,
+  "cottage-hens.json": cottageHens,
+  "first-big-snow.json": firstBigSnow,
+  "misty-woods.json": mistyWoods,
+  "low-tide-shore.json": lowTideShore,
 };

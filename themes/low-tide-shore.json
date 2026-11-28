@@ -1,0 +1,70 @@
+{
+  "id": "low-tide-shore",
+  "name": "The Rock Pools at Low Tide",
+  "genre": "seaside wonder",
+  "ageRange": [
+    2,
+    8
+  ],
+  "pitch": "On a summer day by the sea, the tide slips out further than ever and leaves the rocks full of little pools. The child is sure something lives in them, but every pool looks empty, and the sea will be back by suppertime. The child has to discover how to look.",
+  "setting": "A rocky seaside shore on a sunny summer afternoon at low tide: flat grey rocks with clear pools in their hollows, green and brown seaweed, barnacles and mussel shells, a strip of pale sand, the calm sea far out, a striped towel and bucket on a dry rock, and a grassy dune path at the top of the shore.",
+  "supportingCast": [
+    {
+      "name": "The little crab",
+      "role": "a shy little crab who hides under the flat rock",
+      "look": "a real shore crab about the size of a cookie, olive green with pale tips on its claws and two tiny black eyes on stalks; it scuttles sideways and never talks"
+    },
+    {
+      "name": "The starfish",
+      "role": "the hidden treasure at the bottom of the clearest pool",
+      "look": "a real orange starfish with five bumpy arms, about as wide as a child's hand, resting on a pink rock at the bottom of the pool; it never talks"
+    }
+  ],
+  "storyBeats": [
+    "a day at the seaside and a game of statues",
+    "the tide slips out further than ever",
+    "rock pools that look empty",
+    "a splash and a shadow send everything hiding",
+    "seaweed lifted and the water goes cloudy",
+    "lying still as a statue on the warm rock",
+    "the pool wakes up",
+    "putting everything back just as it was",
+    "the sea comes home to the pools"
+  ],
+  "powerIdeas": "The child's stillness and patience (they are the best at statues) and their love of looking closely are the power. A favorite color can be the bucket or sun hat, and a favorite sea animal can be the one they most hope to find.",
+  "artDirection": {
+    "defaultStyle": "painted-whimsy",
+    "palette": [
+      "#86BDB8",
+      "#EBDDBF",
+      "#8E9AA6",
+      "#EAA06E"
+    ],
+    "mood": "clear, salty afternoon light: cool teal water and warm sand, glistening rocks and seaweed, small bright surprises hiding in still water"
+  },
+  "contentRules": [
+    "real world only: sea creatures act like real creatures and never talk",
+    "look gently and leave everything as it was: no creatures taken home, and any lifted seaweed or rock is put back",
+    "a grown-up is always close by on the rocks, and the child stays well away from the waves and deep water",
+    "the tide comes back slowly and calmly and is never a danger",
+    "slippery rocks are crossed slowly on hands and feet, and nobody gets hurt"
+  ],
+  "familyParts": {
+    "grownUp": "Stays close on the rocks to keep the child safe and asks one small question instead of giving the answer.",
+    "youngerChild": "Splashes at first, then learns to lie still beside the child so they both see the crab.",
+    "olderChild": "Shows how to cross the slippery rocks slowly on hands and feet, then lets the child find the creatures.",
+    "withoutGrownUp": "A grown-up sits close by on the dry rocks the whole time: say only 'a grown-up' and show them from behind or at the edge of the picture."
+  },
+  "starters": [
+    {
+      "id": "before-the-tide",
+      "title": "Before the Tide Comes Back",
+      "summary": "The tide has gone out further than ever and left the rocks full of little pools. Your child is sure something lives in them, but every pool looks empty.",
+      "trait": "Curiosity",
+      "voice": "quiet-wisdom",
+      "idea": "The tide has gone far out, and the child wants to see who lives in the rock pools before the sea comes back. But every pool looks empty, to the grown-up too. Leaning in with a splash fails: the child's shadow falls on the water, the shy creatures hide, leaving only ripples. Lifting the seaweed fails too: sand swirls up and the water clouds. Then the child remembers they are the best at statues (shown at the start). They lie on the warm rock facing the sun, so their shadow falls behind them, and stay very still. The water clears, a crab peeks out, tiny fish dart and a starfish appears."
+    }
+  ],
+  "houseOrder": 6,
+  "licensed": false
+}

@@ -37,7 +37,7 @@ test("photo -> character options -> approve -> book -> edit one page", async ({ 
   await expect(page.locator('img[alt="Uploaded photo"]')).toHaveCount(0); // originals deleted by default
 
   await page.getByRole("link", { name: new RegExp(`Make a book with ${name}`) }).click();
-  await page.getByTestId("story-sunflower-clock").click();
+  await page.getByTestId("story-snow-house").click();
   await page.getByTestId("create-book").click();
   await expect(page.getByTestId("edit-pages")).toBeVisible({ timeout: 60_000 });
 

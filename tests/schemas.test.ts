@@ -8,14 +8,14 @@ import { superhero } from "./helpers";
 
 describe("built-in themes", () => {
   const themes = loadBuiltInThemeFiles();
-  it("loads all nine, each valid", () => {
-    expect(themes.map((t) => t.id).sort()).toEqual(
-      ["construction-crew", "dinosaur-valley", "dragon-knight", "ocean-deep", "quiet-meadow", "space-explorer", "superhero-squad", "topsy-turvy-town", "wishing-garden"].sort(),
-    );
+  it("load every theme, each valid", () => {
+    expect(themes.map((t) => t.id)).toEqual(expect.arrayContaining(["wishing-garden", "sunny-classroom", "cottage-hens", "first-big-snow", "misty-woods", "low-tide-shore", "superhero-squad", "quiet-meadow"]));
   });
-  it("offers only the house theme (The Wishing Garden) for new books; the rest stay for books already made", () => {
-    expect(themes.filter((t) => !t.hidden).map((t) => t.id)).toEqual(["wishing-garden"]);
-    expect(themes.length).toBeGreaterThan(1);
+  it("offer only the base stories' worlds for new books; the older themes stay for books already made", () => {
+    const visible = themes.filter((t) => !t.hidden);
+    expect(visible.every((t) => t.houseOrder !== undefined)).toBe(true);
+    expect(visible.map((t) => t.id)).toContain("wishing-garden");
+    expect(themes.filter((t) => t.hidden).map((t) => t.id)).toEqual(expect.arrayContaining(["superhero-squad", "quiet-meadow"]));
   });
   it("contain no protected characters, franchises or real authors", async () => {
     const { findProtectedNames } = await import("@/lib/safety/protectedNames");

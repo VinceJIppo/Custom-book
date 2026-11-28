@@ -1,0 +1,60 @@
+{
+  "id": "misty-woods",
+  "name": "The Misty Morning Woods",
+  "genre": "woodland walk",
+  "ageRange": [
+    2,
+    8
+  ],
+  "pitch": "On a spring morning walk through the little wood near home, the child picks up one fallen treasure at every turn of the path, the way they always do. On the way back a soft white fog rolls in, every path looks the same, and the grown-up is not sure which way is home.",
+  "setting": "A small wood near home on a misty spring morning: a winding dirt path, a wooden footbridge over a little stream, a mossy fallen log, a tall pine, a white birch with curling bark, an old stone wall, ferns and spring wildflowers, and soft white fog that hides everything beyond a few trees. At the wood's edge is the family's own back gate.",
+  "supportingCast": [],
+  "storyBeats": [
+    "a windowsill of treasures from every walk",
+    "a morning walk into the woods",
+    "one fallen treasure at every turn",
+    "a soft white fog rolls in at the stone wall",
+    "every path looks the same",
+    "the path that looks right ends at a bramble patch",
+    "a sound that seems to come from everywhere",
+    "the treasures remember the way",
+    "leading the way home turn by turn",
+    "the fog lifts at the back gate"
+  ],
+  "powerIdeas": "The child's habit of noticing and keeping small fallen treasures becomes the map, and their calm, steady voice leads the way. A treasure can be in a favorite color, and a favorite song can be sung softly so nobody feels far apart in the fog.",
+  "artDirection": {
+    "defaultStyle": "painted-whimsy",
+    "palette": [
+      "#E6E8E3",
+      "#A9B898",
+      "#B0B3D6",
+      "#A08C7A"
+    ],
+    "mood": "soft, hushed and dreamy: pale mist with trees fading in and out, mossy greens and small spring flowers, calm and safe rather than spooky"
+  },
+  "contentRules": [
+    "real world only: no magic and no talking animals",
+    "the fog is soft and pretty, never spooky: nothing hides in it and nobody is ever in danger",
+    "everyone stays together holding hands; the grown-up stays calm and treats the fog as a puzzle to solve together, and nobody is ever called lost",
+    "the child keeps only fallen things (a feather, a pinecone, a pebble), never flowers or living plants",
+    "no phones or maps: this is a quiet walk, and the child's own noticing finds the way"
+  ],
+  "familyParts": {
+    "grownUp": "Walks hand in hand with the child, honestly says they are not sure of the way, and lets the child lead everyone home.",
+    "youngerChild": "Gets tired and worried in the fog, so the child holds their hand and gives them a treasure to carry.",
+    "olderChild": "Walks beside the child and is the first to say 'you lead', trusting the child's treasures to find the way.",
+    "withoutGrownUp": "A grown-up walks hand in hand with the child the whole time: say only 'a grown-up' and show them from behind or just their hand holding the child's."
+  },
+  "starters": [
+    {
+      "id": "one-treasure",
+      "title": "One Treasure at Every Turn",
+      "summary": "On a morning walk in the woods, your child picks up one small treasure at every turn. Then a soft white fog rolls in, and every path looks the same.",
+      "trait": "Independence",
+      "voice": "quiet-wisdom",
+      "idea": "On a morning walk the child picks up one fallen treasure at each turn, as they always do (shown at the start): a pebble at the stream, a feather at the mossy log, a pinecone under the tall pine. At the stone wall a soft fog rolls in, every path looks the same, and the grown-up isn't sure of the way. The child picks the path that looks right, but it ends at a bramble patch they never passed. Listening for the stream fails too: in fog, sound comes from everywhere. Then the child empties their pocket. The pinecone came last, so the tall pine comes first, then the log, then the stream, and home."
+    }
+  ],
+  "houseOrder": 5,
+  "licensed": false
+}

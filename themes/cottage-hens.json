@@ -1,0 +1,71 @@
+{
+  "id": "cottage-hens",
+  "name": "The Cottage Hen Yard",
+  "genre": "cozy countryside",
+  "ageRange": [
+    2,
+    8
+  ],
+  "pitch": "This week, looking after the hens is the child's job: every morning the child lets them out of their red wooden hen house and hums them the corn song. One autumn evening the sun goes down early, one hen is still out under the apple tree, and the child chooses to walk down the dusky yard to bring her home, though the dusk makes everything look strange.",
+  "setting": "A cottage yard in autumn at the edge of a village: a long path from the kitchen door past vegetable beds, a row of tall bean poles, a wheelbarrow, an old apple tree with fallen apples in the grass, and a red wooden hen house with a ramp and a corn tin at the bottom of the yard. At dusk the sky turns lavender, the first star shows, and the kitchen window glows gold.",
+  "supportingCast": [
+    {
+      "name": "Nutmeg",
+      "role": "a curious speckled hen who will not come in at dusk",
+      "look": "a plump real hen with speckled brown and cream feathers, a small red comb and yellow legs; she clucks and pecks like a real hen and never talks"
+    },
+    {
+      "name": "The roosting hens",
+      "role": "three sleepy hens already settled on their perch",
+      "look": "three real hens, one all brown, one white and one black with a green sheen, each with a red comb; they never talk"
+    }
+  ],
+  "storyBeats": [
+    "a cottage morning and the corn song for the hens",
+    "the hens are the child's job this week",
+    "the autumn evenings are getting dark early",
+    "three hens are in but Nutmeg is still out",
+    "calling from the doorstep is not enough",
+    "the dusky yard looks strange but the child goes",
+    "chasing only makes Nutmeg run",
+    "walking slowly and humming the morning song",
+    "Nutmeg follows and the door clicks shut",
+    "looking back at a yard gone sleepy"
+  ],
+  "powerIdeas": "The child's courage to go anyway and the little song they hum to the hens every morning are what work. A favorite song can become the corn song, and a favorite color can be the rain boots or scarf the child wears down the yard.",
+  "artDirection": {
+    "defaultStyle": "painted-whimsy",
+    "palette": [
+      "#F0C07A",
+      "#6F7BA6",
+      "#C96F5F",
+      "#B49FC4"
+    ],
+    "mood": "warm, hushed autumn dusk: a lavender and soft indigo sky, golden lamplight from the kitchen, apples and hay, a yard going sleepy rather than scary"
+  },
+  "contentRules": [
+    "real world only: hens act like real hens and never talk",
+    "at most one moment where something looks strange in the dusk and turns out to be an ordinary yard thing; never a series of scary shapes; no monsters or foxes",
+    "the glowing kitchen window is always in sight, and a grown-up is just inside the door",
+    "the child is gentle with the hens: no grabbing or squeezing, and the chase that fails is soft and a little silly",
+    "by the end the dark feels sleepy and kind, never something to fear"
+  ],
+  "familyParts": {
+    "grownUp": "Watches from the lit kitchen doorway and offers one calm line about the dusk (it holds the same things as the day, only sleepier), but lets the child go.",
+    "youngerChild": "Holds the back door open and waves from the glowing window while the child walks down the yard.",
+    "olderChild": "Keeps the kitchen door open and the light on, trusting the child with the job because the hens are the child's this week.",
+    "withoutGrownUp": "The kitchen door stays open and its window glows gold the whole time. A grown-up may call softly from inside, but is never named or seen."
+  },
+  "starters": [
+    {
+      "id": "last-hen-home",
+      "title": "The Last Hen Home",
+      "summary": "The autumn evenings are getting dark early. All the hens are tucked in except Nutmeg, and she only follows the one who feeds her.",
+      "trait": "Courage",
+      "voice": "quiet-wisdom",
+      "idea": "The hens are the child's job this week, and Nutmeg only follows the one who feeds her. At autumn sunset three hens are in, but Nutmeg is still pecking apples under the tree, and the hen house must be shut before dark. Calling her from the lit doorstep fails: she is too far to hear. The dusky yard looks strange, but the child chooses to go. Chasing fails: running scares Nutmeg round the tree. Then the child does what they do every morning (shown at the start): walks slowly, hums the corn song and sprinkles corn from the tin. Nutmeg follows up the ramp, and the door clicks shut."
+    }
+  ],
+  "houseOrder": 3,
+  "licensed": false
+}

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { createBookAction } from "@/app/actions";
 import { Star } from "@/components/brand/Star";
 import { CastPicker, type CastOption } from "./CastPicker";
+import type { FamilyParts } from "@/lib/schemas/theme";
 
 export interface StoryCard {
   id: string;
@@ -15,10 +16,23 @@ export interface StoryCard {
   /** Voice id the story is told in, and its label for the card. */
   voice: string;
   voiceLabel: string;
+  /** The one main trait the story builds, shown on the card. */
+  trait: string | null;
+  /** The parts family members play in this story, if the parent adds them. */
+  familyParts: FamilyParts | null;
   picture: string | null;
+  /** The story's own colors, for a soft wash on the card until it has a sample picture. */
+  palette: string[];
 }
 
 const input = "ss-input mt-1";
+
+/** A soft painted wash in a story's own colors (theme data, not brand colors), over the paper. */
+function washOf(palette: string[]) {
+  const c = palette.filter((x) => /^#[0-9a-f]{6}$/i.test(x)).slice(0, 3);
+  if (c.length < 2) return undefined;
+  return { backgroundImage: `radial-gradient(circle at 30% 30%, ${c[0]}66, transparent 60%), radial-gradient(circle at 75% 70%, ${c[1]}66, transparent 55%)${c[2] ? `, radial-gradient(circle at 70% 20%, ${c[2]}44, transparent 45%)` : ""}` };
+}
 
 /**
  * Starting a book in two questions: which story, and who's in it. Everything
@@ -35,7 +49,7 @@ export function SimpleBookForm({
   needsCharacter,
   heroReady,
 }: {
-  child: { id: string; name: string; petName: string | null; friend: string | null };
+  child: { id: string; name: string; age: number; petName: string | null; friend: string | null };
   style: string;
   readingLevel: string;
   stories: StoryCard[];
@@ -96,7 +110,11 @@ export function SimpleBookForm({
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={s.picture} alt="" className="block aspect-square w-full rounded-[var(--radius-book)] object-cover" />
                   ) : (
-                    <span className="block aspect-square w-full rounded-[var(--radius-book)] bg-paper-sunk" />
+                    <span
+                      className="block aspect-square w-full rounded-[var(--radius-book)] bg-paper-sunk"
+                      style={washOf(s.palette)}
+                      data-testid={`wash-${s.id}`}
+                    />
                   )}
                   {selected && (
                     <span className="absolute right-2 top-2 grid size-8 place-items-center rounded-full bg-paper-raised text-persimmon shadow-lift">
@@ -106,14 +124,29 @@ export function SimpleBookForm({
                 </span>
                 <span className="ss-book__title block px-1 text-[17px] leading-[23px] sm:text-[21px] sm:leading-[27px]">{s.title}</span>
                 <span className="ss-book__detail block text-sm sm:text-[15px]">{s.summary}</span>
-                <span className="ss-pill mx-1 hidden self-start sm:inline-flex">{s.voiceLabel}</span>
+                {s.trait && (
+                  <span className="ss-pill mx-1 self-start" data-testid={`trait-${s.id}`}>
+                    <span className="sr-only">Builds </span>
+                    {s.trait}
+                  </span>
+                )}
               </label>
             );
           })}
         </div>
       </fieldset>
 
-      <CastPicker heroId={child.id} heroName={child.name} people={people} style={style} needsCharacter={needsCharacter} showAbout={false} step={2} />
+      <CastPicker
+        heroId={child.id}
+        heroName={child.name}
+        heroAge={child.age}
+        people={people}
+        style={style}
+        needsCharacter={needsCharacter}
+        showAbout={false}
+        step={2}
+        storyParts={story?.familyParts ?? null}
+      />
 
       <details className="ss-card">
         <summary className="ss-summary title">

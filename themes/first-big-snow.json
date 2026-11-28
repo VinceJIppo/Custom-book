@@ -1,0 +1,59 @@
+{
+  "id": "first-big-snow",
+  "name": "The First Big Snow",
+  "genre": "everyday wonder",
+  "ageRange": [
+    2,
+    8
+  ],
+  "pitch": "On the morning of the first big snow, the child sets out to build a real snow house in the backyard, big enough to sit inside. But the snow is cold and powdery and will not hold together, so it takes trying, resting, noticing and many small strong steps.",
+  "setting": "A family backyard after the first big snow of winter: a wooden fence with caps of snow, a bare maple tree, a garden shed holding the sled and a bright summer sand bucket, a shoveled path to the back door, the kitchen window glowing warm, a pale winter sky now the snow has stopped, and long blue shadows by afternoon.",
+  "supportingCast": [],
+  "storyBeats": [
+    "block towers at home and summer sandcastles",
+    "the first big snow and the sled beside the sand bucket",
+    "a dream of a snow house big enough to sit in",
+    "powdery snow that slides away like sugar",
+    "a rolled snowball that will not grow",
+    "a quiet rest and a seat that keeps its shape",
+    "the summer sand bucket in the shed",
+    "brick by brick the walls rise",
+    "sitting inside the snow house with warm drinks"
+  ],
+  "powerIdeas": "The child's love of building (blocks, cushion forts, sandcastles) and their strong, patient hands make it work. A favorite color can be a scarf tied on the top wall, and a favorite animal can be pressed into the snow beside the door.",
+  "artDirection": {
+    "defaultStyle": "painted-whimsy",
+    "palette": [
+      "#E4ECF2",
+      "#A9BFD3",
+      "#D98C7E",
+      "#B98E6E"
+    ],
+    "mood": "hushed and bright: soft white snow with cool blue shadows, warm touches of mitten red and cocoa brown, the cozy quiet of a snow day"
+  },
+  "contentRules": [
+    "real world only: no magic, no talking animals and no snowman that comes to life",
+    "the child builds it with their own hands; others may carry or pat snow but never build it for them",
+    "true to how snow works: loose powder slides apart, and snow pressed hard holds its shape",
+    "the snow house is a low round wall with an open top: no roof, no tunnel and no digging into snowbanks",
+    "cold is cozy, never harsh: mittens, hats, rosy cheeks and a warm kitchen close by; tumbles are soft, nobody gets hurt and nobody throws snow at anyone"
+  ],
+  "familyParts": {
+    "grownUp": "Clears the path, offers one calm line about how snow behaves, and brings warm drinks out at the end, but never builds the snow house.",
+    "youngerChild": "Fills and pats the bucket and is the first one to sit inside the finished snow house.",
+    "olderChild": "Builds a snowman nearby and cheers each new brick, but leaves the snow house to the child.",
+    "withoutGrownUp": "The child plays in their own fenced backyard with the warm kitchen window in sight. At the end, warm drinks come out through the back door in unnamed hands."
+  },
+  "starters": [
+    {
+      "id": "snow-house",
+      "title": "The Snow House",
+      "summary": "The first big snow has fallen, and your child wants to build a real snow house to sit inside. But this snow is cold and powdery, and it just won't stay put.",
+      "trait": "Perseverance",
+      "voice": "quiet-wisdom",
+      "idea": "The child wants to build a snow house to sit inside, all by themselves, while a grown-up clears the path. But the cold, powdery snow won't hold together. A big heap for the walls slides down like sugar. A rolled snowball won't grow, because loose powder won't cling to it as it rolls. Resting, the child sits in the snow, stands up and sees their seat has stayed firm: snow pressed hard holds its shape. Then they remember the sand bucket by the sled in the shed (seen at the start). They pack it with snow, press it hard and tip out brick after brick until the walls are tall enough to sit inside."
+    }
+  ],
+  "houseOrder": 4,
+  "licensed": false
+}

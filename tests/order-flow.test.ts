@@ -6,21 +6,10 @@ import { ensurePrintFiles, productsForBook } from "@/lib/books/export";
 import { orderableExports } from "@/lib/orders/service";
 import { drainQueue } from "@/lib/jobs/runner";
 import { resetConfigCache } from "@/lib/config";
-import { listThemesForUser, loadBuiltInThemeFiles, syncBuiltInThemes } from "@/lib/themes";
+import { listThemesForUser, syncBuiltInThemes } from "@/lib/themes";
 import { resetProviders } from "@/lib/providers/registry";
 import { HOUSE_STYLE, HOUSE_THEME_ID } from "@/lib/schemas/theme";
 import { makeUser, resetDb } from "./helpers";
-
-describe("one house theme, six stories", () => {
-  it("parents see only the Wishing Garden, with six ready-made stories, each with its own voice", () => {
-    const visible = loadBuiltInThemeFiles().filter((t) => !t.hidden);
-    expect(visible.map((t) => t.id)).toEqual([HOUSE_THEME_ID]);
-    const garden = visible[0];
-    expect(garden.artDirection.defaultStyle).toBe(HOUSE_STYLE);
-    expect(garden.starters).toHaveLength(6);
-    expect(garden.starters!.every((s) => s.summary && s.voice)).toBe(true);
-  });
-});
 
 describe("ordering straight from the book", () => {
   let userId: string;
@@ -33,7 +22,7 @@ describe("ordering straight from the book", () => {
     const themeId = (await listThemesForUser(userId)).find((t) => t.slug === HOUSE_THEME_ID)!.id;
     const child = await createChild(userId, { firstName: "Isla", age: 5, pronouns: "she", favorites: { colors: [], animals: [], foods: [], activities: [] }, friends: [] });
     if (!child.ok) throw new Error("child");
-    const res = await createAndStartBook(userId, { childId: child.id, themeId, options: { length: 12, readingLevel: "4-6", style: HOUSE_STYLE, trimSize: "square-8.5", includePet: false, includeFriend: false, starterId: "rainbow-seed", voice: "classic" } });
+    const res = await createAndStartBook(userId, { childId: child.id, themeId, options: { length: 12, readingLevel: "4-6", style: HOUSE_STYLE, trimSize: "square-8.5", includePet: false, includeFriend: false, starterId: "lumas-glow", voice: "quiet-wisdom" } });
     if (!res.ok) throw new Error(res.message);
     bookId = res.bookId;
   });

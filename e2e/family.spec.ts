@@ -33,7 +33,7 @@ test("a grown-up co-stars: Mama is secretly a superhero, in the house hand-paint
   await page.getByRole("link", { name: /^← / }).click();
   await page.getByRole("link", { name: "New book" }).click();
 
-  await page.getByTestId("story-moonlight-lullaby").click();
+  await page.getByTestId("story-last-hen-home").click();
   // Long family lists show the first few people; open the full list if Mama isn't among them.
   const showAll = page.getByRole("button", { name: /^Show all \d+ people$/ });
   if (await showAll.isVisible()) await showAll.click();

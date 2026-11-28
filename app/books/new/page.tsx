@@ -56,6 +56,7 @@ export default async function NewBook({ searchParams }: { searchParams: Promise<
         name: p.nickname || p.firstName,
         label: p.kind === "grownup" ? (p.relationship ?? "grown-up") : `child, ${p.age}`,
         kind: p.kind === "grownup" ? ("grownup" as const) : ("child" as const),
+        age: p.kind === "grownup" ? null : p.age,
         approvedStyles: await approvedStyles(p.id),
         hasLook: !!p.look,
       })),
@@ -79,7 +80,7 @@ export default async function NewBook({ searchParams }: { searchParams: Promise<
           )}
         </div>
         <SimpleBookForm
-          child={{ id: child.id, name: child.nickname || child.firstName, petName: child.petName, friend: friendList[0] ?? null }}
+          child={{ id: child.id, name: child.nickname || child.firstName, age: child.age, petName: child.petName, friend: friendList[0] ?? null }}
           style={HOUSE_STYLE}
           readingLevel={readingLevelForAge(child.age)}
           stories={stories.map((s) => ({
@@ -89,7 +90,10 @@ export default async function NewBook({ searchParams }: { searchParams: Promise<
             summary: s.starter.summary ?? s.starter.idea.slice(0, 140),
             voice: s.starter.voice ?? "classic",
             voiceLabel: VOICES[s.starter.voice ?? "classic"].label,
+            trait: s.starter.trait ?? null,
+            familyParts: s.theme.config.familyParts ?? null,
             picture: pictureOf(s),
+            palette: s.theme.config.artDirection.palette,
           }))}
           people={people}
           needsCharacter={activeProviderNames().image !== "mock"}

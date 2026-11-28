@@ -82,9 +82,27 @@ export const ThemeConfigSchema = z
           summary: z.string().min(10).max(200).optional(),
           /** The voice this story is told in (the parent doesn't choose one). */
           voice: z.enum(VOICE_IDS).optional(),
+          /** The one main trait the story builds, shown on the parent's story card ("Courage"). */
+          trait: z.string().min(2).max(24).optional(),
         }),
       )
       .max(8)
+      .optional(),
+    /**
+     * The parts family members can play, used only for the people the parent actually adds to a
+     * book (see familyPartFor). The story itself never needs them, and never invents them.
+     */
+    familyParts: z
+      .object({
+        /** A grown-up from the family: a calm supporting part that never solves the problem. */
+        grownUp: z.string().min(10).max(220).optional(),
+        /** A child younger than the hero (a little brother, sister or cousin). */
+        youngerChild: z.string().min(10).max(220).optional(),
+        /** A child older than the hero. */
+        olderChild: z.string().min(10).max(220).optional(),
+        /** How the story reads when no grown-up is added: never an invented parent. */
+        withoutGrownUp: z.string().min(10).max(220).optional(),
+      })
       .optional(),
     /** Hidden themes aren't offered for new books (books already made with them keep working). */
     hidden: z.boolean().optional(),
@@ -95,6 +113,25 @@ export const ThemeConfigSchema = z
   .refine((t) => t.ageRange[0] <= t.ageRange[1], { message: "ageRange must be [min, max]", path: ["ageRange"] });
 
 export type ThemeConfig = z.infer<typeof ThemeConfigSchema>;
+
+export type FamilyParts = NonNullable<ThemeConfig["familyParts"]>;
+
+/**
+ * The part a family member plays in this base story, from who they are: a grown-up, or a child
+ * younger or older than the hero. A part the parent typed for them always wins (the caller checks).
+ */
+export function familyPartFor(parts: FamilyParts | undefined, person: { kind: string; age?: number | null }, heroAge: number): string | undefined {
+  if (!parts) return undefined;
+  if (person.kind === "grownup") return parts.grownUp;
+  if (person.age == null) return parts.youngerChild ?? parts.olderChild;
+  return person.age < heroAge ? (parts.youngerChild ?? parts.olderChild) : (parts.olderChild ?? parts.youngerChild);
+}
+
+/** What the family parts ask for, for the parent's cast step ("a grown-up" and "a younger child"). */
+export function familyPartLabels(parts: FamilyParts | undefined): string[] {
+  if (!parts) return [];
+  return [parts.grownUp && "a grown-up", parts.youngerChild && "a younger child", parts.olderChild && "an older child"].filter((x): x is string => !!x);
+}
 
 /** A base story: one ready-made story and the world (theme) it belongs to. */
 export interface HouseStory<T = ThemeConfig> {

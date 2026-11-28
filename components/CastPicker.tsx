@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { familyPartFor, familyPartLabels, type FamilyParts } from "@/lib/schemas/theme";
 
 export interface CastOption {
   id: string;
@@ -9,6 +10,8 @@ export interface CastOption {
   /** "Mom", "Grandpa", or "child, 7" */
   label: string;
   kind: "child" | "grownup";
+  /** A child's age (null for grown-ups), to know whether they are younger or older than the hero. */
+  age?: number | null;
   approvedStyles: string[];
   hasLook: boolean;
 }
@@ -44,23 +47,33 @@ function examplePart(p: CastOption, index: number, hero: string) {
 
 const input = "ss-input mt-1";
 
+/** "a", "a and b", "a, b and c" */
+function listWords(items: string[]) {
+  return items.length < 2 ? (items[0] ?? "") : `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`;
+}
+
 /** Pick other real people for the book, their part, who the story centers on, and what it's about. */
 export function CastPicker({
   heroId,
   heroName,
+  heroAge,
   people,
   style,
   needsCharacter,
   showAbout = true,
   step,
+  storyParts,
 }: {
   heroId: string;
   heroName: string;
+  heroAge?: number;
   people: CastOption[];
   style: string | null;
   needsCharacter: boolean;
   /** The simple book form picks a ready-made story, so it leaves this out. */ showAbout?: boolean;
   /** A step number to put before the heading, when the picker is one numbered step of a form. */ step?: number;
+  /** The base story's parts for family members: shown as the hint and as each person's default part. */
+  storyParts?: FamilyParts | null;
 }) {
   const [picked, setPicked] = useState<string[]>([]);
   const [about, setAbout] = useState("");
@@ -74,12 +87,17 @@ export function CastPicker({
     ? sorted
     : sorted.filter((p, i) => i < LIMIT || picked.includes(p.id));
   const chosen = people.filter((p) => picked.includes(p.id));
+  const partLabels = familyPartLabels(storyParts ?? undefined);
+  const storyPartFor = (p: CastOption) => (storyParts && heroAge != null ? familyPartFor(storyParts, p, heroAge) : undefined);
   return (
     <section className="space-y-4">
       <div>
         <h2 className="title">{step ? `${step}. ` : ""}Who else is in the story?</h2>
         <p className="body-s text-ink-muted">
-          {step ? `${heroName} is the star. ` : ""}Optional. Add a parent, grandparent or sibling.{" "}
+          {step ? `${heroName} is the star. ` : ""}
+          {partLabels.length
+            ? `Optional. This story has a part for ${listWords(partLabels)} if you add them. It works just as well without, and we never make up family members.`
+            : "Optional. Add a parent, grandparent or sibling."}{" "}
           <Link href="/people/new" className="ss-link">
             Add a grown-up
           </Link>
@@ -137,9 +155,9 @@ export function CastPicker({
                     <textarea
                       name={`part_${p.id}`}
                       maxLength={300}
-                      rows={2}
+                      rows={storyPartFor(p) ? 4 : 2}
                       className={input}
-                      placeholder={examplePart(p, sorted.indexOf(p), heroName)}
+                      placeholder={storyPartFor(p) ? `Leave blank for the story's part: ${storyPartFor(p)}` : examplePart(p, sorted.indexOf(p), heroName)}
                     />
                   </label>
                 )}

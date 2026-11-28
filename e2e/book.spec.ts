@@ -22,9 +22,9 @@ test("create a profile, pick a theme, and read a 16-page book in the flipbook", 
   await expect(page.getByRole("heading", { level: 1, name })).toBeVisible();
 
   await page.getByRole("link", { name: "New book" }).click();
-  // One house theme: pick one of the six stories (the first is chosen already).
+  // One house theme: pick one of the base stories (the first is chosen already).
   await expect(page.getByTestId("simple-book-form").locator('[data-testid^="story-"]')).toHaveCount(6);
-  await page.getByTestId("story-teacup-pond").click();
+  await page.getByTestId("story-before-the-tide").click();
   await page.getByTestId("create-book").click();
 
   await expect(page).toHaveURL(/\/books\/\w+$/);

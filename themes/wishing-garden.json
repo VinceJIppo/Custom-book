@@ -56,48 +56,20 @@
     "only original characters"
   ],
   "licensed": false,
+  "familyParts": {
+    "grownUp": "Comes through the painted door with the child and helps hang the lanterns, but it is the child who notices what Luma needs.",
+    "youngerChild": "Holds the daisy crown while the child makes it, and is the first to see Luma's glow come back.",
+    "olderChild": "Helps carry the picnic basket and lets the child lead the way to Luma.",
+    "withoutGrownUp": "The child goes through the painted door on their own: the Wishing Garden is safe, small and made for children."
+  },
   "starters": [
     {
       "id": "lumas-glow",
       "title": "Luma's Lost Glow",
       "summary": "On the night of the Moon Picnic, a shy little firefly has lost her glow, and the lanterns can't be lit without her.",
+      "trait": "Kindness",
       "voice": "quiet-wisdom",
       "idea": "Luma the firefly has lost her glow on the night of the Moon Picnic, and the lanterns can't be lit without her. A jar of moonlight and Clementine's brave pep talk don't work. Pipkin notices Luma glows when she feels loved, the child gives her a tiny daisy crown and a hug, and her glow lights every bluebell lantern."
-    },
-    {
-      "id": "teacup-pond",
-      "title": "The Teacup Pond Party",
-      "summary": "The roses have planned a tea party, but the teacup pond has gone dry the very morning of the party.",
-      "voice": "classic",
-      "idea": "The roses have planned a tea party but the teacup pond has gone dry. Carrying water in thimbles is too slow and a raincloud won't come. The child spots a sleepy snail sitting on the little spring, kindly helps him move, and the pond fills just in time for a sparkling tea."
-    },
-    {
-      "id": "sunflower-clock",
-      "title": "The Sleepy Sunflower Clock",
-      "summary": "The tall sunflower that wakes the garden each morning won't wake up, and the Morning Parade can't begin.",
-      "voice": "rhyming-mischief",
-      "idea": "The garden wakes when the tall Sunflower Clock turns its face to the sun, but today it slept through sunrise behind a thick morning mist, so the Morning Parade can't start. Ringing the bluebells only wakes the bees, and Pipkin's feather tickle makes it sneeze but not wake. The child remembers their shiny button (shown at the start) and holds it up to catch the first ray of light through the mist, shining it onto the sunflower's face. It stretches, turns, and the parade begins."
-    },
-    {
-      "id": "moonlight-lullaby",
-      "title": "The Moonlight Lullaby",
-      "summary": "The night breeze has lost its lullaby, and nobody in the Wishing Garden can fall asleep.",
-      "voice": "bedtime",
-      "idea": "Every night the breeze hums a lullaby through the seashell chimes, but tonight the chimes are tangled and the garden can't fall asleep. Clementine hums loudly, but it's too bouncy to be sleepy, and counting stars makes everyone wide awake. The child gently untangles the chimes with Pipkin's help, then softly sings the bedtime song their own grown-up sings to them at home (set up at the start). The breeze learns it, and the whole garden drifts to sleep, and so does the child, back at home."
-    },
-    {
-      "id": "grandma-mouse-basket",
-      "title": "Grandma Mouse's Birthday Basket",
-      "summary": "Pipkin has picked the perfect strawberries for his grandma's birthday, but his little basket is far too heavy to carry across the garden.",
-      "voice": "adventure",
-      "idea": "Pipkin wants to bring a basket of strawberries to Grandma Mouse's birthday across the garden, but it's too heavy for him. Clementine tries carrying it on her head and the strawberries tumble out. The child notices an empty walnut shell and four round buttons (from the child's coat, mentioned at the start), and together they build a tiny wagon. They pull it past the rose bushes and over the moss bridge, and arrive just as Grandma Mouse lights her candle."
-    },
-    {
-      "id": "rainbow-seed",
-      "title": "The Rainbow Seed",
-      "summary": "The garden's rainbow seed won't sprout, and without it there will be no rainbow over the Wishing Garden this spring.",
-      "voice": "classic",
-      "idea": "Each spring the garden plants one rainbow seed, and its flower paints the rainbow in the sky. This year it won't sprout. Watering it more just makes a muddy puddle, and Clementine's cheerful singing doesn't help. Pipkin notices the seed is in the cold shadow of a big leaf. The child gently moves the big leaf aside so the warm sun reaches the seed, and ties their favorite-colored ribbon to the stem so everyone remembers to give it sun. The flower opens, and a rainbow arcs over the garden."
     }
   ],
   "houseOrder": 1

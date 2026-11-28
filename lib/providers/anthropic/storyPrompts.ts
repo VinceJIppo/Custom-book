@@ -6,7 +6,7 @@ import { budgetText } from "../../books/budget";
 import { audienceFor, audienceText } from "../../books/audience";
 import type { ReadingLevel } from "../../schemas/book";
 import type { StoryContext, ThemeDraftRequest } from "../story/types";
-import { ART_STYLES } from "../../schemas/theme";
+import { ART_STYLES, familyPartFor } from "../../schemas/theme";
 import { retryNote } from "./client";
 import { setupPageCount } from "../../books/setup";
 
@@ -48,6 +48,7 @@ Real family and friends in the story
 - Follow each person's theirPartInThisStory closely: it is the parent's wish for the book. A secret (for example "Mom is secretly a superhero and the child doesn't know") is a gift to the reader: keep it hidden from the child character until the moment the parent planned (or keep it a fun secret the reader shares), and plant small clues along the way.
 - storyCentersOn says whose story it is. If it is a grown-up, the child still has an important, active part, and the story should help the child see that grown-up in a new, admiring light.
 - whatThisStoryIsAbout comes first: build the plot around it and use the theme for the setting, supporting cast and mood. If it describes a real job or a real life situation (a hospital stay, a move, a new sibling), keep the facts true, simple and reassuring for the child's age.
+- The child's family in this book is ONLY the child and the people in otherPeopleInTheStory. Never add, mention or picture a parent, brother, sister, grandparent or other relative who is not listed there, even if the theme or story idea suggests one. When family.ifNoGrownUp is given, follow it for any grown-up the story needs.
 
 Characters stay the same from page to page
 - Every character keeps the same species, size, colors, clothes and accessories (glasses, hats, bags, capes) on every page. An animal is always the same kind of animal: a red fox on page 2 is the same red fox on page 12, never a dog, a cat or a "furry friend" of another kind. Always call it by its name or its kind consistently.
@@ -143,6 +144,10 @@ export function spotlightName(ctx: StoryContext): string {
   return c ? c.nickname || c.name : ctx.child.nickname || ctx.child.firstName;
 }
 
+/** When the parent adds no grown-up: the story may still need one nearby, but never an invented parent. */
+export const NO_GROWN_UP =
+  "No grown-up from the family is in this book. If the story needs one nearby, call them only 'a grown-up' (never Mom, Dad or a named relative) and keep their face out of the pictures: hands, back, or a voice from a doorway.";
+
 export function describeContext(ctx: StoryContext): string {
   const { child, theme, options } = ctx;
   const cast = ctx.cast ?? [];
@@ -175,9 +180,14 @@ export function describeContext(ctx: StoryContext): string {
           pronouns: m.pronouns,
           about: m.about ?? null,
           appearance: ctx.appearance?.people?.[m.nickname || m.name] ?? m.look ?? null,
-          theirPartInThisStory: m.part ?? null,
+          // The parent's own words win; otherwise the base story's part for a grown-up, a younger or an older child.
+          theirPartInThisStory: m.part || familyPartFor(theme.familyParts, m, child.age) || null,
         }))
       : null,
+    family: {
+      onlyThesePeople: "The child and otherPeopleInTheStory are the whole family in this book. Never invent a parent, sibling or other relative.",
+      ifNoGrownUp: cast.some((m) => m.kind === "grownup") ? null : (theme.familyParts?.withoutGrownUp ?? NO_GROWN_UP),
+    },
     storyCentersOn: spotlightName(ctx),
     whatThisStoryIsAbout: options.storyAbout || null,
     // A rewrite: the parent read a previous draft and asked for these changes. Follow them closely.
@@ -495,6 +505,7 @@ export function artDirectionPrompt(ctx: StoryContext, outline: Outline, pages: A
     `The hero: ${ctx.child.nickname || ctx.child.firstName}, age ${ctx.child.age}.`,
     "Characters as they must look (name real people in each scene's characters exactly as written here, so the illustrator can match their reference sheets):",
     cast,
+    "Only the people listed here are real family. Never add a parent, brother, sister or other relative to a scene. A grown-up who is not listed above (the words say only \"a grown-up\") is shown only partly: hands, back or from behind, never a clear face.",
     ctx.appearance?.hero ? `${ctx.child.nickname || ctx.child.firstName} (the hero): ${ctx.appearance.hero}` : "",
     "",
     "Character guide for the whole book (species and fixed look; use it in every scene):",

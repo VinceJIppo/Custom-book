@@ -1,0 +1,66 @@
+{
+  "id": "sunny-classroom",
+  "name": "The Sunny Classroom",
+  "genre": "first day",
+  "ageRange": [
+    2,
+    8
+  ],
+  "pitch": "On the first morning at a new school, the classroom is so busy that the child can't find a place to fit, until the child notices a thirsty plant on the windowsill and does what they do every morning at home.",
+  "setting": "A bright classroom at a new school on the very first morning of the year: a row of coat pegs with picture labels, little tables and chairs, a reading rug, a block corner, a small sink with paper cups, and big windows full of late summer sun. On the sunny windowsill sits a drooping potted plant, thirsty after a hot week in the empty room. At home, a small plant lives on the kitchen windowsill.",
+  "supportingCast": [
+    {
+      "name": "Nico",
+      "role": "a new classmate who is shy too and becomes the child's first friend",
+      "look": "a boy about the child's age with short wavy black hair, a mustard yellow cardigan with a ladybug badge over a blue striped T-shirt, green shorts and red sneakers; he carries nothing"
+    }
+  ],
+  "storyBeats": [
+    "watering the little plant at home every morning",
+    "the night before the first day",
+    "goodbye at the classroom door",
+    "a busy room where everyone is new",
+    "waiting by the coat pegs beside shy Nico",
+    "the block corner has no room for one more",
+    "a thirsty plant on the windowsill",
+    "doing what the child knows how to do",
+    "Nico comes over to help",
+    "home again with something to tell"
+  ],
+  "powerIdeas": "What the child already knows from home is what helps. A favorite color can be the child's lunchbox or the picture on their coat peg, and a favorite thing can be what the child and Nico talk about while the plant drinks.",
+  "artDirection": {
+    "defaultStyle": "painted-whimsy",
+    "palette": [
+      "#F2CC6B",
+      "#7D9ED3",
+      "#E2766A",
+      "#8DC3A0"
+    ],
+    "mood": "bright and fresh, late summer sun through big classroom windows and crayon colors, busy at first, then calm and warm"
+  },
+  "contentRules": [
+    "School is safe and kind: no teasing, no unkind children and nobody gets in trouble.",
+    "The grown-up says goodbye at the classroom door because that is the school's rule, and comes back at home time as promised.",
+    "The teacher is warm and is simply 'the teacher' unless the family adds the child's real teacher.",
+    "The plant perks up slowly over the day after a drink, never by magic.",
+    "No school, shop or brand names, and no readable words on signs or labels."
+  ],
+  "familyParts": {
+    "grownUp": "Walks the child to the classroom door, says goodbye there because that is the school's rule, and comes back at home time as promised.",
+    "youngerChild": "Waves goodbye from the stroller at the classroom door and hears all about the plant at home time.",
+    "olderChild": "Waves from the big kids' line but can't come in, and wants to hear all about the day at home time.",
+    "withoutGrownUp": "Say only 'a grown-up' brings the child to the door: show just a hand waving goodbye, and the same hand waving hello at home time."
+  },
+  "starters": [
+    {
+      "id": "little-plant-big-school",
+      "title": "The Little Plant at Big School",
+      "summary": "It is your child's very first day at big school. The classroom is busy and loud, everyone is new, and it is hard to find a place to fit.",
+      "trait": "Self-belief",
+      "voice": "quiet-wisdom",
+      "idea": "On the first day at big school, the grown-up must say goodbye at the door and the teacher is busy greeting each family, so nobody notices the child. Waiting by the coat pegs to be asked to play fails: everyone is new and busy, and Nico at the next peg is too shy to speak. Joining the block corner fails too: every block is already in a tower. Then the child spots a plant drooping on the windowsill, thirsty after a hot week. Like the plant at home (shown at the start), it needs a slow drink, and the child knows how. Nico comes to help, and by home time the plant and the child both stand taller."
+    }
+  ],
+  "houseOrder": 2,
+  "licensed": false
+}

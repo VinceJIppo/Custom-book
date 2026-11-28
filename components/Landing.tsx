@@ -198,6 +198,12 @@ export function Landing({
                   <h3 className="ss-book__title">{s.title}</h3>
                   <span className="ss-book__price">[PRICE]</span>
                 </div>
+                {s.trait && (
+                  <span className="ss-pill self-start" data-testid={`landing-trait-${s.id}`}>
+                    <span className="sr-only">Builds </span>
+                    {s.trait}
+                  </span>
+                )}
                 <p className="ss-book__detail">
                   Hardcover, {PAGE_RANGE}. {s.summary}
                 </p>
