@@ -36,10 +36,12 @@ describe("ThemeConfigSchema", () => {
     expect(ThemeConfigSchema.safeParse({ ...t, artDirection: { ...t.artDirection, palette: ["blue", "#FFF"] } }).success).toBe(false);
     expect(ThemeConfigSchema.safeParse({ ...t, ageRange: [8, 3] }).success).toBe(false);
   });
-  it("rejects unknown art styles and missing cast", () => {
+  it("rejects unknown art styles and half-described characters, but allows a world with none", () => {
     const t = superhero();
     expect(ThemeConfigSchema.safeParse({ ...t, artDirection: { ...t.artDirection, defaultStyle: "anime" } }).success).toBe(false);
-    expect(ThemeConfigSchema.safeParse({ ...t, supportingCast: [] }).success).toBe(false);
+    expect(ThemeConfigSchema.safeParse({ ...t, supportingCast: [{ name: "Pip", role: "a helper", look: "" }] }).success).toBe(false);
+    // A real-world base story may bring no made-up characters at all.
+    expect(ThemeConfigSchema.safeParse({ ...t, supportingCast: [] }).success).toBe(true);
   });
 });
 

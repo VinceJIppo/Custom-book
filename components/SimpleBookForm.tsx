@@ -8,6 +8,8 @@ import { CastPicker, type CastOption } from "./CastPicker";
 
 export interface StoryCard {
   id: string;
+  /** The story's own world (theme): sent with the book so the right setting and characters are used. */
+  themeId: string;
   title: string;
   summary: string;
   /** Voice id the story is told in, and its label for the card. */
@@ -20,13 +22,12 @@ const input = "ss-input mt-1";
 
 /**
  * Starting a book in two questions: which story, and who's in it. Everything
- * else is set for the parent: the house theme and art style, 16 pages, the
+ * else is set for the parent: the story's own world, the house art style, 16 pages, the
  * reading level for the child's age, the story's own voice, the pet and best
  * friend when the profile has them, and pictures drawn right away.
  */
 export function SimpleBookForm({
   child,
-  themeId,
   style,
   readingLevel,
   stories,
@@ -35,7 +36,6 @@ export function SimpleBookForm({
   heroReady,
 }: {
   child: { id: string; name: string; petName: string | null; friend: string | null };
-  themeId: string;
   style: string;
   readingLevel: string;
   stories: StoryCard[];
@@ -60,7 +60,7 @@ export function SimpleBookForm({
       data-testid="simple-book-form"
     >
       <input type="hidden" name="childId" value={child.id} />
-      <input type="hidden" name="themeId" value={themeId} />
+      <input type="hidden" name="themeId" value={story?.themeId ?? ""} />
       <input type="hidden" name="style" value={style} />
       <input type="hidden" name="length" value="16" />
       <input type="hidden" name="readingLevel" value={readingLevel} />

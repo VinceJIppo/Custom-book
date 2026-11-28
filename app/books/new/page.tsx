@@ -5,7 +5,7 @@ import { getChild, listPeople } from "@/lib/children/service";
 import { listThemesForUser } from "@/lib/themes";
 import { storyPictures, themeSamples } from "@/lib/themeSamples";
 import { isAdminEmail } from "@/lib/admin";
-import { HOUSE_STYLE, HOUSE_THEME_ID } from "@/lib/schemas/theme";
+import { HOUSE_STYLE, houseStories } from "@/lib/schemas/theme";
 import { VOICES } from "@/lib/schemas/voices";
 import { SimpleBookForm } from "@/components/SimpleBookForm";
 import { estimateFor } from "@/lib/books/service";
@@ -62,13 +62,12 @@ export default async function NewBook({ searchParams }: { searchParams: Promise<
   );
   const friendList = child.friends as string[];
 
-  // Parents pick one of the house theme's ready-made stories; admins can open the full options.
+  // Parents pick one of the base stories (each brings its own world); admins can open the full options.
   if (!(advanced && isAdminEmail(user.email))) {
-    const house = (await listThemesForUser(user.id)).find((t) => t.slug === HOUSE_THEME_ID);
-    if (!house) notFound();
-    const starters = house.config.starters ?? [];
-    const fallback = (await themeSamples(user.id, [{ id: house.id, slug: house.slug }]))[house.id] ?? [];
-    const pictures = storyPictures(house.slug, starters.map((s) => s.id), fallback);
+    const stories = houseStories(await listThemesForUser(user.id));
+    if (!stories.length) notFound();
+    const samples = await themeSamples(user.id, stories.map((s) => ({ id: s.theme.id, slug: s.theme.slug })));
+    const pictureOf = (s: (typeof stories)[number]) => storyPictures(s.theme.slug, [s.starter.id], samples[s.theme.id] ?? [])[s.starter.id];
     return (
       <div className="space-y-6">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -81,10 +80,17 @@ export default async function NewBook({ searchParams }: { searchParams: Promise<
         </div>
         <SimpleBookForm
           child={{ id: child.id, name: child.nickname || child.firstName, petName: child.petName, friend: friendList[0] ?? null }}
-          themeId={house.id}
           style={HOUSE_STYLE}
           readingLevel={readingLevelForAge(child.age)}
-          stories={starters.map((s) => ({ id: s.id, title: s.title, summary: s.summary ?? s.idea.slice(0, 140), voice: s.voice ?? "classic", voiceLabel: VOICES[s.voice ?? "classic"].label, picture: pictures[s.id] }))}
+          stories={stories.map((s) => ({
+            id: s.starter.id,
+            themeId: s.theme.id,
+            title: s.starter.title,
+            summary: s.starter.summary ?? s.starter.idea.slice(0, 140),
+            voice: s.starter.voice ?? "classic",
+            voiceLabel: VOICES[s.starter.voice ?? "classic"].label,
+            picture: pictureOf(s),
+          }))}
           people={people}
           needsCharacter={activeProviderNames().image !== "mock"}
           heroReady={(await approvedStyles(child.id)).includes(HOUSE_STYLE)}

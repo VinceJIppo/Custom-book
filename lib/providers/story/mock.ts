@@ -362,9 +362,10 @@ function buildVars(ctx: StoryContext): Vars {
   return {
     name,
     setting: theme.setting.split(",")[0].trim(),
-    leader: cast[0].name,
-    helper: (cast[1] ?? cast[0]).name,
-    sidekick: (cast[2] ?? cast[1] ?? cast[0]).name,
+    // A real-world story may bring no characters of its own: then a neighbor helps.
+    leader: cast[0]?.name ?? "a kind neighbor",
+    helper: (cast[1] ?? cast[0])?.name ?? "a kind neighbor",
+    sidekick: (cast[2] ?? cast[1] ?? cast[0])?.name ?? "a kind neighbor",
     color: child.favorites.colors[0]?.toLowerCase() ?? "golden",
     animal: singular(child.favorites.animals[0]?.toLowerCase() ?? "bunny"),
     food: child.favorites.foods[0]?.toLowerCase() ?? "pancakes",

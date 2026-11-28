@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 import Link from "next/link";
 import { loadBuiltInThemeFiles } from "@/lib/themes";
-import { HOUSE_THEME_ID } from "@/lib/schemas/theme";
+import { houseStories } from "@/lib/schemas/theme";
 import { Star } from "@/components/brand/Star";
 import {
   BookCover,
@@ -68,8 +68,8 @@ export function Landing({
   signedIn: boolean;
   startHref: string;
 }) {
-  const house = loadBuiltInThemeFiles().find((t) => t.id === HOUSE_THEME_ID);
-  const stories = house?.starters ?? [];
+  // The base stories, each from its own world.
+  const stories = houseStories(loadBuiltInThemeFiles()).map((s) => s.starter);
   return (
     <div className="-mb-8 -mt-8 sm:-mb-12 sm:-mt-12">
       {/* 1. Hero */}
@@ -173,7 +173,7 @@ export function Landing({
         <div className="ss-container ss-section">
           <div className="ss-section__head">
             <div>
-              <p className="ss-eyebrow">The Wishing Garden</p>
+              <p className="ss-eyebrow">Stories to start from</p>
               <h2 className="ss-h2">Pick where the story goes</h2>
             </div>
             <Link className="ss-link" href="/examples">

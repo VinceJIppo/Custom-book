@@ -5,7 +5,7 @@
  * Pictures are not drawn. Produces one Markdown file to review, with timings,
  * costs, the plan, the editor's notes, the finished words and a feedback checklist.
  *
- *   npm run sample-stories                       all six Wishing Garden stories (the house theme)
+ *   npm run sample-stories                       all six base stories, each in its own world and voice
  *   npm run sample-stories -- --compare          also writes each as a brand-new story, for comparison
  *   npm run sample-stories -- --stories topsy-turvy-town:sideways-rain,wishing-garden:lumas-glow
  *   npm run sample-stories -- --hero Theo --age 5 --siblings "Oliver:3:he,Charlie:1:she" --grownup "Mom:Mama:she"
@@ -67,8 +67,8 @@ async function main() {
   ];
 
   const runs: Array<{ themeId: string; starterId?: string }> = [];
-  const { HOUSE_THEME_ID } = await import("../lib/schemas/theme");
-  const picked = values.stories || (themes.find((t) => t.id === HOUSE_THEME_ID)?.starters ?? []).map((s) => `${HOUSE_THEME_ID}:${s.id}`).join(",");
+  const { houseStories } = await import("../lib/schemas/theme");
+  const picked = values.stories || houseStories(themes).map((s) => `${s.theme.id}:${s.starter.id}`).join(",");
   for (const pair of picked.split(",")) {
     const [themeId, starterId] = pair.trim().split(":");
     runs.push({ themeId, starterId });

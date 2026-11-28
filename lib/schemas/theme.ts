@@ -26,9 +26,12 @@ export const ART_STYLE_LABELS: Record<ArtStyle, string> = {
 };
 
 /**
- * Every new book and character uses the house theme and art style, so a person's
- * character is drawn once and used in every book. Books made earlier keep theirs.
+ * Every new book and character uses the house art style, so a person's character is drawn
+ * once and used in every book. Parents pick one of the base stories; each base story is a
+ * built-in theme with its own world and characters (a theme with a houseOrder), so stories
+ * never share characters. Books made earlier keep their theme and style.
  */
+/** The first base story's world (The Wishing Garden, home of "Luma's Lost Glow"). */
 export const HOUSE_THEME_ID = "wishing-garden";
 export const HOUSE_STYLE: ArtStyle = "painted-whimsy";
 
@@ -53,7 +56,8 @@ export const ThemeConfigSchema = z
     ageRange: z.tuple([z.number().int().min(1).max(12), z.number().int().min(1).max(12)]),
     pitch: z.string().min(10).max(400),
     setting: z.string().min(10).max(400),
-    supportingCast: z.array(CastMemberSchema).min(1).max(6),
+    /** Characters this world brings; a real-world story may have none. */
+    supportingCast: z.array(CastMemberSchema).max(6),
     storyBeats: z.array(z.string().min(2).max(80)).min(4).max(12),
     powerIdeas: z.string().max(300).optional(),
     artDirection: z.object({
@@ -84,8 +88,28 @@ export const ThemeConfigSchema = z
       .optional(),
     /** Hidden themes aren't offered for new books (books already made with them keep working). */
     hidden: z.boolean().optional(),
+    /** Set on the base stories parents pick from: their position in the list (1 first). */
+    houseOrder: z.number().int().min(1).max(20).optional(),
     licensed: z.boolean().default(false),
   })
   .refine((t) => t.ageRange[0] <= t.ageRange[1], { message: "ageRange must be [min, max]", path: ["ageRange"] });
 
 export type ThemeConfig = z.infer<typeof ThemeConfigSchema>;
+
+/** A base story: one ready-made story and the world (theme) it belongs to. */
+export interface HouseStory<T = ThemeConfig> {
+  theme: T;
+  starter: NonNullable<ThemeConfig["starters"]>[number];
+}
+
+/**
+ * The base stories parents pick from, in order: every starter of every visible theme with a
+ * houseOrder. Works on theme configs or on DB listings (anything with a `config`).
+ */
+export function houseStories<T extends ThemeConfig | { config: ThemeConfig }>(themes: T[]): Array<HouseStory<T>> {
+  const cfg = (t: T): ThemeConfig => ("config" in t ? t.config : t) as ThemeConfig;
+  return themes
+    .filter((t) => cfg(t).houseOrder !== undefined && !cfg(t).hidden)
+    .sort((a, b) => (cfg(a).houseOrder ?? 0) - (cfg(b).houseOrder ?? 0))
+    .flatMap((t) => (cfg(t).starters ?? []).map((starter) => ({ theme: t, starter })));
+}
