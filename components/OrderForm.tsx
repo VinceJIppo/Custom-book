@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { Fragment, useActionState, useState } from "react";
 import { checkoutAction, quoteAction, type OrderFormState } from "@/app/orders/actions";
 
 const SHIPPING_LABELS: Record<string, string> = {
@@ -14,6 +14,8 @@ const SHIPPING_LABELS: Record<string, string> = {
 };
 
 type Fields = { name: string; street1: string; street2: string; city: string; stateCode: string; postcode: string; countryCode: string; phone: string; email: string; giftNote: string };
+
+const formatUsd = (usd: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(usd);
 
 function dateRange(min?: string, max?: string) {
   const f = (d: string) => new Date(`${d}T12:00:00`).toLocaleDateString(undefined, { month: "short", day: "numeric" });
@@ -34,7 +36,7 @@ export function OrderForm({
   countries: Array<[string, string]>;
   paymentName: string;
   /** Credits that can go toward this book (keeping the minimum in the account), and the balance. */
-  credits?: { redeemableUsd: number; balanceUsd: number; keepUsd: number };
+  credits?: { redeemableUsd: number; balanceUsd: number; keepUsd: number; perBookUsd: number };
 }) {
   const [quote, quoteFormAction, quoting] = useActionState<OrderFormState | null, FormData>(quoteAction, null);
   const [checkout, checkoutFormAction, paying] = useActionState<OrderFormState | null, FormData>(checkoutAction, null);
@@ -44,6 +46,8 @@ export function OrderForm({
   const [quotedFor, setQuotedFor] = useState<string | null>(null);
   const key = JSON.stringify({ ...v, giftNote: "", exportId });
   const fresh = !!quote?.options?.length && quotedFor === key;
+  const [level, setLevel] = useState<string | null>(null);
+  const selected = quote?.options?.find((o) => o.level === level) ?? quote?.options?.[0];
   const errors = { ...(quote?.errors ?? {}), ...(checkout?.errors ?? {}) };
 
   const field = (name: keyof Fields, label: string, opts: { required?: boolean; hint?: string; autoComplete?: string; max?: number; wide?: boolean } = {}) => (
@@ -171,10 +175,10 @@ export function OrderForm({
         )}
         {fresh && (
           <div className="space-y-3" data-testid="shipping-options">
-            {quote!.options!.map((o, i) => (
+            {quote!.options!.map((o) => (
               <label key={o.level} className="ss-option group min-w-0 items-center justify-between">
                 <span className="flex min-w-0 items-center gap-3">
-                  <input type="radio" name="shippingLevel" value={o.level} defaultChecked={i === 0} className="ss-check shrink-0" />
+                  <input type="radio" name="shippingLevel" value={o.level} checked={selected?.level === o.level} onChange={() => setLevel(o.level)} className="ss-check shrink-0" />
                   <span className="min-w-0">
                     <span className="block font-semibold">{SHIPPING_LABELS[o.level] ?? o.level}</span>
                     <span className="body-s text-ink-muted group-has-checked:text-ink">{dateRange(o.arrivalMin, o.arrivalMax)}</span>
@@ -183,7 +187,24 @@ export function OrderForm({
                 <span className="shrink-0 text-lg font-bold">{o.total}</span>
               </label>
             ))}
-            <p className="body-s text-ink-muted">One total per option: printing, shipping and tax included.</p>
+            {selected && (
+              <div className="rounded-[var(--radius-sm)] bg-paper-sunk p-4" data-testid="price-lines">
+                <dl className="body-s m-0 grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-1 [&_dd]:m-0 [&_dd]:text-right [&_dd]:tabular-nums">
+                  {selected.lines.map((l) => (
+                    <Fragment key={l.key}>
+                      <dt className="min-w-0 break-words">{l.label}</dt>
+                      <dd>{l.amount}</dd>
+                    </Fragment>
+                  ))}
+                  <dt className="mt-1 border-t border-line pt-2 font-semibold">Total</dt>
+                  <dd className="mt-1 border-t border-line pt-2 font-semibold">{selected.total}</dd>
+                </dl>
+                <p className="body-s mt-2 text-ink-muted">
+                  {selected.tax ? `Includes ${selected.tax} tax.` : "Tax included."}
+                  {credits && selected.lines.some((l) => l.key === "credit") && ` The account credit adds ${formatUsd(credits.perBookUsd)} to your account for making more books.`}
+                </p>
+              </div>
+            )}
             {credits && (
               <label className="ss-option group min-w-0" data-testid="use-credits">
                 <input type="checkbox" name="useCredits" disabled={credits.redeemableUsd <= 0} defaultChecked={credits.redeemableUsd > 0} className="ss-check mt-0.5 shrink-0" />

@@ -1,8 +1,9 @@
+import { Fragment } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireOnboardedUser } from "@/lib/session";
 import { fulfillCheckout, getOrder, isAdmin, quoteOf } from "@/lib/orders/service";
-import { formatMoney, SHIPPING_LABELS } from "@/lib/orders/pricing";
+import { customerLines, formatMoney, SHIPPING_LABELS } from "@/lib/orders/pricing";
 import { historyMessage, STATUS_LABELS, type OrderStatus, type StatusEvent } from "@/lib/orders/status";
 import { getStorage } from "@/lib/storage";
 import { AutoRefresh } from "@/components/AutoRefresh";
@@ -145,14 +146,27 @@ export default async function OrderPage({ params, searchParams }: { params: Prom
           <p className="text-2xl font-bold" data-testid="order-total">
             {formatMoney(order.totalCents, order.currency)}
           </p>
-          <p className="body-s mt-1 text-ink-muted">Printing, shipping and tax included. {order.pageCount} pages.</p>
+          <p className="body-s mt-1 text-ink-muted">
+            {quote && quote.printer.tax > 0 ? `Includes ${formatMoney(Math.round(quote.printer.tax * 100), order.currency)} tax.` : "Tax included."} {order.pageCount} pages.
+          </p>
+          {quote && (
+            <dl className="body-s mt-4 grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-1 [&_dd]:m-0 [&_dd]:text-right [&_dd]:tabular-nums" data-testid="price-lines">
+              {customerLines({ ...quote, totalCents: order.totalCents }, order.bookTitle).map((l) => (
+                <Fragment key={l.key}>
+                  <dt className="min-w-0 break-words">{l.label}</dt>
+                  <dd>{formatMoney(l.cents, order.currency)}</dd>
+                </Fragment>
+              ))}
+            </dl>
+          )}
           {order.creditCents > 0 && (
-            <p className="body-s mt-1" data-testid="order-credits">
+            <p className="body-s mt-3" data-testid="order-credits">
               {formatMoney(order.creditCents, order.currency)} paid with credits, {formatMoney(order.totalCents - order.creditCents, order.currency)} by card.
             </p>
           )}
           {admin && quote && (
-            <dl className="body-s mt-4 grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-1 [&_dd]:text-right [&_dd]:tabular-nums" data-testid="price-breakdown">
+            <dl className="body-s mt-4 grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-1 border-t border-line pt-3 [&_dd]:m-0 [&_dd]:text-right [&_dd]:tabular-nums" data-testid="price-breakdown">
+              <dt className="col-span-2 font-semibold">Full breakdown (admins only)</dt>
               <dt>Printer: printing</dt>
               <dd>{formatMoney(Math.round(quote.printer.printCost * 100))}</dd>
               <dt>Printer: shipping</dt>
@@ -163,6 +177,8 @@ export default async function OrderPage({ params, searchParams }: { params: Prom
               <dd>{formatMoney(Math.round(quote.printer.tax * 100))}</dd>
               <dt>Your margin</dt>
               <dd>{formatMoney(Math.round(quote.margin * 100))}</dd>
+              <dt>Account credit</dt>
+              <dd>{formatMoney(Math.round((quote.creditCharge ?? 0) * 100))}</dd>
               <dt>Card fee allowance</dt>
               <dd>{formatMoney(Math.round(quote.cardFees * 100))}</dd>
             </dl>

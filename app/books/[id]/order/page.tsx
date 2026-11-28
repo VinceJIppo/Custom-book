@@ -77,7 +77,7 @@ export default async function OrderBook({ params, searchParams }: { params: Prom
           }))}
           countries={COUNTRIES}
           paymentName={providers.payment}
-          credits={credits.enabled ? { redeemableUsd: credits.redeemableUsd, balanceUsd: credits.balanceUsd, keepUsd: getConfig().CREDIT_REDEEM_KEEP_USD } : undefined}
+          credits={credits.enabled ? { redeemableUsd: credits.redeemableUsd, balanceUsd: credits.balanceUsd, keepUsd: getConfig().CREDIT_REDEEM_KEEP_USD, perBookUsd: getConfig().CREDIT_PER_BOOK_USD } : undefined}
         />
       )}
     </div>

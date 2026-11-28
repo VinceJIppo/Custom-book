@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { getCurrentUser } from "@/lib/auth";
-import { formatMoney } from "@/lib/orders/pricing";
+import { customerLines, formatMoney } from "@/lib/orders/pricing";
 import { isAdmin, refreshOrderStatus, refundOrder, resendOrder, shippingQuotes, startCheckout, getOrder } from "@/lib/orders/service";
 import { getPaymentProvider } from "@/lib/providers/registry";
 import { MockPaymentProvider } from "@/lib/providers/payment/mock";
@@ -13,6 +13,10 @@ export interface QuoteOption {
   level: string;
   totalCents: number;
   total: string;
+  /** What the customer sees: the book (margin and fees rolled in), shipping and the account credit. */
+  lines: Array<{ key: string; label: string; amount: string }>;
+  /** Tax already included in the total, or null when there is none. */
+  tax: string | null;
   arrivalMin?: string;
   arrivalMax?: string;
 }
@@ -36,7 +40,15 @@ export async function quoteAction(_prev: OrderFormState | null, fd: FormData): P
   const res = await shippingQuotes(user.id, { bookId: String(fd.get("bookId") ?? ""), exportId: String(fd.get("exportId") ?? ""), address: addressFrom(fd) });
   if (!res.ok) return { message: res.message, errors: res.errors };
   return {
-    options: res.quotes.map((q) => ({ level: q.shippingLevel, totalCents: q.totalCents, total: formatMoney(q.totalCents, q.currency), arrivalMin: q.arrivalMin, arrivalMax: q.arrivalMax })),
+    options: res.quotes.map((q) => ({
+      level: q.shippingLevel,
+      totalCents: q.totalCents,
+      total: formatMoney(q.totalCents, q.currency),
+      lines: customerLines(q, res.bookTitle).map((l) => ({ key: l.key, label: l.label, amount: formatMoney(l.cents, q.currency) })),
+      tax: q.printer.tax > 0 ? formatMoney(Math.round(q.printer.tax * 100), q.currency) : null,
+      arrivalMin: q.arrivalMin,
+      arrivalMax: q.arrivalMax,
+    })),
     warnings: res.warnings,
     suggestion: res.suggestion,
   };

@@ -32,7 +32,9 @@ export type Result<T> = ({ ok: true } & T) | { ok: false; message: string; error
 
 function pricingConfig() {
   const c = getConfig();
-  return { marginPercent: c.ORDER_MARGIN_PERCENT, marginFlatUsd: c.ORDER_MARGIN_FLAT_USD, coverCardFees: c.ORDER_COVER_CARD_FEES };
+  // The account credit charge only applies when the order really comes with credits.
+  const credit = c.CREDITS_ENABLED && c.CREDIT_PER_BOOK_USD > 0 ? c.ORDER_CREDIT_CHARGE_USD : 0;
+  return { marginPercent: c.ORDER_MARGIN_PERCENT, marginFlatUsd: c.ORDER_MARGIN_FLAT_USD, coverCardFees: c.ORDER_COVER_CARD_FEES, creditChargeUsd: credit };
 }
 
 /** Print files that can be ordered: rendered, preflight passed, and made from the book as it is now. */
@@ -69,7 +71,7 @@ export interface ShippingQuote extends CustomerQuote {
 export async function shippingQuotes(
   userId: string,
   input: { bookId: string; exportId: string; address: unknown },
-): Promise<Result<{ quotes: CustomerQuote[]; address: ShippingAddress; warnings: string[]; suggestion?: Partial<ShippingAddress> }>> {
+): Promise<Result<{ quotes: CustomerQuote[]; bookTitle: string; address: ShippingAddress; warnings: string[]; suggestion?: Partial<ShippingAddress> }>> {
   const parsed = parseAddress(input.address);
   if (!parsed.ok) return { ok: false, message: "Please check the address.", errors: parsed.errors };
   const o = await loadOrderable(userId, input.bookId, input.exportId);
@@ -86,6 +88,7 @@ export async function shippingQuotes(
     return {
       ok: true,
       quotes,
+      bookTitle: o.book.title ?? "Your book",
       address: parsed.address,
       warnings: first?.addressWarnings?.map((w) => w.message) ?? [],
       suggestion: first?.suggestedAddress,

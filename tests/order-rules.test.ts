@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import Stripe from "stripe";
-import { priceQuote } from "@/lib/orders/pricing";
+import { customerLines, priceQuote } from "@/lib/orders/pricing";
 import { parseAddress } from "@/lib/orders/address";
 import { shouldApply } from "@/lib/orders/status";
 import { StripePaymentProvider } from "@/lib/providers/stripe/payment";
@@ -14,14 +14,47 @@ describe("customer price", () => {
     expect(q.totalCents).toBe(2398);
     expect(q.margin).toBe(0);
   });
-  it("adds the margin, then grosses up so the card fee doesn't eat it", () => {
+  it("adds the margin on everything but shipping, then grosses up so the card fee doesn't eat it", () => {
     const q = priceQuote(printer, { marginPercent: 10, marginFlatUsd: 1, coverCardFees: true });
-    expect(q.margin).toBe(3.4); // 10% of 23.98 + $1
+    expect(q.margin).toBe(2.86); // 10% of (23.98 - 5.39 shipping) + $1
     // After Stripe takes 2.9% + 30c, at least cost + margin is left.
     const net = q.totalCents - Math.round(q.totalCents * 0.029) - 30;
-    expect(net).toBeGreaterThanOrEqual(2398 + 340);
-    expect(net - (2398 + 340)).toBeLessThanOrEqual(1);
-    expect(q.cardFees).toBeCloseTo((q.totalCents - 2738) / 100, 2);
+    expect(net).toBeGreaterThanOrEqual(2398 + 286);
+    expect(net - (2398 + 286)).toBeLessThanOrEqual(1);
+    expect(q.cardFees).toBeCloseTo((q.totalCents - 2684) / 100, 2);
+  });
+  it("passes shipping through at cost: a pricier shipping option adds exactly its own cost before the card fee", () => {
+    const cfg = { marginPercent: 20, marginFlatUsd: 0, coverCardFees: false, creditChargeUsd: 5 };
+    const mail = priceQuote(printer, cfg);
+    const express = priceQuote({ ...printer, shippingLevel: "EXPRESS", shippingCost: 25.39, total: 43.98 }, cfg);
+    expect(express.margin).toBe(mail.margin);
+    expect(express.totalCents - mail.totalCents).toBe(2000);
+  });
+  it("charges 20% on the book plus $5 for the account credit, covered by the card fee allowance", () => {
+    const q = priceQuote(printer, { marginPercent: 20, marginFlatUsd: 0, coverCardFees: true, creditChargeUsd: 5 });
+    expect(q.margin).toBe(3.72); // 20% of 18.59
+    expect(q.creditCharge).toBe(5);
+    const net = q.totalCents - Math.round(q.totalCents * 0.029) - 30;
+    expect(net).toBeGreaterThanOrEqual(2398 + 372 + 500);
+  });
+});
+
+describe("customer price lines", () => {
+  const q = priceQuote(printer, { marginPercent: 20, marginFlatUsd: 0, coverCardFees: true, creditChargeUsd: 5 });
+  it("roll printing, fulfillment, fees, card fee allowance and margin into one book line that never names the margin", () => {
+    const lines = customerLines(q, "Theo and the Moon");
+    expect(lines.map((l) => l.label)).toEqual(["Book: Theo and the Moon", "Shipping", "Account credit"]);
+    expect(lines.find((l) => l.key === "shipping")!.cents).toBe(539);
+    expect(lines.find((l) => l.key === "credit")!.cents).toBe(500);
+    // Book = printing + fulfillment + fees + margin + card fee allowance, so the lines add up to the total exactly.
+    expect(lines.find((l) => l.key === "book")!.cents).toBe(1728 + 81 + 50 + 372 + Math.round(q.cardFees * 100));
+    expect(lines.reduce((s, l) => s + l.cents, 0)).toBe(q.totalCents);
+    expect(JSON.stringify(lines)).not.toMatch(/margin|fee/i);
+  });
+  it("leave out the credit line for older orders that had no credit charge", () => {
+    const old = { ...q, creditCharge: undefined };
+    expect(customerLines(old, "Old book").map((l) => l.key)).toEqual(["book", "shipping"]);
+    expect(customerLines(old, "Old book").reduce((s, l) => s + l.cents, 0)).toBe(q.totalCents);
   });
 });
 

@@ -114,11 +114,16 @@ const EnvSchema = z.object({
    * is true, so a test setup can never charge a real card or print a real book.
    */
   ALLOW_LIVE_ORDERS: bool.default(false),
-  /** Your margin on top of the printer's price: a percentage plus a flat amount (USD). */
-  ORDER_MARGIN_PERCENT: z.coerce.number().min(0).max(500).default(0),
+  /**
+   * Your margin on top of the printer's price for the book (printing, fulfillment and fees; never
+   * shipping, which is passed through at cost): a percentage plus a flat amount (USD). Never shown to customers.
+   */
+  ORDER_MARGIN_PERCENT: z.coerce.number().min(0).max(500).default(20),
   ORDER_MARGIN_FLAT_USD: z.coerce.number().min(0).max(1000).default(0),
   /** Add the card processing fee (2.9% + $0.30) to the price so it doesn't come out of your pocket. */
   ORDER_COVER_CARD_FEES: bool.default(true),
+  /** Added to every order for the account credit that comes with it (USD). Not charged when credits are off. */
+  ORDER_CREDIT_CHARGE_USD: z.coerce.number().min(0).max(100).default(5),
   /** Email the printer contacts about print problems (defaults to the parent's email). */
   ORDER_CONTACT_EMAIL: z.string().email().optional(),
   /** Comma-separated emails that can see the admin orders page (single-user mode: that user). */

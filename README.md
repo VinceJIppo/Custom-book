@@ -99,10 +99,13 @@ Order form -> shipping options (printer price + your margin + card fee = one tot
   -> worker creates the Lulu print job -> status by webhook (or polling every ORDER_POLL_MINUTES)
 ```
 
-- **Prices** are always recalculated on the server from Lulu's cost API at checkout. The customer
-  sees one total; the breakdown (printing, shipping, fulfillment, tax, your margin, card fee) is
-  stored on the order and shown to admins. Set `ORDER_MARGIN_PERCENT` / `ORDER_MARGIN_FLAT_USD`
-  for a margin; `ORDER_COVER_CARD_FEES=true` (default) adds Stripe's fee so it isn't your loss.
+- **Prices** are always recalculated on the server from Lulu's cost API at checkout. The margin
+  (`ORDER_MARGIN_PERCENT`, default 20, plus `ORDER_MARGIN_FLAT_USD`) applies to printing,
+  fulfillment and fees only; shipping is passed through at cost. `ORDER_CREDIT_CHARGE_USD`
+  (default 5) is added for the account credit each order brings, and `ORDER_COVER_CARD_FEES=true`
+  (default) adds Stripe's fee so it isn't your loss. Customers see three lines: "Book: {title}"
+  (printing, fulfillment and fees, card fee allowance and the margin rolled together), Shipping,
+  and Account credit. The margin is never shown to them. Admins see every line on the order page.
 - **Addresses** are checked against the printer's rules (name 35 characters, street and city 30,
   a phone number, state codes where required) and Lulu's corrections are offered.
 - **Rejected orders** show Lulu's reason and a fix path: make new print files, then "Send to the
